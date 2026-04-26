@@ -1,121 +1,150 @@
 import { FormEvent, useMemo, useState } from "react";
 import { AI_MODEL } from "./aiConfig";
 
+type PageKey = "code" | "learning" | "career" | "projects";
 type Status = "Planned" | "In progress" | "Done";
 
-type VaultItem = {
+type CodeSnippet = {
+  id: string;
+  title: string;
+  language: string;
+  code: string;
+};
+
+type LearningConnection = {
+  name: string;
+  status: string;
+  progress: number;
+};
+
+type ProjectBlock = {
   id: string;
   title: string;
   status: Status;
-  note: string;
+  body: string;
 };
 
-type VaultSection = {
-  key: "code" | "learning" | "career" | "integrations";
-  title: string;
-  tab: string;
+type VaultState = {
+  code: {
+    language: string;
+    editor: string;
+    notesHtml: string;
+    snippets: CodeSnippet[];
+  };
+  learning: {
+    docHtml: string;
+    connections: LearningConnection[];
+    calendarFocus: string[];
+  };
+  career: {
+    resume: string;
+    aiDraft: string;
+  };
+  projects: {
+    blocks: ProjectBlock[];
+  };
 };
 
-type TabKey = VaultSection["key"] | "assistant";
+type NavItem = {
+  key: PageKey;
+  label: string;
+  icon: string;
+};
 
-type VaultData = Record<VaultSection["key"], VaultItem[]>;
-
-const sections: VaultSection[] = [
-  { key: "code", title: "Code Vault", tab: "Code" },
-  { key: "learning", title: "Learning Progress", tab: "Learning" },
-  { key: "career", title: "Career Applications", tab: "Career" },
-  { key: "integrations", title: "Integrations", tab: "Integrations" },
+const navItems: NavItem[] = [
+  { key: "code", label: "Code Vault", icon: "<>" },
+  { key: "learning", label: "Learning", icon: "ED" },
+  { key: "career", label: "Career", icon: "CV" },
+  { key: "projects", label: "Projects", icon: "PR" },
 ];
 
-const defaultVaultData: VaultData = {
-  code: [
-    {
-      id: "code-1",
-      title: "IOVault GitHub repo",
-      status: "In progress",
-      note: "Track commits, test status, features, and deployment tasks.",
-    },
-    {
-      id: "code-2",
-      title: "Automated test checks",
-      status: "Planned",
-      note: "Connect GitHub Actions and show pass/fail status.",
-    },
-  ],
-  learning: [
-    {
-      id: "learning-1",
-      title: "Weekly focus",
-      status: "In progress",
-      note: "Pick one course and log progress.",
-    },
-    {
-      id: "learning-2",
-      title: "Practice log",
-      status: "Planned",
-      note: "Save reviews, blockers, and next steps.",
-    },
-  ],
-  career: [
-    {
-      id: "career-1",
-      title: "Application tracker",
-      status: "In progress",
-      note: "Company, role, date, contact, stage, follow-up.",
-    },
-    {
-      id: "career-2",
-      title: "Interview prep",
-      status: "Planned",
-      note: "Project stories, technical notes, and questions.",
-    },
-  ],
-  integrations: [
-    {
-      id: "integrations-1",
-      title: "AI assistant",
-      status: "Planned",
-      note: "Connect through a secure backend before using your API key.",
-    },
-    {
-      id: "integrations-2",
-      title: "GitHub Actions",
-      status: "Planned",
-      note: "Pull latest workflow results.",
-    },
-  ],
+const storageKey = "io-vault-workspace";
+
+const defaultVaultState: VaultState = {
+  code: {
+    language: "tsx",
+    editor: `function WelcomeCard() {\n  return <section>IO Vault</section>;\n}\n`,
+    notesHtml: "<h2>Code Notes</h2><p>Paste code, write implementation notes, and save snippets here.</p>",
+    snippets: [
+      {
+        id: "snippet-1",
+        title: "React component",
+        language: "tsx",
+        code: `type CardProps = {\n  title: string;\n};\n\nfunction Card({ title }: CardProps) {\n  return <article>{title}</article>;\n}`,
+      },
+      {
+        id: "snippet-2",
+        title: "Fetch helper",
+        language: "ts",
+        code: `async function getJson<T>(url: string): Promise<T> {\n  const response = await fetch(url);\n  if (!response.ok) throw new Error("Request failed");\n  return response.json();\n}`,
+      },
+    ],
+  },
+  learning: {
+    docHtml:
+      "<h2>Learning Docs</h2><p>Use this space for documentation notes, course summaries, questions, and study plans.</p>",
+    connections: [
+      { name: "Coursera", status: "Ready to connect", progress: 0 },
+      { name: "edX", status: "Ready to connect", progress: 0 },
+      { name: "freeCodeCamp", status: "Manual tracking", progress: 35 },
+      { name: "MIT OCW", status: "Manual tracking", progress: 15 },
+    ],
+    calendarFocus: ["Study", "Build", "Review", "Apply", "Read", "Practice", "Plan"],
+  },
+  career: {
+    resume:
+      "Your Name\nRole / Target Title\n\nSummary\nWrite a concise professional summary here.\n\nExperience\n- Add impact-focused bullets.\n\nProjects\n- Add projects with results.\n\nSkills\n- Add tools, languages, and platforms.",
+    aiDraft: "Ask the AI to revise your resume. The revised version will appear here before you apply it.",
+  },
+  projects: {
+    blocks: [
+      {
+        id: "project-1",
+        title: "Lab Project",
+        status: "In progress",
+        body: "Goal, hypothesis, notes, files, blockers, and next steps.",
+      },
+      {
+        id: "project-2",
+        title: "Research Log",
+        status: "Planned",
+        body: "Collect sources, observations, experiment notes, and decisions.",
+      },
+    ],
+  },
 };
 
-const storageKey = "io-vault-data";
-
-function getSavedVaultData() {
+function getSavedVaultState() {
   const saved = localStorage.getItem(storageKey);
 
-  if (!saved) return defaultVaultData;
+  if (!saved) return defaultVaultState;
 
   try {
-    return JSON.parse(saved) as VaultData;
+    return JSON.parse(saved) as VaultState;
   } catch {
     localStorage.removeItem(storageKey);
-    return defaultVaultData;
+    return defaultVaultState;
   }
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function highlightCode(code: string) {
+  return escapeHtml(code)
+    .replace(/\b(const|let|var|function|return|type|interface|async|await|if|else|throw|new)\b/g, '<span class="token keyword">$1</span>')
+    .replace(/(".*?"|'.*?'|`[\s\S]*?`)/g, '<span class="token string">$1</span>')
+    .replace(/\b(\d+)\b/g, '<span class="token number">$1</span>')
+    .replace(/\b([A-Z][A-Za-z0-9_]*)\b/g, '<span class="token type">$1</span>');
 }
 
 function answerBasicQuestion(question: string) {
   if (/^(hi|hello|hey)\b/.test(question)) {
-    return "Hey. I can help you search the vault, organize tasks, and answer basic questions.";
-  }
-
-  if (question.includes("who are you") || question.includes("what are you")) {
-    return "I am the IO Vault assistant. I help keep your code, learning, career, and integrations organized.";
-  }
-
-  if (question.includes("what can you do") || question.includes("help")) {
-    return "I can search your vault, remind you what needs attention, answer basic questions, and help organize next steps.";
-  }
-
-  if (question.includes("api key") || question.includes("key connected")) {
-    return "The AI key is read by the local server from OPENAI_API_KEY in .env.local.";
+    return "Hey. I can help write, organize, revise, search, and plan inside IO Vault.";
   }
 
   if (question.includes("time")) {
@@ -156,151 +185,130 @@ function answerBasicQuestion(question: string) {
 
 function App() {
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabKey>("code");
+  const [activePage, setActivePage] = useState<PageKey>("code");
+  const [isNavOpen, setIsNavOpen] = useState(false);
   const [isAgentOpen, setIsAgentOpen] = useState(false);
-  const [vaultData, setVaultData] = useState<VaultData>(getSavedVaultData);
+  const [isLearningPanelOpen, setIsLearningPanelOpen] = useState(false);
+  const [activeSnippetId, setActiveSnippetId] = useState<string | null>("snippet-1");
+  const [vaultState, setVaultState] = useState<VaultState>(getSavedVaultState);
   const [assistantQuestion, setAssistantQuestion] = useState("");
-  const [assistantAnswer, setAssistantAnswer] = useState("Ask for a reminder or search your vault.");
+  const [assistantAnswer, setAssistantAnswer] = useState("Ask the agent anything or have it search this workspace.");
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
+  const [isResumeLoading, setIsResumeLoading] = useState(false);
 
-  const progress = useMemo(() => {
-    const allItems = Object.values(vaultData).flat();
-    const done = allItems.filter((item) => item.status === "Done").length;
-    const active = allItems.filter((item) => item.status === "In progress").length;
+  const activeSnippet = vaultState.code.snippets.find((snippet) => snippet.id === activeSnippetId);
+  const activeNavItem = navItems.find((item) => item.key === activePage) || navItems[0];
+  const projectStats = useMemo(() => {
+    const active = vaultState.projects.blocks.filter((block) => block.status === "In progress").length;
+    const done = vaultState.projects.blocks.filter((block) => block.status === "Done").length;
+    return { active, done, total: vaultState.projects.blocks.length };
+  }, [vaultState.projects.blocks]);
 
-    return {
-      total: allItems.length,
-      done,
-      active,
-      percent: allItems.length ? Math.round((done / allItems.length) * 100) : 0,
+  function saveVaultState(nextState: VaultState) {
+    setVaultState(nextState);
+    localStorage.setItem(storageKey, JSON.stringify(nextState));
+  }
+
+  function updateCode(updates: Partial<VaultState["code"]>) {
+    saveVaultState({ ...vaultState, code: { ...vaultState.code, ...updates } });
+  }
+
+  function updateLearning(updates: Partial<VaultState["learning"]>) {
+    saveVaultState({ ...vaultState, learning: { ...vaultState.learning, ...updates } });
+  }
+
+  function updateCareer(updates: Partial<VaultState["career"]>) {
+    saveVaultState({ ...vaultState, career: { ...vaultState.career, ...updates } });
+  }
+
+  function updateProject(id: string, updates: Partial<ProjectBlock>) {
+    saveVaultState({
+      ...vaultState,
+      projects: {
+        ...vaultState.projects,
+        blocks: vaultState.projects.blocks.map((block) =>
+          block.id === id ? { ...block, ...updates } : block,
+        ),
+      },
+    });
+  }
+
+  function addSnippet() {
+    const snippet: CodeSnippet = {
+      id: crypto.randomUUID(),
+      title: `Snippet ${vaultState.code.snippets.length + 1}`,
+      language: vaultState.code.language,
+      code: vaultState.code.editor,
     };
-  }, [vaultData]);
 
-  const activeSection = sections.find((section) => section.key === activeTab);
-
-  function saveVaultData(nextData: VaultData) {
-    setVaultData(nextData);
-    localStorage.setItem(storageKey, JSON.stringify(nextData));
+    updateCode({ snippets: [snippet, ...vaultState.code.snippets] });
+    setActiveSnippetId(snippet.id);
   }
 
-  function updateItem(
-    sectionKey: VaultSection["key"],
-    itemId: string,
-    updates: Partial<VaultItem>,
-  ) {
-    saveVaultData({
-      ...vaultData,
-      [sectionKey]: vaultData[sectionKey].map((item) =>
-        item.id === itemId ? { ...item, ...updates } : item,
-      ),
+  function addProjectBlock() {
+    const block: ProjectBlock = {
+      id: crypto.randomUUID(),
+      title: "Untitled Project",
+      status: "Planned",
+      body: "Write project context, notes, links, and next steps.",
+    };
+
+    saveVaultState({
+      ...vaultState,
+      projects: { ...vaultState.projects, blocks: [block, ...vaultState.projects.blocks] },
     });
   }
 
-  function addItem(sectionKey: VaultSection["key"], event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const title = String(formData.get("title") || "").trim();
-    const note = String(formData.get("note") || "").trim();
-
-    if (!title) return;
-
-    saveVaultData({
-      ...vaultData,
-      [sectionKey]: [
-        ...vaultData[sectionKey],
-        {
-          id: `${sectionKey}-${crypto.randomUUID()}`,
-          title,
-          note: note || "Add notes, links, or next steps.",
-          status: "Planned",
-        },
-      ],
+  async function requestAgent(message: string) {
+    const response = await fetch("/api/agent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, vaultData: vaultState }),
     });
+    const data = (await response.json()) as { answer?: string; error?: string };
 
-    event.currentTarget.reset();
-  }
-
-  function removeItem(sectionKey: VaultSection["key"], itemId: string) {
-    saveVaultData({
-      ...vaultData,
-      [sectionKey]: vaultData[sectionKey].filter((item) => item.id !== itemId),
-    });
+    if (!response.ok) throw new Error(data.error || "AI request failed.");
+    return data.answer || "I could not generate an answer.";
   }
 
   async function askAssistant(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const prompt = assistantQuestion.trim();
-    const question = prompt.toLowerCase();
-    const allItems = sections.flatMap((section) =>
-      vaultData[section.key].map((item) => ({ ...item, section: section.title })),
-    );
 
-    if (!question) {
-      setAssistantAnswer("Ask: what needs attention? or search a project, course, company, or tool.");
+    if (!prompt) {
+      setAssistantAnswer("Ask a question, request a summary, or search the workspace.");
       return;
     }
 
-    const basicAnswer = answerBasicQuestion(question);
-
-    if (basicAnswer) {
-      setAssistantAnswer(basicAnswer);
-      return;
-    }
-
-    let aiErrorMessage = "";
     setIsAssistantLoading(true);
 
     try {
-      const response = await fetch("/api/agent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: prompt,
-          vaultData,
-        }),
-      });
-      const data = (await response.json()) as { answer?: string; error?: string };
-
-      if (!response.ok) {
-        throw new Error(data.error || "AI request failed.");
-      }
-
-      setAssistantAnswer(data.answer || "I could not generate an answer.");
-      return;
+      setAssistantAnswer(await requestAgent(prompt));
     } catch (error) {
-      aiErrorMessage = error instanceof Error ? error.message : "AI request failed.";
+      const fallback = answerBasicQuestion(prompt.toLowerCase());
+      setAssistantAnswer(
+        fallback || `${error instanceof Error ? error.message : "AI request failed."} Local fallback did not find an answer.`,
+      );
     } finally {
       setIsAssistantLoading(false);
     }
+  }
 
-    const needsAttention = allItems.filter((item) => item.status !== "Done");
+  async function reviseResume() {
+    setIsResumeLoading(true);
 
-    if (question.includes("remind") || question.includes("attention") || question.includes("todo")) {
-      setAssistantAnswer(
-        needsAttention.length
-          ? `${aiErrorMessage ? `${aiErrorMessage} Local reminder: ` : ""}${needsAttention
-              .slice(0, 4)
-              .map((item) => `${item.title} - ${item.section}`)
-              .join(" | ")}`
-          : `${aiErrorMessage ? `${aiErrorMessage} ` : ""}Everything is marked done.`,
+    try {
+      const answer = await requestAgent(
+        `Revise this resume for clarity, impact, ATS readability, and strong bullets. Return only the improved resume text:\n\n${vaultState.career.resume}`,
       );
-      return;
+      updateCareer({ aiDraft: answer });
+    } catch (error) {
+      updateCareer({
+        aiDraft: error instanceof Error ? error.message : "Could not revise the resume right now.",
+      });
+    } finally {
+      setIsResumeLoading(false);
     }
-
-    const matches = allItems.filter((item) =>
-      `${item.title} ${item.note} ${item.section}`.toLowerCase().includes(question),
-    );
-
-    setAssistantAnswer(
-      matches.length
-        ? `${aiErrorMessage ? `${aiErrorMessage} Local matches: ` : ""}${matches
-            .slice(0, 5)
-            .map((item) => `${item.title} - ${item.section}`)
-            .join(" | ")}`
-        : `${aiErrorMessage ? `${aiErrorMessage} ` : ""}No local match yet. Add it to a tab so I can track it.`,
-    );
   }
 
   const agentDrawer = (
@@ -332,7 +340,7 @@ function App() {
           <textarea
             value={assistantQuestion}
             onChange={(event) => setAssistantQuestion(event.target.value)}
-            placeholder="Ask the agent to find, remind, or organize..."
+            placeholder="Ask the agent to write, explain, revise, plan, or find..."
           />
           <button type="submit" disabled={isAssistantLoading}>
             {isAssistantLoading ? "Thinking..." : "Ask AI"}
@@ -340,9 +348,8 @@ function App() {
         </form>
 
         <div className="agent-response">{assistantAnswer}</div>
-
         <div className="agent-key-note">
-          Key source: <code>OPENAI_API_KEY</code> in <code>.env.local</code>
+          Model: <code>{AI_MODEL}</code>
         </div>
       </aside>
     </>
@@ -371,116 +378,228 @@ function App() {
 
   return (
     <>
-      <main className="vault-dashboard">
-        <header className="topbar">
-          <button className="brand" type="button" onClick={() => setIsUnlocked(false)}>
-            IO Vault
+      <main className={`vault-dashboard nav-${isNavOpen ? "open" : "closed"}`}>
+        <aside className={`workspace-nav ${isNavOpen ? "open" : ""}`}>
+          <button className="nav-toggle" type="button" onClick={() => setIsNavOpen((value) => !value)}>
+            {isNavOpen ? "Close" : "Menu"}
           </button>
-
-        <nav className="tabs" aria-label="Vault sections">
-          {sections.map((section) => (
+          {navItems.map((item) => (
             <button
-              className={activeTab === section.key ? "active" : ""}
-              key={section.key}
+              className={activePage === item.key ? "active" : ""}
+              key={item.key}
               type="button"
-              onClick={() => setActiveTab(section.key)}
+              onClick={() => setActivePage(item.key)}
+              aria-label={item.label}
             >
-              {section.tab}
+              <span>{item.icon}</span>
+              <strong>{item.label}</strong>
             </button>
           ))}
-          <button
-            className={activeTab === "assistant" ? "active" : ""}
-            type="button"
-            onClick={() => setActiveTab("assistant")}
-          >
-            Assistant
-          </button>
-        </nav>
+        </aside>
 
-        <div className="mini-stats" aria-label="Vault progress">
-          <strong>{progress.percent}%</strong>
-          <span>{progress.active} active</span>
-        </div>
-      </header>
-
-      {activeSection ? (
-        <section className="workspace">
-          <div className="workspace-head">
+        <section className="workspace-shell">
+          <header className="workspace-topline">
+            <button className="brand" type="button" onClick={() => setIsUnlocked(false)}>
+              IO Vault
+            </button>
             <div>
-              <p className="kicker">{activeSection.tab}</p>
-              <h1>{activeSection.title}</h1>
+              <p className="kicker">{activeNavItem.icon}</p>
+              <h1>{activeNavItem.label}</h1>
             </div>
-            <span>{vaultData[activeSection.key].length} items</span>
-          </div>
+          </header>
 
-          <div className="vault-items">
-            {vaultData[activeSection.key].map((item) => (
-              <article className="vault-item" key={item.id}>
-                <input
-                  value={item.title}
-                  onChange={(event) =>
-                    updateItem(activeSection.key, item.id, { title: event.target.value })
-                  }
-                  aria-label={`${item.title} title`}
-                />
-                <textarea
-                  value={item.note}
-                  onChange={(event) =>
-                    updateItem(activeSection.key, item.id, { note: event.target.value })
-                  }
-                  aria-label={`${item.title} notes`}
-                />
-                <div className="item-row">
+          {activePage === "code" && (
+            <div className="code-workspace page-grid">
+              <section className="editor-panel code-editor-panel">
+                <div className="panel-toolbar">
                   <select
-                    value={item.status}
-                    onChange={(event) =>
-                      updateItem(activeSection.key, item.id, { status: event.target.value as Status })
-                    }
-                    aria-label={`${item.title} status`}
+                    value={vaultState.code.language}
+                    onChange={(event) => updateCode({ language: event.target.value })}
+                    aria-label="Code language"
                   >
-                    <option>Planned</option>
-                    <option>In progress</option>
-                    <option>Done</option>
+                    <option value="tsx">TSX</option>
+                    <option value="ts">TypeScript</option>
+                    <option value="js">JavaScript</option>
+                    <option value="py">Python</option>
+                    <option value="css">CSS</option>
                   </select>
-                  <button type="button" onClick={() => removeItem(activeSection.key, item.id)}>
-                    Remove
+                  <button type="button" onClick={addSnippet}>Save Snippet</button>
+                  <button type="button">GitHub</button>
+                  <button type="button">Tests</button>
+                </div>
+                <textarea
+                  className="code-input"
+                  value={vaultState.code.editor}
+                  onChange={(event) => updateCode({ editor: event.target.value })}
+                  spellCheck={false}
+                  aria-label="Code editor"
+                />
+              </section>
+
+              <section className="editor-panel syntax-panel">
+                <div className="panel-label">Syntax Preview</div>
+                <pre><code dangerouslySetInnerHTML={{ __html: highlightCode(vaultState.code.editor) }} /></pre>
+              </section>
+
+              <section className="editor-panel rich-panel">
+                <div className="panel-label">Notes</div>
+                <div
+                  className="rich-editor"
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={(event) => updateCode({ notesHtml: event.currentTarget.innerHTML })}
+                  dangerouslySetInnerHTML={{ __html: vaultState.code.notesHtml }}
+                />
+              </section>
+
+              <aside className="snippet-strip">
+                {vaultState.code.snippets.map((snippet) => (
+                  <button
+                    className={activeSnippetId === snippet.id ? "snippet-card active" : "snippet-card"}
+                    key={snippet.id}
+                    type="button"
+                    onClick={() => setActiveSnippetId(snippet.id)}
+                  >
+                    <strong>{snippet.title}</strong>
+                    <span>{snippet.language}</span>
+                  </button>
+                ))}
+              </aside>
+
+              {activeSnippet && (
+                <div className="floating-snippet">
+                  <div className="panel-toolbar">
+                    <strong>{activeSnippet.title}</strong>
+                    <button type="button" onClick={() => updateCode({ editor: activeSnippet.code, language: activeSnippet.language })}>
+                      Open
+                    </button>
+                    <button type="button" onClick={() => setActiveSnippetId(null)}>Hide</button>
+                  </div>
+                  <pre><code dangerouslySetInnerHTML={{ __html: highlightCode(activeSnippet.code) }} /></pre>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activePage === "learning" && (
+            <div className="learning-workspace page-grid">
+              <button
+                className="learning-pull-button"
+                type="button"
+                onClick={() => setIsLearningPanelOpen((value) => !value)}
+              >
+                Learning APIs
+              </button>
+
+              <aside className={`learning-drawer ${isLearningPanelOpen ? "open" : ""}`}>
+                <p className="kicker">Connections</p>
+                {vaultState.learning.connections.map((connection) => (
+                  <div className="connection-card" key={connection.name}>
+                    <strong>{connection.name}</strong>
+                    <span>{connection.status}</span>
+                    <div><i style={{ width: `${connection.progress}%` }} /></div>
+                  </div>
+                ))}
+              </aside>
+
+              <section className="editor-panel documentation-panel">
+                <div className="panel-label">Documentation Notes</div>
+                <div
+                  className="rich-editor document-space"
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={(event) => updateLearning({ docHtml: event.currentTarget.innerHTML })}
+                  dangerouslySetInnerHTML={{ __html: vaultState.learning.docHtml }}
+                />
+              </section>
+
+              <section className="editor-panel calendar-panel">
+                <div className="panel-label">Mini Calendar</div>
+                <div className="calendar-grid">
+                  {vaultState.learning.calendarFocus.map((day, index) => (
+                    <button key={`${day}-${index}`} type="button">
+                      <span>Day {index + 1}</span>
+                      <strong>{day}</strong>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activePage === "career" && (
+            <div className="career-workspace page-grid two-column">
+              <section className="editor-panel resume-panel">
+                <div className="panel-toolbar">
+                  <span>Resume Editor</span>
+                  <button type="button" onClick={reviseResume} disabled={isResumeLoading}>
+                    {isResumeLoading ? "Revising..." : "AI Revise"}
                   </button>
                 </div>
-              </article>
-            ))}
-          </div>
+                <textarea
+                  className="resume-editor"
+                  value={vaultState.career.resume}
+                  onChange={(event) => updateCareer({ resume: event.target.value })}
+                  aria-label="Resume editor"
+                />
+              </section>
 
-          <form className="add-item" onSubmit={(event) => addItem(activeSection.key, event)}>
-            <input name="title" placeholder="New item" />
-            <input name="note" placeholder="Note or link" />
-            <button type="submit">Add</button>
-          </form>
-        </section>
-      ) : (
-        <section className="workspace assistant-workspace">
-          <div className="workspace-head">
-            <div>
-              <p className="kicker">Assistant</p>
-              <h1>Organizer</h1>
+              <section className="editor-panel resume-panel">
+                <div className="panel-toolbar">
+                  <span>AI Draft</span>
+                  <button type="button" onClick={() => updateCareer({ resume: vaultState.career.aiDraft })}>
+                    Apply
+                  </button>
+                </div>
+                <textarea
+                  className="resume-editor"
+                  value={vaultState.career.aiDraft}
+                  onChange={(event) => updateCareer({ aiDraft: event.target.value })}
+                  aria-label="AI resume draft"
+                />
+              </section>
             </div>
-            <span>{AI_MODEL}</span>
-          </div>
+          )}
 
-          <form className="assistant-form" onSubmit={askAssistant}>
-            <input
-              value={assistantQuestion}
-              onChange={(event) => setAssistantQuestion(event.target.value)}
-              placeholder="Search or ask what needs attention"
-            />
-            <button type="submit" disabled={isAssistantLoading}>
-              {isAssistantLoading ? "Thinking..." : "Ask"}
-            </button>
-          </form>
+          {activePage === "projects" && (
+            <div className="projects-workspace">
+              <div className="project-toolbar">
+                <div>
+                  <span>{projectStats.active} active</span>
+                  <span>{projectStats.done} done</span>
+                  <span>{projectStats.total} total</span>
+                </div>
+                <button type="button" onClick={addProjectBlock}>New Block</button>
+              </div>
 
-          <div className="assistant-answer">{assistantAnswer}</div>
-          <p className="secure-note">Uses the local server endpoint with OPENAI_API_KEY.</p>
+              <section className="project-board">
+                {vaultState.projects.blocks.map((block) => (
+                  <article className="project-block" key={block.id}>
+                    <input
+                      value={block.title}
+                      onChange={(event) => updateProject(block.id, { title: event.target.value })}
+                      aria-label={`${block.title} title`}
+                    />
+                    <select
+                      value={block.status}
+                      onChange={(event) => updateProject(block.id, { status: event.target.value as Status })}
+                      aria-label={`${block.title} status`}
+                    >
+                      <option>Planned</option>
+                      <option>In progress</option>
+                      <option>Done</option>
+                    </select>
+                    <textarea
+                      value={block.body}
+                      onChange={(event) => updateProject(block.id, { body: event.target.value })}
+                      aria-label={`${block.title} notes`}
+                    />
+                  </article>
+                ))}
+              </section>
+            </div>
+          )}
         </section>
-      )}
       </main>
       {agentDrawer}
     </>
