@@ -12,32 +12,18 @@ type VaultItem = {
 type VaultSection = {
   key: "code" | "learning" | "career" | "integrations";
   title: string;
-  description: string;
+  tab: string;
 };
+
+type TabKey = VaultSection["key"] | "assistant";
 
 type VaultData = Record<VaultSection["key"], VaultItem[]>;
 
 const sections: VaultSection[] = [
-  {
-    key: "code",
-    title: "Code Vault",
-    description: "Keep projects, repos, tests, bugs, and build notes organized.",
-  },
-  {
-    key: "learning",
-    title: "Learning Progress",
-    description: "Track courses, skills, videos, certificates, and practice goals.",
-  },
-  {
-    key: "career",
-    title: "Career Applications",
-    description: "Manage job applications, referrals, interviews, and follow-ups.",
-  },
-  {
-    key: "integrations",
-    title: "App Integrations",
-    description: "Plan connected tools like GitHub, learning sites, calendars, and AI.",
-  },
+  { key: "code", title: "Code Vault", tab: "Code" },
+  { key: "learning", title: "Learning Progress", tab: "Learning" },
+  { key: "career", title: "Career Applications", tab: "Career" },
+  { key: "integrations", title: "Integrations", tab: "Integrations" },
 ];
 
 const defaultVaultData: VaultData = {
@@ -52,21 +38,21 @@ const defaultVaultData: VaultData = {
       id: "code-2",
       title: "Automated test checks",
       status: "Planned",
-      note: "Connect GitHub Actions so IO Vault can show whether tests passed.",
+      note: "Connect GitHub Actions and show pass/fail status.",
     },
   ],
   learning: [
     {
       id: "learning-1",
-      title: "Weekly learning focus",
+      title: "Weekly focus",
       status: "In progress",
-      note: "Choose one course from freeCodeCamp, Coursera, edX, MIT OCW, or Khan Academy.",
+      note: "Pick one course and log progress.",
     },
     {
       id: "learning-2",
       title: "Practice log",
       status: "Planned",
-      note: "Record what you learned, what confused you, and what to review next.",
+      note: "Save reviews, blockers, and next steps.",
     },
   ],
   career: [
@@ -74,13 +60,13 @@ const defaultVaultData: VaultData = {
       id: "career-1",
       title: "Application tracker",
       status: "In progress",
-      note: "Save company, role, date applied, contact, interview stage, and next follow-up.",
+      note: "Company, role, date, contact, stage, follow-up.",
     },
     {
       id: "career-2",
       title: "Interview prep",
       status: "Planned",
-      note: "Build answer notes for projects, teamwork, leadership, and technical problem solving.",
+      note: "Project stories, technical notes, and questions.",
     },
   ],
   integrations: [
@@ -88,13 +74,13 @@ const defaultVaultData: VaultData = {
       id: "integrations-1",
       title: "AI assistant",
       status: "Planned",
-      note: "Use a secure backend before connecting your API key so it does not ship to the browser.",
+      note: "Connect through a secure backend before using your API key.",
     },
     {
       id: "integrations-2",
       title: "GitHub Actions",
       status: "Planned",
-      note: "Pull latest workflow runs and summarize passing or failing tests.",
+      note: "Pull latest workflow results.",
     },
   ],
 };
@@ -116,11 +102,10 @@ function getSavedVaultData() {
 
 function App() {
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>("code");
   const [vaultData, setVaultData] = useState<VaultData>(getSavedVaultData);
   const [assistantQuestion, setAssistantQuestion] = useState("");
-  const [assistantAnswer, setAssistantAnswer] = useState(
-    "Ask me what to work on, where something is saved, or what still needs attention.",
-  );
+  const [assistantAnswer, setAssistantAnswer] = useState("Ask for a reminder or search your vault.");
 
   const progress = useMemo(() => {
     const allItems = Object.values(vaultData).flat();
@@ -134,6 +119,8 @@ function App() {
       percent: allItems.length ? Math.round((done / allItems.length) * 100) : 0,
     };
   }, [vaultData]);
+
+  const activeSection = sections.find((section) => section.key === activeTab);
 
   function saveVaultData(nextData: VaultData) {
     setVaultData(nextData);
@@ -168,7 +155,7 @@ function App() {
         {
           id: `${sectionKey}-${crypto.randomUUID()}`,
           title,
-          note: note || "Add details, links, dates, or next steps here.",
+          note: note || "Add notes, links, or next steps.",
           status: "Planned",
         },
       ],
@@ -192,7 +179,7 @@ function App() {
     );
 
     if (!question) {
-      setAssistantAnswer("Ask a question like 'what needs attention?' or search for a project, course, company, or integration.");
+      setAssistantAnswer("Ask: what needs attention? or search a project, course, company, or tool.");
       return;
     }
 
@@ -201,11 +188,11 @@ function App() {
     if (question.includes("remind") || question.includes("attention") || question.includes("todo")) {
       setAssistantAnswer(
         needsAttention.length
-          ? `Reminder: ${needsAttention
+          ? needsAttention
               .slice(0, 4)
-              .map((item) => `${item.title} (${item.section})`)
-              .join(", ")} still need attention.`
-          : "Everything is marked done. Add the next goal when you are ready.",
+              .map((item) => `${item.title} - ${item.section}`)
+              .join(" | ")
+          : "Everything is marked done.",
       );
       return;
     }
@@ -216,11 +203,11 @@ function App() {
 
     setAssistantAnswer(
       matches.length
-        ? `Found ${matches.length} match${matches.length === 1 ? "" : "es"}: ${matches
+        ? matches
             .slice(0, 5)
-            .map((item) => `${item.title} in ${item.section}`)
-            .join(", ")}.`
-        : "I did not find that yet. Add it to the right vault card so I can help you track it.",
+            .map((item) => `${item.title} - ${item.section}`)
+            .join(" | ")
+        : "No match yet. Add it to a tab so I can track it.",
     );
   }
 
@@ -244,95 +231,113 @@ function App() {
 
   return (
     <main className="vault-dashboard">
-      <header className="dashboard-header">
-        <div>
-          <p className="kicker">Unlocked</p>
-          <h1>IO Vault</h1>
-          <p className="dashboard-copy">
-            Your command center for code, learning, career applications, integrations, and assistant reminders.
-          </p>
-        </div>
-        <div className="progress-card">
+      <header className="topbar">
+        <button className="brand" type="button" onClick={() => setIsUnlocked(false)}>
+          IO Vault
+        </button>
+
+        <nav className="tabs" aria-label="Vault sections">
+          {sections.map((section) => (
+            <button
+              className={activeTab === section.key ? "active" : ""}
+              key={section.key}
+              type="button"
+              onClick={() => setActiveTab(section.key)}
+            >
+              {section.tab}
+            </button>
+          ))}
+          <button
+            className={activeTab === "assistant" ? "active" : ""}
+            type="button"
+            onClick={() => setActiveTab("assistant")}
+          >
+            Assistant
+          </button>
+        </nav>
+
+        <div className="mini-stats" aria-label="Vault progress">
           <strong>{progress.percent}%</strong>
-          <span>{progress.done} done / {progress.active} active / {progress.total} total</span>
+          <span>{progress.active} active</span>
         </div>
       </header>
 
-      <section className="assistant-panel">
-        <div>
-          <p className="kicker">AI Assistant Prep</p>
-          <h2>Organizer and Finder</h2>
-          <p>
-            This local assistant can search your vault and create reminders now. When you are ready, we can connect your API key through a secure backend.
-          </p>
-        </div>
-        <form onSubmit={askAssistant}>
-          <input
-            value={assistantQuestion}
-            onChange={(event) => setAssistantQuestion(event.target.value)}
-            placeholder="Ask: what needs attention? or search GitHub, Coursera, applications..."
-          />
-          <button type="submit">Ask</button>
-        </form>
-        <div className="assistant-answer">{assistantAnswer}</div>
-      </section>
-
-      <section className="vault-grid">
-        {sections.map((section) => (
-          <article className="vault-card" key={section.key}>
-            <div className="card-heading">
-              <div>
-                <h2>{section.title}</h2>
-                <p>{section.description}</p>
-              </div>
-              <span>{vaultData[section.key].length}</span>
+      {activeSection ? (
+        <section className="workspace">
+          <div className="workspace-head">
+            <div>
+              <p className="kicker">{activeSection.tab}</p>
+              <h1>{activeSection.title}</h1>
             </div>
+            <span>{vaultData[activeSection.key].length} items</span>
+          </div>
 
-            <div className="vault-items">
-              {vaultData[section.key].map((item) => (
-                <div className="vault-item" key={item.id}>
-                  <input
-                    value={item.title}
+          <div className="vault-items">
+            {vaultData[activeSection.key].map((item) => (
+              <article className="vault-item" key={item.id}>
+                <input
+                  value={item.title}
+                  onChange={(event) =>
+                    updateItem(activeSection.key, item.id, { title: event.target.value })
+                  }
+                  aria-label={`${item.title} title`}
+                />
+                <textarea
+                  value={item.note}
+                  onChange={(event) =>
+                    updateItem(activeSection.key, item.id, { note: event.target.value })
+                  }
+                  aria-label={`${item.title} notes`}
+                />
+                <div className="item-row">
+                  <select
+                    value={item.status}
                     onChange={(event) =>
-                      updateItem(section.key, item.id, { title: event.target.value })
+                      updateItem(activeSection.key, item.id, { status: event.target.value as Status })
                     }
-                    aria-label={`${item.title} title`}
-                  />
-                  <textarea
-                    value={item.note}
-                    onChange={(event) =>
-                      updateItem(section.key, item.id, { note: event.target.value })
-                    }
-                    aria-label={`${item.title} notes`}
-                  />
-                  <div className="item-row">
-                    <select
-                      value={item.status}
-                      onChange={(event) =>
-                        updateItem(section.key, item.id, { status: event.target.value as Status })
-                      }
-                      aria-label={`${item.title} status`}
-                    >
-                      <option>Planned</option>
-                      <option>In progress</option>
-                      <option>Done</option>
-                    </select>
-                    <button type="button" onClick={() => removeItem(section.key, item.id)}>
-                      Remove
-                    </button>
-                  </div>
+                    aria-label={`${item.title} status`}
+                  >
+                    <option>Planned</option>
+                    <option>In progress</option>
+                    <option>Done</option>
+                  </select>
+                  <button type="button" onClick={() => removeItem(activeSection.key, item.id)}>
+                    Remove
+                  </button>
                 </div>
-              ))}
-            </div>
+              </article>
+            ))}
+          </div>
 
-            <form className="add-item" onSubmit={(event) => addItem(section.key, event)}>
-              <input name="title" placeholder={`Add to ${section.title}`} />
-              <input name="note" placeholder="Notes, links, or next step" />
-              <button type="submit">Add</button>
-            </form>
-          </article>
-        ))}
-      </section>
+          <form className="add-item" onSubmit={(event) => addItem(activeSection.key, event)}>
+            <input name="title" placeholder="New item" />
+            <input name="note" placeholder="Note or link" />
+            <button type="submit">Add</button>
+          </form>
+        </section>
+      ) : (
+        <section className="workspace assistant-workspace">
+          <div className="workspace-head">
+            <div>
+              <p className="kicker">Assistant</p>
+              <h1>Organizer</h1>
+            </div>
+            <span>Local</span>
+          </div>
+
+          <form className="assistant-form" onSubmit={askAssistant}>
+            <input
+              value={assistantQuestion}
+              onChange={(event) => setAssistantQuestion(event.target.value)}
+              placeholder="Search or ask what needs attention"
+            />
+            <button type="submit">Ask</button>
+          </form>
+
+          <div className="assistant-answer">{assistantAnswer}</div>
+          <p className="secure-note">API key connection should use a secure backend.</p>
+        </section>
+      )}
     </main>
   );
 }
