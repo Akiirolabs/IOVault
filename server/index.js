@@ -2,13 +2,13 @@ import dotenv from "dotenv";
 import express from "express";
 import OpenAI from "openai";
 
-dotenv.config({ path: ".env.local" });
-dotenv.config();
+dotenv.config({ path: ".env.local", override: true });
+dotenv.config({ override: false });
 
 const app = express();
 const port = Number(process.env.API_PORT || 8787);
 const model = "gpt-4o-mini";
-const apiKey = process.env.OPENAI_API_KEY || process.env.VITE_AI_API_KEY;
+const apiKey = process.env.OPENAI_API_KEY;
 
 app.use(express.json({ limit: "1mb" }));
 
