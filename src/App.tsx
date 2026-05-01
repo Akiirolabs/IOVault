@@ -1,4 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
+import type { IconType } from "react-icons";
+import { FaLinkedin } from "react-icons/fa";
+import { SiCoursera, SiGithub, SiNotion } from "react-icons/si";
 import { AI_MODEL } from "./aiConfig";
 
 type PageKey = "code" | "learning" | "career" | "projects";
@@ -48,14 +51,14 @@ type VaultState = {
 type NavItem = {
   key: PageKey;
   label: string;
-  icon: string;
+  icon: IconType;
 };
 
 const navItems: NavItem[] = [
-  { key: "code", label: "Code Vault", icon: "<>" },
-  { key: "learning", label: "Learning", icon: "ED" },
-  { key: "career", label: "Career", icon: "CV" },
-  { key: "projects", label: "Projects", icon: "PR" },
+  { key: "code", label: "Code Vault", icon: SiGithub },
+  { key: "learning", label: "Learning", icon: SiCoursera },
+  { key: "career", label: "Career", icon: FaLinkedin },
+  { key: "projects", label: "Projects", icon: SiNotion },
 ];
 
 const storageKey = "io-vault-workspace";
@@ -198,6 +201,7 @@ function App() {
 
   const activeSnippet = vaultState.code.snippets.find((snippet) => snippet.id === activeSnippetId);
   const activeNavItem = navItems.find((item) => item.key === activePage) || navItems[0];
+  const ActivePageIcon = activeNavItem.icon;
   const projectStats = useMemo(() => {
     const active = vaultState.projects.blocks.filter((block) => block.status === "In progress").length;
     const done = vaultState.projects.blocks.filter((block) => block.status === "Done").length;
@@ -383,18 +387,24 @@ function App() {
           <button className="nav-toggle" type="button" onClick={() => setIsNavOpen((value) => !value)}>
             {isNavOpen ? "Close" : "Menu"}
           </button>
-          {navItems.map((item) => (
-            <button
-              className={activePage === item.key ? "active" : ""}
-              key={item.key}
-              type="button"
-              onClick={() => setActivePage(item.key)}
-              aria-label={item.label}
-            >
-              <span>{item.icon}</span>
-              <strong>{item.label}</strong>
-            </button>
-          ))}
+          {navItems.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <button
+                className={activePage === item.key ? "active" : ""}
+                key={item.key}
+                type="button"
+                onClick={() => setActivePage(item.key)}
+                aria-label={item.label}
+              >
+                <span>
+                  <Icon aria-hidden="true" />
+                </span>
+                <strong>{item.label}</strong>
+              </button>
+            );
+          })}
         </aside>
 
         <section className="workspace-shell">
@@ -403,7 +413,9 @@ function App() {
               IO Vault
             </button>
             <div>
-              <p className="kicker">{activeNavItem.icon}</p>
+              <p className="kicker title-icon">
+                <ActivePageIcon aria-hidden="true" />
+              </p>
               <h1>{activeNavItem.label}</h1>
             </div>
           </header>

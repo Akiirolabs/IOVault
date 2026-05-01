@@ -284,6 +284,21 @@ textarea:focus-visible,
   font-weight: 950;
 }
 
+.workspace-nav span svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.title-icon {
+  display: flex;
+  margin-bottom: 0.35rem;
+}
+
+.title-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
 .workspace-nav strong {
   display: none;
   font-size: 0.85rem;
