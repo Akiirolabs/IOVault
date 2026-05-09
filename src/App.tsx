@@ -117,13 +117,48 @@ const defaultVaultState: VaultState = {
   },
 };
 
+function normalizeVaultState(raw: unknown): VaultState {
+  if (!raw || typeof raw !== "object") return defaultVaultState;
+
+  const parsed = raw as Partial<VaultState>;
+
+  return {
+    code: {
+      ...defaultVaultState.code,
+      ...(typeof parsed.code === "object" && parsed.code ? parsed.code : {}),
+      snippets: Array.isArray(parsed.code?.snippets)
+        ? parsed.code.snippets
+        : defaultVaultState.code.snippets,
+    },
+    learning: {
+      ...defaultVaultState.learning,
+      ...(typeof parsed.learning === "object" && parsed.learning ? parsed.learning : {}),
+      connections: Array.isArray(parsed.learning?.connections)
+        ? parsed.learning.connections
+        : defaultVaultState.learning.connections,
+      calendarFocus: Array.isArray(parsed.learning?.calendarFocus)
+        ? parsed.learning.calendarFocus
+        : defaultVaultState.learning.calendarFocus,
+    },
+    career: {
+      ...defaultVaultState.career,
+      ...(typeof parsed.career === "object" && parsed.career ? parsed.career : {}),
+    },
+    projects: {
+      blocks: Array.isArray(parsed.projects?.blocks)
+        ? parsed.projects.blocks
+        : defaultVaultState.projects.blocks,
+    },
+  };
+}
+
 function getSavedVaultState() {
   const saved = localStorage.getItem(storageKey);
 
   if (!saved) return defaultVaultState;
 
   try {
-    return JSON.parse(saved) as VaultState;
+    return normalizeVaultState(JSON.parse(saved));
   } catch {
     localStorage.removeItem(storageKey);
     return defaultVaultState;
@@ -138,6 +173,7 @@ function escapeHtml(value: string) {
 }
 
 function highlightCode(code: string) {
+  if (typeof code !== "string") return "";
   return escapeHtml(code)
     .replace(/\b(const|let|var|function|return|type|interface|async|await|if|else|throw|new)\b/g, '<span class="token keyword">$1</span>')
     .replace(/(".*?"|'.*?'|`[\s\S]*?`)/g, '<span class="token string">$1</span>')
@@ -208,45 +244,51 @@ function App() {
     return { active, done, total: vaultState.projects.blocks.length };
   }, [vaultState.projects.blocks]);
 
-  function saveVaultState(nextState: VaultState) {
-    setVaultState(nextState);
-    localStorage.setItem(storageKey, JSON.stringify(nextState));
-  }
-
-  function updateCode(updates: Partial<VaultState["code"]>) {
-    saveVaultState({ ...vaultState, code: { ...vaultState.code, ...updates } });
-  }
-
-  function updateLearning(updates: Partial<VaultState["learning"]>) {
-    saveVaultState({ ...vaultState, learning: { ...vaultState.learning, ...updates } });
-  }
-
-  function updateCareer(updates: Partial<VaultState["career"]>) {
-    saveVaultState({ ...vaultState, career: { ...vaultState.career, ...updates } });
-  }
-
-  function updateProject(id: string, updates: Partial<ProjectBlock>) {
-    saveVaultState({
-      ...vaultState,
-      projects: {
-        ...vaultState.projects,
-        blocks: vaultState.projects.blocks.map((block) =>
-          block.id === id ? { ...block, ...updates } : block,
-        ),
-      },
+  function saveVaultState(reducer: (previous: VaultState) => VaultState) {
+    setVaultState((previous) => {
+      const nextState = reducer(previous);
+      localStorage.setItem(storageKey, JSON.stringify(nextState));
+      return nextState;
     });
   }
 
-  function addSnippet() {
-    const snippet: CodeSnippet = {
-      id: crypto.randomUUID(),
-      title: `Snippet ${vaultState.code.snippets.length + 1}`,
-      language: vaultState.code.language,
-      code: vaultState.code.editor,
-    };
+  function updateCode(updates: Partial<VaultState["code"]>) {
+    saveVaultState((prev) => ({ ...prev, code: { ...prev.code, ...updates } }));
+  }
 
-    updateCode({ snippets: [snippet, ...vaultState.code.snippets] });
-    setActiveSnippetId(snippet.id);
+  function updateLearning(updates: Partial<VaultState["learning"]>) {
+    saveVaultState((prev) => ({ ...prev, learning: { ...prev.learning, ...updates } }));
+  }
+
+  function updateCareer(updates: Partial<VaultState["career"]>) {
+    saveVaultState((prev) => ({ ...prev, career: { ...prev.career, ...updates } }));
+  }
+
+  function updateProject(id: string, updates: Partial<ProjectBlock>) {
+    saveVaultState((prev) => ({
+      ...prev,
+      projects: {
+        ...prev.projects,
+        blocks: prev.projects.blocks.map((block) =>
+          block.id === id ? { ...block, ...updates } : block,
+        ),
+      },
+    }));
+  }
+
+  function addSnippet() {
+    const id = crypto.randomUUID();
+
+    saveVaultState((prev) => {
+      const snippet: CodeSnippet = {
+        id,
+        title: `Snippet ${prev.code.snippets.length + 1}`,
+        language: prev.code.language,
+        code: prev.code.editor,
+      };
+      return { ...prev, code: { ...prev.code, snippets: [snippet, ...prev.code.snippets] } };
+    });
+    setActiveSnippetId(id);
   }
 
   function addProjectBlock() {
@@ -257,10 +299,10 @@ function App() {
       body: "Write project context, notes, links, and next steps.",
     };
 
-    saveVaultState({
-      ...vaultState,
-      projects: { ...vaultState.projects, blocks: [block, ...vaultState.projects.blocks] },
-    });
+    saveVaultState((prev) => ({
+      ...prev,
+      projects: { ...prev.projects, blocks: [block, ...prev.projects.blocks] },
+    }));
   }
 
   async function requestAgent(message: string) {
@@ -597,9 +639,9 @@ function App() {
                       onChange={(event) => updateProject(block.id, { status: event.target.value as Status })}
                       aria-label={`${block.title} status`}
                     >
-                      <option>Planned</option>
-                      <option>In progress</option>
-                      <option>Done</option>
+                      <option value="Planned">Planned</option>
+                      <option value="In progress">In progress</option>
+                      <option value="Done">Done</option>
                     </select>
                     <textarea
                       value={block.body}
