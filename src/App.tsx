@@ -1,8 +1,16 @@
+/**
+ * IO Vault — main application UI.
+ *
+ * Flow: unlock screen → dashboard with 4 workspace pages (Code, Learning, Career, Projects).
+ * All workspace data persists to localStorage. AI features call POST /api/agent (see server/index.js).
+ */
 import { FormEvent, useMemo, useState } from "react";
 import type { IconType } from "react-icons";
 import { FaLinkedin } from "react-icons/fa";
 import { SiCoursera, SiGithub, SiNotion } from "react-icons/si";
 import { AI_MODEL } from "./aiConfig";
+
+// --- Types: shape of each workspace page and full saved state ---
 
 type PageKey = "code" | "learning" | "career" | "projects";
 type Status = "Planned" | "In progress" | "Done";
@@ -54,6 +62,8 @@ type NavItem = {
   icon: IconType;
 };
 
+// --- Navigation & defaults: sidebar labels and first-run sample content ---
+
 const navItems: NavItem[] = [
   { key: "code", label: "Code Vault", icon: SiGithub },
   { key: "learning", label: "Learning", icon: SiCoursera },
@@ -61,8 +71,10 @@ const navItems: NavItem[] = [
   { key: "projects", label: "Projects", icon: SiNotion },
 ];
 
+/** localStorage key — entire VaultState is JSON-serialized here on every edit */
 const storageKey = "io-vault-workspace";
 
+/** Shown on first visit and used to fill missing fields when loading old saves */
 const defaultVaultState: VaultState = {
   code: {
     language: "tsx",
@@ -117,6 +129,9 @@ const defaultVaultState: VaultState = {
   },
 };
 
+// --- Persistence: read/write localStorage safely ---
+
+/** Merges saved JSON with defaults so partial or legacy data never crashes the app */
 function normalizeVaultState(raw: unknown): VaultState {
   if (!raw || typeof raw !== "object") return defaultVaultState;
 
@@ -152,6 +167,7 @@ function normalizeVaultState(raw: unknown): VaultState {
   };
 }
 
+/** Loads workspace from localStorage, or returns defaults if empty / corrupt */
 function getSavedVaultState() {
   const saved = localStorage.getItem(storageKey);
 
@@ -164,6 +180,8 @@ function getSavedVaultState() {
     return defaultVaultState;
   }
 }
+
+// --- Code preview: lightweight syntax highlighting (no external highlighter) ---
 
 function escapeHtml(value: string) {
   return value
@@ -180,6 +198,8 @@ function highlightCode(code: string) {
     .replace(/\b(\d+)\b/g, '<span class="token number">$1</span>')
     .replace(/\b([A-Z][A-Za-z0-9_]*)\b/g, '<span class="token type">$1</span>');
 }
+
+// --- Offline fallback when API is unavailable (greetings, time, simple math) ---
 
 function answerBasicQuestion(question: string) {
   if (/^(hi|hello|hey)\b/.test(question)) {
@@ -223,6 +243,7 @@ function answerBasicQuestion(question: string) {
 }
 
 function App() {
+  // --- UI state (not persisted): which screen/panels are open ---
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [activePage, setActivePage] = useState<PageKey>("code");
   const [isNavOpen, setIsNavOpen] = useState(false);
@@ -235,6 +256,7 @@ function App() {
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
   const [isResumeLoading, setIsResumeLoading] = useState(false);
 
+  // --- Derived values for the active page / snippet / project counts ---
   const activeSnippet = vaultState.code.snippets.find((snippet) => snippet.id === activeSnippetId);
   const activeNavItem = navItems.find((item) => item.key === activePage) || navItems[0];
   const ActivePageIcon = activeNavItem.icon;
@@ -243,6 +265,8 @@ function App() {
     const done = vaultState.projects.blocks.filter((block) => block.status === "Done").length;
     return { active, done, total: vaultState.projects.blocks.length };
   }, [vaultState.projects.blocks]);
+
+  // --- State updaters: every change writes through to localStorage ---
 
   function saveVaultState(reducer: (previous: VaultState) => VaultState) {
     setVaultState((previous) => {
@@ -305,6 +329,8 @@ function App() {
     }));
   }
 
+  // --- AI: shared fetch to /api/agent (proxied to Express in dev) ---
+
   async function requestAgent(message: string) {
     const response = await fetch("/api/agent", {
       method: "POST",
@@ -357,6 +383,8 @@ function App() {
     }
   }
 
+  // --- Global AI drawer: available on unlock screen and all workspace pages ---
+
   const agentDrawer = (
     <>
       <button
@@ -401,6 +429,8 @@ function App() {
     </>
   );
 
+  // --- Unlock / landing screen (animated hero before entering the workspace) ---
+
   if (!isUnlocked) {
     return (
       <>
@@ -422,9 +452,12 @@ function App() {
     );
   }
 
+  // --- Main workspace: sidebar navigation + page content ---
+
   return (
     <>
       <main className={`vault-dashboard nav-${isNavOpen ? "open" : "closed"}`}>
+        {/* Left nav: switch between Code, Learning, Career, Projects */}
         <aside className={`workspace-nav ${isNavOpen ? "open" : ""}`}>
           <button className="nav-toggle" type="button" onClick={() => setIsNavOpen((value) => !value)}>
             {isNavOpen ? "Close" : "Menu"}
@@ -462,6 +495,7 @@ function App() {
             </div>
           </header>
 
+          {/* Page: Code Vault — editor, syntax preview, notes, saved snippets */}
           {activePage === "code" && (
             <div className="code-workspace page-grid">
               <section className="editor-panel code-editor-panel">
@@ -535,6 +569,7 @@ function App() {
             </div>
           )}
 
+          {/* Page: Learning — docs, course connections drawer, focus calendar */}
           {activePage === "learning" && (
             <div className="learning-workspace page-grid">
               <button
@@ -581,6 +616,7 @@ function App() {
             </div>
           )}
 
+          {/* Page: Career — resume editor + AI revision draft */}
           {activePage === "career" && (
             <div className="career-workspace page-grid two-column">
               <section className="editor-panel resume-panel">
@@ -615,6 +651,7 @@ function App() {
             </div>
           )}
 
+          {/* Page: Projects — kanban-style blocks with status and notes */}
           {activePage === "projects" && (
             <div className="projects-workspace">
               <div className="project-toolbar">

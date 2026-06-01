@@ -1,3 +1,9 @@
+/* =============================================================================
+   IO Vault — global styles (src/styles.css)
+   Dark cyan/blue theme. Sections mirror App.tsx: home, dashboard, pages, agent.
+   ============================================================================= */
+
+/* --- Base: typography, page background, form controls --- */
 :root {
   color: #eaf8ff;
   background: #020817;
@@ -38,6 +44,7 @@ button:disabled {
   opacity: 0.65;
 }
 
+/* --- Shell backgrounds: shared gradient used on home + dashboard --- */
 .home-screen,
 .vault-dashboard {
   position: relative;
@@ -48,6 +55,7 @@ button:disabled {
     linear-gradient(135deg, #010313 0%, #03102b 42%, #020817 100%);
 }
 
+/* --- Unlock / landing screen: centered title, orbs, grid animation --- */
 .home-screen {
   display: grid;
   place-items: center;
@@ -216,6 +224,7 @@ textarea:focus-visible,
   outline-offset: 4px;
 }
 
+/* --- Dashboard layout: collapsible left nav + main content --- */
 .vault-dashboard {
   display: grid;
   grid-template-columns: 4.25rem minmax(0, 1fr);
@@ -318,6 +327,7 @@ textarea:focus-visible,
   text-transform: uppercase;
 }
 
+/* --- Main content area: header bar + page grids --- */
 .workspace-shell {
   min-width: 0;
 }
@@ -355,6 +365,7 @@ textarea:focus-visible,
   line-height: 0.92;
 }
 
+/* --- Shared panel chrome: cards, toolbars, inputs (all workspace pages) --- */
 .page-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
@@ -453,6 +464,7 @@ textarea {
   white-space: pre-wrap;
 }
 
+/* --- Code Vault: syntax token colors + snippet list + floating preview --- */
 .token.keyword {
   color: #7dd3fc;
 }
@@ -529,6 +541,7 @@ textarea {
   overflow: hidden;
 }
 
+/* --- Learning page: slide-out API connections + calendar grid --- */
 .learning-workspace {
   position: relative;
 }
@@ -618,6 +631,9 @@ textarea {
   min-height: calc(100vh - 13rem);
 }
 
+/* --- Career page: tall resume textareas (see .resume-panel above) --- */
+
+/* --- Projects page: stats bar + column board --- */
 .projects-workspace {
   display: grid;
   gap: 1rem;
@@ -669,6 +685,7 @@ textarea {
   resize: vertical;
 }
 
+/* --- Global AI agent: fixed toggle + slide-in drawer (all screens) --- */
 .agent-toggle {
   position: fixed;
   right: 1rem;
@@ -777,6 +794,7 @@ textarea {
   color: #dff8ff;
 }
 
+/* --- Motion: background glow, grid drift, floating orbs --- */
 @keyframes rotateGlow {
   to {
     transform: rotate(1turn) scale(1.08);
@@ -819,6 +837,7 @@ textarea {
   }
 }
 
+/* --- Responsive: stack columns on tablet/phone --- */
 @media (max-width: 1100px) {
   .page-grid,
   .two-column,

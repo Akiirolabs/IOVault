@@ -1,3 +1,8 @@
+/**
+ * Vite dev/build configuration.
+ * - React plugin compiles TSX
+ * - /api requests from the browser are forwarded to the Express server (npm run dev:api)
+ */
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 

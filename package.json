@@ -10,6 +10,13 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
+  "_comments": {
+    "dev": "Starts Vite (frontend) and Express (API) together — use for local IO Vault",
+    "dev:web": "Frontend only at http://localhost:5173 — AI calls need dev:api or full dev",
+    "dev:api": "Express API at http://localhost:8787 — requires OPENAI_API_KEY in .env.local",
+    "build": "Typecheck + production bundle to dist/",
+    "preview": "Serve the production build locally"
+  },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
     "concurrently": "^9.2.1",

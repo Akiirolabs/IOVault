@@ -1,7 +1,15 @@
+/**
+ * IO Vault API server (Express).
+ * Run with: npm run dev:api  (or together via npm run dev)
+ *
+ * Loads secrets from .env.local, exposes POST /api/agent for the in-app AI assistant.
+ */
+
 import dotenv from "dotenv";
 import express from "express";
 import OpenAI from "openai";
 
+// Load API keys: .env.local overrides, then optional .env
 dotenv.config({ path: ".env.local", override: true });
 dotenv.config({ override: false });
 
@@ -12,6 +20,11 @@ const apiKey = process.env.OPENAI_API_KEY;
 
 app.use(express.json({ limit: "1mb" }));
 
+/**
+ * AI agent endpoint — called from the frontend drawer and Career "AI Revise".
+ * Body: { message: string, vaultData?: object }
+ * Returns: { answer: string, model: string } or { error: string }
+ */
 app.post("/api/agent", async (request, response) => {
   const message = String(request.body?.message || "").trim();
   const vaultData = request.body?.vaultData || {};
@@ -41,6 +54,7 @@ app.post("/api/agent", async (request, response) => {
         },
         {
           role: "user",
+          // Full workspace snapshot so the model can answer in context
           content: JSON.stringify({
             message,
             vaultData,
