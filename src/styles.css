@@ -327,6 +327,49 @@ textarea:focus-visible,
   text-transform: uppercase;
 }
 
+/* --- Nav icon picker (visible when nav is open) --- */
+.nav-icon-settings {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(125, 211, 252, 0.12);
+  display: grid;
+  gap: 0.55rem;
+}
+
+.nav-icon-row {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.55rem 0.75rem;
+  align-items: center;
+  color: #cfe9f7;
+}
+
+.nav-icon-preview {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.75rem;
+  color: #7dd3fc;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.nav-icon-preview svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.nav-icon-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.nav-icon-row select {
+  grid-column: 1 / -1;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.8rem;
+}
+
 /* --- Main content area: header bar + page grids --- */
 .workspace-shell {
   min-width: 0;
@@ -394,6 +437,7 @@ textarea:focus-visible,
 
 .code-editor-panel,
 .documentation-panel,
+.write-panel,
 .resume-panel {
   min-height: calc(100vh - 8.5rem);
 }
@@ -500,6 +544,49 @@ textarea {
 
 .document-space {
   min-height: calc(100vh - 12rem);
+}
+
+/* --- Write page: full blank rich-text canvas --- */
+.write-workspace {
+  min-height: calc(100vh - 8.5rem);
+}
+
+.write-panel {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: calc(100vh - 8.5rem);
+}
+
+.write-format-bar {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.08);
+}
+
+.write-format-bar button {
+  width: auto;
+  min-width: 2rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.55rem;
+  color: #9bd8f5;
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.write-format-bar button:hover {
+  background: rgba(56, 189, 248, 0.18);
+}
+
+.write-canvas {
+  min-height: calc(100vh - 11rem);
+  padding: 1.25rem 1.5rem 2rem;
+  font-size: 1.05rem;
+}
+
+.write-canvas:empty::before {
+  content: none;
 }
 
 .snippet-strip {

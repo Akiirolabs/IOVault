@@ -1,19 +1,115 @@
 /**
  * IO Vault — main application UI.
  *
- * Flow: unlock screen → dashboard with 4 workspace pages (Code, Learning, Career, Projects).
+ * Flow: unlock screen → dashboard with workspace pages (Code, Write, Learning, Career, Projects).
  * All workspace data persists to localStorage. AI features call POST /api/agent (see server/index.js).
  */
 import { FormEvent, useMemo, useState } from "react";
 import type { IconType } from "react-icons";
 import { FaLinkedin } from "react-icons/fa";
+import {
+  HiOutlineAcademicCap,
+  HiOutlineBeaker,
+  HiOutlineBolt,
+  HiOutlineBookOpen,
+  HiOutlineBriefcase,
+  HiOutlineCalendarDays,
+  HiOutlineChartBar,
+  HiOutlineCheckBadge,
+  HiOutlineClipboardDocumentList,
+  HiOutlineCodeBracket,
+  HiOutlineCog6Tooth,
+  HiOutlineDocumentText,
+  HiOutlineFolder,
+  HiOutlineGlobeAlt,
+  HiOutlineHeart,
+  HiOutlineLightBulb,
+  HiOutlineLink,
+  HiOutlineMap,
+  HiOutlineMusicalNote,
+  HiOutlinePencilSquare,
+  HiOutlineRocketLaunch,
+  HiOutlineSparkles,
+  HiOutlineStar,
+  HiOutlineTag,
+  HiOutlineUserGroup,
+} from "react-icons/hi2";
 import { SiCoursera, SiGithub, SiNotion } from "react-icons/si";
 import { AI_MODEL } from "./aiConfig";
 
 // --- Types: shape of each workspace page and full saved state ---
 
-type PageKey = "code" | "learning" | "career" | "projects";
+type PageKey = "code" | "write" | "learning" | "career" | "projects";
 type Status = "Planned" | "In progress" | "Done";
+
+type IconId =
+  | "code"
+  | "pencil"
+  | "doc"
+  | "book"
+  | "cap"
+  | "briefcase"
+  | "folder"
+  | "sparkles"
+  | "bolt"
+  | "calendar"
+  | "clipboard"
+  | "chart"
+  | "cog"
+  | "globe"
+  | "heart"
+  | "bulb"
+  | "link"
+  | "map"
+  | "music"
+  | "rocket"
+  | "star"
+  | "tag"
+  | "users"
+  | "beaker"
+  | "badge";
+
+type IconOption = {
+  id: IconId;
+  label: string;
+  Icon: IconType;
+};
+
+const ICON_OPTIONS: IconOption[] = [
+  { id: "code", label: "Code", Icon: HiOutlineCodeBracket },
+  { id: "pencil", label: "Pencil", Icon: HiOutlinePencilSquare },
+  { id: "doc", label: "Document", Icon: HiOutlineDocumentText },
+  { id: "book", label: "Book", Icon: HiOutlineBookOpen },
+  { id: "cap", label: "Academic cap", Icon: HiOutlineAcademicCap },
+  { id: "briefcase", label: "Briefcase", Icon: HiOutlineBriefcase },
+  { id: "folder", label: "Folder", Icon: HiOutlineFolder },
+  { id: "sparkles", label: "Sparkles", Icon: HiOutlineSparkles },
+  { id: "bolt", label: "Bolt", Icon: HiOutlineBolt },
+  { id: "calendar", label: "Calendar", Icon: HiOutlineCalendarDays },
+  { id: "clipboard", label: "Checklist", Icon: HiOutlineClipboardDocumentList },
+  { id: "chart", label: "Chart", Icon: HiOutlineChartBar },
+  { id: "cog", label: "Settings", Icon: HiOutlineCog6Tooth },
+  { id: "globe", label: "Globe", Icon: HiOutlineGlobeAlt },
+  { id: "heart", label: "Heart", Icon: HiOutlineHeart },
+  { id: "bulb", label: "Lightbulb", Icon: HiOutlineLightBulb },
+  { id: "link", label: "Link", Icon: HiOutlineLink },
+  { id: "map", label: "Map", Icon: HiOutlineMap },
+  { id: "music", label: "Music", Icon: HiOutlineMusicalNote },
+  { id: "rocket", label: "Rocket", Icon: HiOutlineRocketLaunch },
+  { id: "star", label: "Star", Icon: HiOutlineStar },
+  { id: "tag", label: "Tag", Icon: HiOutlineTag },
+  { id: "users", label: "Users", Icon: HiOutlineUserGroup },
+  { id: "beaker", label: "Lab", Icon: HiOutlineBeaker },
+  { id: "badge", label: "Badge", Icon: HiOutlineCheckBadge },
+];
+
+const ICONS_BY_ID: Record<IconId, IconType> = ICON_OPTIONS.reduce(
+  (acc, option) => {
+    acc[option.id] = option.Icon;
+    return acc;
+  },
+  {} as Record<IconId, IconType>,
+);
 
 type CodeSnippet = {
   id: string;
@@ -54,21 +150,28 @@ type VaultState = {
   projects: {
     blocks: ProjectBlock[];
   };
+  write: {
+    docHtml: string;
+  };
+  settings: {
+    navIcons: Record<PageKey, IconId>;
+  };
 };
 
 type NavItem = {
   key: PageKey;
   label: string;
-  icon: IconType;
+  defaultIcon: IconType;
 };
 
 // --- Navigation & defaults: sidebar labels and first-run sample content ---
 
 const navItems: NavItem[] = [
-  { key: "code", label: "Code Vault", icon: SiGithub },
-  { key: "learning", label: "Learning", icon: SiCoursera },
-  { key: "career", label: "Career", icon: FaLinkedin },
-  { key: "projects", label: "Projects", icon: SiNotion },
+  { key: "code", label: "Code Vault", defaultIcon: SiGithub },
+  { key: "write", label: "Write", defaultIcon: HiOutlineDocumentText },
+  { key: "learning", label: "Learning", defaultIcon: SiCoursera },
+  { key: "career", label: "Career", defaultIcon: FaLinkedin },
+  { key: "projects", label: "Projects", defaultIcon: SiNotion },
 ];
 
 /** localStorage key — entire VaultState is JSON-serialized here on every edit */
@@ -94,6 +197,18 @@ const defaultVaultState: VaultState = {
         code: `async function getJson<T>(url: string): Promise<T> {\n  const response = await fetch(url);\n  if (!response.ok) throw new Error("Request failed");\n  return response.json();\n}`,
       },
     ],
+  },
+  write: {
+    docHtml: "",
+  },
+  settings: {
+    navIcons: {
+      code: "code",
+      write: "pencil",
+      learning: "cap",
+      career: "briefcase",
+      projects: "folder",
+    },
   },
   learning: {
     docHtml:
@@ -158,6 +273,18 @@ function normalizeVaultState(raw: unknown): VaultState {
     career: {
       ...defaultVaultState.career,
       ...(typeof parsed.career === "object" && parsed.career ? parsed.career : {}),
+    },
+    write: {
+      ...defaultVaultState.write,
+      ...(typeof parsed.write === "object" && parsed.write ? parsed.write : {}),
+    },
+    settings: {
+      ...defaultVaultState.settings,
+      ...(typeof parsed.settings === "object" && parsed.settings ? parsed.settings : {}),
+      navIcons:
+        typeof parsed.settings?.navIcons === "object" && parsed.settings?.navIcons
+          ? { ...defaultVaultState.settings.navIcons, ...(parsed.settings.navIcons as Record<string, unknown>) }
+          : defaultVaultState.settings.navIcons,
     },
     projects: {
       blocks: Array.isArray(parsed.projects?.blocks)
@@ -259,7 +386,8 @@ function App() {
   // --- Derived values for the active page / snippet / project counts ---
   const activeSnippet = vaultState.code.snippets.find((snippet) => snippet.id === activeSnippetId);
   const activeNavItem = navItems.find((item) => item.key === activePage) || navItems[0];
-  const ActivePageIcon = activeNavItem.icon;
+  const activeNavIconId = vaultState.settings.navIcons[activeNavItem.key];
+  const ActivePageIcon = (activeNavIconId && ICONS_BY_ID[activeNavIconId]) || activeNavItem.defaultIcon;
   const projectStats = useMemo(() => {
     const active = vaultState.projects.blocks.filter((block) => block.status === "In progress").length;
     const done = vaultState.projects.blocks.filter((block) => block.status === "Done").length;
@@ -282,6 +410,27 @@ function App() {
 
   function updateLearning(updates: Partial<VaultState["learning"]>) {
     saveVaultState((prev) => ({ ...prev, learning: { ...prev.learning, ...updates } }));
+  }
+
+  function updateWrite(updates: Partial<VaultState["write"]>) {
+    saveVaultState((prev) => ({ ...prev, write: { ...prev.write, ...updates } }));
+  }
+
+  function updateSettings(updates: Partial<VaultState["settings"]>) {
+    saveVaultState((prev) => ({ ...prev, settings: { ...prev.settings, ...updates } }));
+  }
+
+  function setNavIcon(page: PageKey, iconId: IconId) {
+    updateSettings({
+      navIcons: {
+        ...vaultState.settings.navIcons,
+        [page]: iconId,
+      },
+    });
+  }
+
+  function applyWriteFormat(command: string, value?: string) {
+    document.execCommand(command, false, value);
   }
 
   function updateCareer(updates: Partial<VaultState["career"]>) {
@@ -463,7 +612,8 @@ function App() {
             {isNavOpen ? "Close" : "Menu"}
           </button>
           {navItems.map((item) => {
-            const Icon = item.icon;
+            const iconId = vaultState.settings.navIcons[item.key];
+            const Icon = (iconId && ICONS_BY_ID[iconId]) || item.defaultIcon;
 
             return (
               <button
@@ -480,6 +630,36 @@ function App() {
               </button>
             );
           })}
+
+          {isNavOpen && (
+            <div className="nav-icon-settings" aria-label="Navigation icon settings">
+              <p className="kicker">Icons</p>
+              {navItems.map((item) => {
+                const currentId = vaultState.settings.navIcons[item.key];
+                const CurrentIcon = (currentId && ICONS_BY_ID[currentId]) || item.defaultIcon;
+
+                return (
+                  <label className="nav-icon-row" key={`icon-${item.key}`}>
+                    <span className="nav-icon-preview" aria-hidden="true">
+                      <CurrentIcon />
+                    </span>
+                    <span className="nav-icon-label">{item.label}</span>
+                    <select
+                      value={currentId}
+                      onChange={(event) => setNavIcon(item.key, event.target.value as IconId)}
+                      aria-label={`${item.label} icon`}
+                    >
+                      {ICON_OPTIONS.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                );
+              })}
+            </div>
+          )}
         </aside>
 
         <section className="workspace-shell">
@@ -566,6 +746,76 @@ function App() {
                   <pre><code dangerouslySetInnerHTML={{ __html: highlightCode(activeSnippet.code) }} /></pre>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Page: Write — blank rich-text canvas (no labels or starter copy) */}
+          {activePage === "write" && (
+            <div className="write-workspace">
+              <section className="editor-panel write-panel">
+                <div className="write-format-bar" role="toolbar" aria-label="Text formatting">
+                  <button
+                    type="button"
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      applyWriteFormat("bold");
+                    }}
+                    aria-label="Bold"
+                  >
+                    B
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      applyWriteFormat("italic");
+                    }}
+                    aria-label="Italic"
+                  >
+                    I
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      applyWriteFormat("underline");
+                    }}
+                    aria-label="Underline"
+                  >
+                    U
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      applyWriteFormat("formatBlock", "h2");
+                    }}
+                    aria-label="Heading"
+                  >
+                    H
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      applyWriteFormat("insertUnorderedList");
+                    }}
+                    aria-label="Bullet list"
+                  >
+                    •
+                  </button>
+                </div>
+                <div
+                  className="rich-editor write-canvas"
+                  contentEditable
+                  suppressContentEditableWarning
+                  role="textbox"
+                  aria-multiline="true"
+                  aria-label="Write"
+                  onInput={(event) => updateWrite({ docHtml: event.currentTarget.innerHTML })}
+                  dangerouslySetInnerHTML={{ __html: vaultState.write.docHtml }}
+                />
+              </section>
             </div>
           )}
 
