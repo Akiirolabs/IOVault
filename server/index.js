@@ -1,13 +1,21 @@
 /**
  * IO Vault API server (Express).
  * Run with: npm run dev:api  (or together via npm run dev)
+ * Production: npm run build && npm start
  *
- * Loads secrets from .env.local, exposes POST /api/agent for the in-app AI assistant.
+ * Loads secrets from .env.local (or .env), exposes POST /api/agent for the in-app AI assistant.
+ * In production, also serves the Vite build from dist/.
  */
 
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import express from "express";
 import OpenAI from "openai";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const distPath = path.join(__dirname, "..", "dist");
+const isProduction = process.env.NODE_ENV === "production";
 
 // Load API keys: .env.local overrides, then optional .env
 dotenv.config({ path: ".env.local", override: true });
@@ -75,6 +83,18 @@ app.post("/api/agent", async (request, response) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`IO Vault API running on http://localhost:${port}`);
+if (isProduction) {
+  app.use(express.static(distPath));
+
+  // SPA fallback — API routes above take precedence
+  app.get(/^(?!\/api).*/, (_request, response) => {
+    response.sendFile(path.join(distPath, "index.html"));
+  });
+}
+
+const host = process.env.API_HOST || "0.0.0.0";
+
+app.listen(port, host, () => {
+  const mode = isProduction ? "production" : "development";
+  console.log(`IO Vault API running (${mode}) on http://${host}:${port}`);
 });
