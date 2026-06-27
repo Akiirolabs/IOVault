@@ -23,7 +23,7 @@ Use the `owner/repository` format in the GitHub card, then click **Check tests**
 
 ## Deploy on a VPS
 
-The production setup serves the built frontend and the `/api/agent` backend from a single Node process on port **8787**. Put **nginx** (or Caddy) in front for HTTPS.
+The production setup serves the built frontend and the `/api/agent` backend from a single Node process on port **8787**. With nginx already in place, proxy your site to **`http://127.0.0.1:8787`** — both `/` and `/api` go to the same upstream.
 
 ### Option A: Docker (recommended)
 
@@ -38,7 +38,22 @@ cp .env.example .env.local
 docker compose up -d --build
 ```
 
-The app listens on `0.0.0.0:8787`. Point nginx at `127.0.0.1:8787` — see `deploy/nginx.conf`. Use [Certbot](https://certbot.eff.org/) for TLS.
+Docker binds to `127.0.0.1:8787` only (not exposed publicly). Reload nginx after the container is up.
+
+**nginx upstream** (add to your existing server block if needed):
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:8787;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+See `deploy/nginx.conf` for a full reference block.
 
 ### Option B: Node + systemd
 
@@ -55,7 +70,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now io-vault
 ```
 
-Configure nginx the same way (`deploy/nginx.conf`).
+Same nginx upstream: `http://127.0.0.1:8787`.
 
 ### Environment variables
 
