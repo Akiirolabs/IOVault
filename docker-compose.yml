@@ -1,0 +1,12 @@
+services:
+  io-vault:
+    build: .
+    ports:
+      - "127.0.0.1:${API_PORT:-8787}:8787"
+    env_file:
+      - .env.local
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: 8787
+    restart: unless-stopped

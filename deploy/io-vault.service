@@ -1,0 +1,26 @@
+# systemd unit for running without Docker.
+# Install:
+#   sudo cp deploy/io-vault.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now io-vault
+#
+# Edit WorkingDirectory and User to match your VPS layout.
+
+[Unit]
+Description=IO Vault (Progress Command Center)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/io-vault
+Environment=NODE_ENV=production
+Environment=API_HOST=127.0.0.1
+Environment=API_PORT=8787
+EnvironmentFile=/var/www/io-vault/.env.local
+ExecStart=/usr/bin/node server/index.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
