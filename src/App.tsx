@@ -5,6 +5,7 @@
  * All workspace data persists to localStorage. AI features call POST /api/agent (see server/index.js).
  */
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import type { IconType } from "react-icons";
 import { FaLinkedin } from "react-icons/fa";
 import {
@@ -733,7 +734,9 @@ function App() {
           </button>
         </form>
 
-        <div className="agent-response">{assistantAnswer}</div>
+        <div className="agent-response">
+          <ReactMarkdown>{assistantAnswer}</ReactMarkdown>
+        </div>
         <div className="agent-key-note">
           Model: <code>{AI_MODEL}</code>
         </div>

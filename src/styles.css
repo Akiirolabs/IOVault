@@ -960,6 +960,61 @@ textarea {
   background: rgba(56, 189, 248, 0.08);
 }
 
+.agent-response > :first-child {
+  margin-top: 0;
+}
+
+.agent-response > :last-child {
+  margin-bottom: 0;
+}
+
+.agent-response p {
+  margin: 0 0 0.6rem;
+}
+
+.agent-response h1,
+.agent-response h2,
+.agent-response h3 {
+  margin: 0.8rem 0 0.4rem;
+  color: #f8fdff;
+  font-size: 1rem;
+}
+
+.agent-response ul,
+.agent-response ol {
+  margin: 0 0 0.6rem;
+  padding-left: 1.25rem;
+}
+
+.agent-response li {
+  margin: 0.2rem 0;
+}
+
+.agent-response a {
+  color: #7dd3fc;
+}
+
+.agent-response code {
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.4rem;
+  background: rgba(2, 8, 23, 0.6);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.85em;
+}
+
+.agent-response pre {
+  overflow: auto;
+  margin: 0 0 0.6rem;
+  padding: 0.75rem;
+  border-radius: 0.6rem;
+  background: rgba(2, 8, 23, 0.6);
+}
+
+.agent-response pre code {
+  padding: 0;
+  background: transparent;
+}
+
 .agent-key-note {
   margin-top: 1rem;
   color: #9fb7cf;
