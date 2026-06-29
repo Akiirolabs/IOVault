@@ -4,7 +4,7 @@
  * Flow: unlock screen → dashboard with workspace pages (Code, Write, Learning, Career, Projects).
  * All workspace data persists to localStorage. AI features call POST /api/agent (see server/index.js).
  */
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { IconType } from "react-icons";
 import { FaLinkedin } from "react-icons/fa";
 import {
@@ -392,6 +392,46 @@ function answerBasicQuestion(question: string) {
   }
 
   return null;
+}
+
+// --- Rich text editor: uncontrolled contentEditable ---
+// The DOM content is seeded once on mount from `html`, then left uncontrolled.
+// Re-binding `dangerouslySetInnerHTML` to state on every keystroke would make
+// React reset innerHTML each input, sending the caret to the start and
+// producing reversed text. `onChange` still fires so edits persist to state.
+
+type RichTextEditorProps = {
+  html: string;
+  onChange: (html: string) => void;
+  className?: string;
+  role?: string;
+  ariaLabel?: string;
+  ariaMultiline?: boolean;
+};
+
+function RichTextEditor({ html, onChange, className, role, ariaLabel, ariaMultiline }: RichTextEditorProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (node && node.innerHTML !== html) {
+      node.innerHTML = html;
+    }
+    // Seed once on mount only; the element is uncontrolled while editing.
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      contentEditable
+      suppressContentEditableWarning
+      role={role}
+      aria-label={ariaLabel}
+      aria-multiline={ariaMultiline}
+      onInput={(event) => onChange(event.currentTarget.innerHTML)}
+    />
+  );
 }
 
 function App() {
@@ -844,12 +884,10 @@ function App() {
 
               <section className="editor-panel rich-panel">
                 <div className="panel-label">Notes</div>
-                <div
+                <RichTextEditor
                   className="rich-editor"
-                  contentEditable
-                  suppressContentEditableWarning
-                  onInput={(event) => updateCode({ notesHtml: event.currentTarget.innerHTML })}
-                  dangerouslySetInnerHTML={{ __html: vaultState.code.notesHtml }}
+                  html={vaultState.code.notesHtml}
+                  onChange={(notesHtml) => updateCode({ notesHtml })}
                 />
               </section>
 
@@ -982,15 +1020,13 @@ function App() {
                     •
                   </button>
                 </div>
-                <div
+                <RichTextEditor
                   className="rich-editor write-canvas"
-                  contentEditable
-                  suppressContentEditableWarning
+                  html={vaultState.write.docHtml}
+                  onChange={(docHtml) => updateWrite({ docHtml })}
                   role="textbox"
-                  aria-multiline="true"
-                  aria-label="Write"
-                  onInput={(event) => updateWrite({ docHtml: event.currentTarget.innerHTML })}
-                  dangerouslySetInnerHTML={{ __html: vaultState.write.docHtml }}
+                  ariaMultiline
+                  ariaLabel="Write"
                 />
               </section>
             </div>
@@ -1020,12 +1056,10 @@ function App() {
 
               <section className="editor-panel documentation-panel">
                 <div className="panel-label">Documentation Notes</div>
-                <div
+                <RichTextEditor
                   className="rich-editor document-space"
-                  contentEditable
-                  suppressContentEditableWarning
-                  onInput={(event) => updateLearning({ docHtml: event.currentTarget.innerHTML })}
-                  dangerouslySetInnerHTML={{ __html: vaultState.learning.docHtml }}
+                  html={vaultState.learning.docHtml}
+                  onChange={(docHtml) => updateLearning({ docHtml })}
                 />
               </section>
 
