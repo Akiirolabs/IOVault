@@ -13,8 +13,9 @@ Personal productivity dashboard: a Vite + React + TypeScript single-page app wit
 - The Vite dev server proxies `/api/*` to `http://localhost:8787` (see `vite.config.ts`), so run the full `npm run dev` if you need the API reachable from the browser.
 
 ### AI / secrets (optional)
-- The API reads `OPENAI_API_KEY` from `.env.local` (git-ignored). Without it, `POST /api/agent` returns HTTP 400 with `"Missing OPENAI_API_KEY in .env.local."` — this is expected, not a bug. The frontend has an offline fallback for greetings/time/date/simple math when the API is unavailable.
-- To enable real AI responses, create `.env.local` with `OPENAI_API_KEY=...` (model is hardcoded to `gpt-4o-mini`).
+- The API reads `OPENAI_API_KEY` from `.env.local` (preferred) or `.env` — both git-ignored. `server/index.js` loads `.env.local` with override, then `.env`. A `process.env.OPENAI_API_KEY` (e.g. a Cursor Secret) also works with no file. Without a key, `POST /api/agent` returns HTTP 400 `"Missing OPENAI_API_KEY in .env.local."` — expected, not a bug. The frontend has an offline fallback for greetings/time/date/simple math.
+- Model is hardcoded to `gpt-4o-mini`.
+- GOTCHA: the Express API reads the key once at startup (`const apiKey = process.env.OPENAI_API_KEY`) and does NOT watch env files. Under `npm run dev`, editing `.env`/`.env.local` triggers a **Vite** restart but NOT a restart of the `node server/index.js` process — so the new key is ignored until you restart the whole `npm run dev` command (or the API process). After adding a key, restart dev and confirm the log shows `injected env (1) from .env` (count > 0).
 
 ### Lint / typecheck / build
 - There is no dedicated lint script. Type checking happens via `tsc -b` as part of `npm run build` (`tsc -b && vite build`). Use `npm run build` as the typecheck + build gate.
