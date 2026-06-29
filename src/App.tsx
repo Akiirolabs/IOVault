@@ -131,6 +131,21 @@ type ProjectBlock = {
   body: string;
 };
 
+/** Result of a GitHub Actions test-status lookup (UI-only, not persisted) */
+type GithubTestStatus = {
+  state: "ok" | "error";
+  message: string;
+  run?: {
+    name: string;
+    status: string;
+    conclusion: string | null;
+    branch: string;
+    commit: string;
+    url: string;
+    updatedAt: string;
+  };
+};
+
 type VaultState = {
   code: {
     language: string;
@@ -152,6 +167,9 @@ type VaultState = {
   };
   write: {
     docHtml: string;
+  };
+  github: {
+    repo: string;
   };
   settings: {
     navIcons: Record<PageKey, IconId>;
@@ -200,6 +218,9 @@ const defaultVaultState: VaultState = {
   },
   write: {
     docHtml: "",
+  },
+  github: {
+    repo: "",
   },
   settings: {
     navIcons: {
@@ -277,6 +298,10 @@ function normalizeVaultState(raw: unknown): VaultState {
     write: {
       ...defaultVaultState.write,
       ...(typeof parsed.write === "object" && parsed.write ? parsed.write : {}),
+    },
+    github: {
+      ...defaultVaultState.github,
+      ...(typeof parsed.github === "object" && parsed.github ? parsed.github : {}),
     },
     settings: {
       ...defaultVaultState.settings,
@@ -382,6 +407,9 @@ function App() {
   const [assistantAnswer, setAssistantAnswer] = useState("Ask the agent anything or have it search this workspace.");
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
   const [isResumeLoading, setIsResumeLoading] = useState(false);
+  const [isGithubOpen, setIsGithubOpen] = useState(false);
+  const [githubStatus, setGithubStatus] = useState<GithubTestStatus | null>(null);
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
 
   // --- Derived values for the active page / snippet / project counts ---
   const activeSnippet = vaultState.code.snippets.find((snippet) => snippet.id === activeSnippetId);
@@ -414,6 +442,101 @@ function App() {
 
   function updateWrite(updates: Partial<VaultState["write"]>) {
     saveVaultState((prev) => ({ ...prev, write: { ...prev.write, ...updates } }));
+  }
+
+  function updateGithub(updates: Partial<VaultState["github"]>) {
+    saveVaultState((prev) => ({ ...prev, github: { ...prev.github, ...updates } }));
+  }
+
+  function updateCalendarFocus(index: number) {
+    const current = vaultState.learning.calendarFocus[index] ?? "";
+    const next = window.prompt(`Focus for Day ${index + 1}`, current);
+
+    if (next === null) return;
+
+    const trimmed = next.trim();
+    if (!trimmed) return;
+
+    updateLearning({
+      calendarFocus: vaultState.learning.calendarFocus.map((value, position) =>
+        position === index ? trimmed : value,
+      ),
+    });
+  }
+
+  // --- GitHub: latest Actions test status via the public GitHub API ---
+
+  async function checkGithubTests() {
+    const repo = vaultState.github.repo
+      .trim()
+      .replace(/^https?:\/\/github\.com\//i, "")
+      .replace(/\.git$/i, "")
+      .replace(/\/+$/, "");
+
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+      setGithubStatus({ state: "error", message: "Enter a repository as owner/repository." });
+      return;
+    }
+
+    setIsGithubLoading(true);
+    setGithubStatus(null);
+
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${repo}/actions/runs?per_page=1`,
+        { headers: { Accept: "application/vnd.github+json" } },
+      );
+
+      if (response.status === 404) {
+        throw new Error("Repository not found or it has no public Actions.");
+      }
+      if (response.status === 403) {
+        throw new Error("GitHub API rate limit reached. Try again later.");
+      }
+      if (!response.ok) {
+        throw new Error(`GitHub API error (${response.status}).`);
+      }
+
+      const data = (await response.json()) as {
+        workflow_runs?: Array<{
+          name?: string;
+          display_title?: string;
+          status?: string;
+          conclusion?: string | null;
+          head_branch?: string;
+          head_commit?: { message?: string };
+          html_url?: string;
+          updated_at?: string;
+        }>;
+      };
+      const run = data.workflow_runs?.[0];
+
+      if (!run) {
+        setGithubStatus({ state: "ok", message: `No workflow runs found for ${repo}.` });
+        return;
+      }
+
+      setGithubStatus({
+        state: "ok",
+        message: `Latest run for ${repo}`,
+        run: {
+          name: run.name || run.display_title || "Workflow",
+          status: run.status || "unknown",
+          conclusion: run.conclusion ?? null,
+          branch: run.head_branch || "—",
+          commit: run.head_commit?.message?.split("\n")[0] || "—",
+          url: run.html_url || `https://github.com/${repo}/actions`,
+          updatedAt: run.updated_at ? new Date(run.updated_at).toLocaleString() : "—",
+        },
+      });
+    } catch (error) {
+      setGithubStatus({
+        state: "error",
+        message: error instanceof Error ? error.message : "Could not check tests.",
+      });
+    } finally {
+      setIsGithubLoading(false);
+    }
   }
 
   function updateSettings(updates: Partial<VaultState["settings"]>) {
@@ -692,8 +815,18 @@ function App() {
                     <option value="css">CSS</option>
                   </select>
                   <button type="button" onClick={addSnippet}>Save Snippet</button>
-                  <button type="button">GitHub</button>
-                  <button type="button">Tests</button>
+                  <button type="button" onClick={() => setIsGithubOpen((value) => !value)}>
+                    GitHub
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsGithubOpen(true);
+                      checkGithubTests();
+                    }}
+                  >
+                    Tests
+                  </button>
                 </div>
                 <textarea
                   className="code-input"
@@ -744,6 +877,50 @@ function App() {
                     <button type="button" onClick={() => setActiveSnippetId(null)}>Hide</button>
                   </div>
                   <pre><code dangerouslySetInnerHTML={{ __html: highlightCode(activeSnippet.code) }} /></pre>
+                </div>
+              )}
+
+              {isGithubOpen && (
+                <div className="github-card">
+                  <div className="panel-toolbar">
+                    <strong>GitHub Test Status</strong>
+                    <button type="button" onClick={() => setIsGithubOpen(false)}>Hide</button>
+                  </div>
+                  <div className="github-card-body">
+                    <input
+                      value={vaultState.github.repo}
+                      onChange={(event) => updateGithub({ repo: event.target.value })}
+                      placeholder="owner/repository"
+                      aria-label="GitHub repository"
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") checkGithubTests();
+                      }}
+                    />
+                    <button type="button" onClick={checkGithubTests} disabled={isGithubLoading}>
+                      {isGithubLoading ? "Checking..." : "Check tests"}
+                    </button>
+
+                    {githubStatus && (
+                      <div className={`github-result ${githubStatus.state}`}>
+                        <p>{githubStatus.message}</p>
+                        {githubStatus.run && (
+                          <ul>
+                            <li><span>Workflow</span><strong>{githubStatus.run.name}</strong></li>
+                            <li><span>Status</span><strong>{githubStatus.run.status}</strong></li>
+                            <li><span>Result</span><strong>{githubStatus.run.conclusion ?? "pending"}</strong></li>
+                            <li><span>Branch</span><strong>{githubStatus.run.branch}</strong></li>
+                            <li><span>Commit</span><strong>{githubStatus.run.commit}</strong></li>
+                            <li><span>Updated</span><strong>{githubStatus.run.updatedAt}</strong></li>
+                            <li>
+                              <a href={githubStatus.run.url} target="_blank" rel="noreferrer">
+                                View on GitHub
+                              </a>
+                            </li>
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -856,7 +1033,12 @@ function App() {
                 <div className="panel-label">Mini Calendar</div>
                 <div className="calendar-grid">
                   {vaultState.learning.calendarFocus.map((day, index) => (
-                    <button key={`${day}-${index}`} type="button">
+                    <button
+                      key={`${day}-${index}`}
+                      type="button"
+                      onClick={() => updateCalendarFocus(index)}
+                      title="Click to edit this day's focus"
+                    >
                       <span>Day {index + 1}</span>
                       <strong>{day}</strong>
                     </button>

@@ -628,6 +628,95 @@ textarea {
   overflow: hidden;
 }
 
+/* --- Code Vault: GitHub Actions test-status card --- */
+.github-card {
+  position: fixed;
+  left: 5.5rem;
+  bottom: 5.5rem;
+  z-index: 25;
+  width: min(420px, calc(100vw - 2rem));
+  max-height: 60vh;
+  overflow: auto;
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  border-radius: 1.25rem;
+  background: rgba(7, 18, 38, 0.92);
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(18px);
+}
+
+.github-card-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+}
+
+.github-card-body button {
+  border: 1px solid rgba(125, 211, 252, 0.58);
+  border-radius: 999px;
+  padding: 0.7rem 1.1rem;
+  color: #eaf8ff;
+  background:
+    linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(37, 99, 235, 0.36)),
+    rgba(2, 8, 23, 0.42);
+  cursor: pointer;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.github-result {
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  border-radius: 1rem;
+  padding: 0.85rem;
+  background: rgba(56, 189, 248, 0.06);
+  font-size: 0.85rem;
+}
+
+.github-result p {
+  margin: 0;
+  color: #cfe9f7;
+}
+
+.github-result.error {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.github-result.error p {
+  color: #fecaca;
+}
+
+.github-result ul {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.github-result li {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.github-result li span {
+  color: #7dd3fc;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.github-result li strong {
+  text-align: right;
+  word-break: break-word;
+}
+
+.github-result a {
+  color: #7dd3fc;
+}
+
 /* --- Learning page: slide-out API connections + calendar grid --- */
 .learning-workspace {
   position: relative;
@@ -932,7 +1021,8 @@ textarea {
     grid-template-columns: 1fr;
   }
 
-  .floating-snippet {
+  .floating-snippet,
+  .github-card {
     position: static;
     width: 100%;
     max-height: none;
