@@ -15,6 +15,12 @@ Planned button row (left → right), all sitting next to the title:
 | Data table creator | Spreadsheet-style typed table (add columns/rows, edit cells) | 🔜 Planned — see [`data-table-creator.md`](./data-table-creator.md) |
 | Object mindmap | Add object blocks; connector lines are drawn automatically from relationships | 🔜 Planned — see [`object-mindmap.md`](./object-mindmap.md) |
 
+## Platform features (not per-project)
+
+| Feature | Description | Status |
+| --- | --- | --- |
+| Server, sign-in & SQL database | User accounts + a free SQL backend that stores all user data (currently `localStorage` only) | 🔜 Planned — see [`server-and-auth.md`](./server-and-auth.md) |
+
 ## Shared conventions
 
 All screens follow the same patterns as the implemented full-page editor, so the planned features should reuse them:
