@@ -458,6 +458,7 @@ function App() {
   const [isGithubLoading, setIsGithubLoading] = useState(false);
   const [openProjectId, setOpenProjectId] = useState<string | null>(null);
   const [projectDocMode, setProjectDocMode] = useState<"rich" | "markdown">("rich");
+  const [isMarkdownPreview, setIsMarkdownPreview] = useState(false);
   const markdownRef = useRef<HTMLTextAreaElement>(null);
 
   // --- Derived values for the active page / snippet / project counts ---
@@ -1174,6 +1175,7 @@ function App() {
                         type="button"
                         onClick={() => {
                           setProjectDocMode("rich");
+                          setIsMarkdownPreview(false);
                           setOpenProjectId(block.id);
                         }}
                         aria-label={`Open ${block.title} as a full page`}
@@ -1235,30 +1237,36 @@ function App() {
                       </select>
                     </header>
 
-                    <div className="project-page-modes" role="tablist" aria-label="Editor mode">
-                      <button
-                        type="button"
-                        role="tab"
-                        aria-selected={projectDocMode === "rich"}
-                        className={projectDocMode === "rich" ? "active" : ""}
-                        onClick={() => setProjectDocMode("rich")}
-                      >
-                        Rich Text
-                      </button>
-                      <button
-                        type="button"
-                        role="tab"
-                        aria-selected={projectDocMode === "markdown"}
-                        className={projectDocMode === "markdown" ? "active" : ""}
-                        onClick={() => setProjectDocMode("markdown")}
-                      >
-                        Markdown
-                      </button>
-                    </div>
+                    <div className="project-page-toolbar" role="toolbar" aria-label="Document tools">
+                      <div className="project-page-modes" role="group" aria-label="Editor mode">
+                        <button
+                          type="button"
+                          aria-pressed={projectDocMode === "rich"}
+                          className={projectDocMode === "rich" ? "active" : ""}
+                          onClick={() => {
+                            setProjectDocMode("rich");
+                            setIsMarkdownPreview(false);
+                          }}
+                        >
+                          Rich Text
+                        </button>
+                        <button
+                          type="button"
+                          aria-pressed={projectDocMode === "markdown"}
+                          className={projectDocMode === "markdown" ? "active" : ""}
+                          onClick={() => {
+                            setProjectDocMode("markdown");
+                            setIsMarkdownPreview(false);
+                          }}
+                        >
+                          Markdown
+                        </button>
+                      </div>
 
-                    {projectDocMode === "rich" ? (
-                      <section className="project-page-rich">
-                        <div className="write-format-bar" role="toolbar" aria-label="Rich text formatting">
+                      <span className="project-page-toolbar-divider" aria-hidden="true" />
+
+                      {projectDocMode === "rich" ? (
+                        <div className="project-page-format">
                           <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("bold"); }} aria-label="Bold">B</button>
                           <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("italic"); }} aria-label="Italic">I</button>
                           <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("underline"); }} aria-label="Underline">U</button>
@@ -1266,6 +1274,29 @@ function App() {
                           <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("insertUnorderedList"); }} aria-label="Bullet list">•</button>
                           <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("insertOrderedList"); }} aria-label="Numbered list">1.</button>
                         </div>
+                      ) : (
+                        <>
+                          <div className="project-page-format">
+                            <button type="button" disabled={isMarkdownPreview} onClick={() => wrapProjectMarkdown("**", "**")} aria-label="Bold">B</button>
+                            <button type="button" disabled={isMarkdownPreview} onClick={() => wrapProjectMarkdown("_", "_")} aria-label="Italic">I</button>
+                            <button type="button" disabled={isMarkdownPreview} onClick={() => wrapProjectMarkdown("## ", "")} aria-label="Heading">H</button>
+                            <button type="button" disabled={isMarkdownPreview} onClick={() => wrapProjectMarkdown("- ", "")} aria-label="Bullet list">•</button>
+                            <button type="button" disabled={isMarkdownPreview} onClick={() => wrapProjectMarkdown("`", "`")} aria-label="Inline code">{"</>"}</button>
+                          </div>
+                          <button
+                            type="button"
+                            className={`project-md-toggle ${isMarkdownPreview ? "active" : ""}`}
+                            aria-pressed={isMarkdownPreview}
+                            onClick={() => setIsMarkdownPreview((value) => !value)}
+                          >
+                            {isMarkdownPreview ? "Edit" : "Preview"}
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="project-page-body">
+                      {projectDocMode === "rich" ? (
                         <RichTextEditor
                           key={`project-rich-${openProject.id}`}
                           className="rich-editor project-page-editor"
@@ -1275,36 +1306,26 @@ function App() {
                           ariaMultiline
                           ariaLabel="Project rich text document"
                         />
-                      </section>
-                    ) : (
-                      <section className="project-page-markdown">
-                        <div className="write-format-bar" role="toolbar" aria-label="Markdown formatting">
-                          <button type="button" onClick={() => wrapProjectMarkdown("**", "**")} aria-label="Bold">B</button>
-                          <button type="button" onClick={() => wrapProjectMarkdown("_", "_")} aria-label="Italic">I</button>
-                          <button type="button" onClick={() => wrapProjectMarkdown("## ", "")} aria-label="Heading">H</button>
-                          <button type="button" onClick={() => wrapProjectMarkdown("- ", "")} aria-label="Bullet list">•</button>
-                          <button type="button" onClick={() => wrapProjectMarkdown("`", "`")} aria-label="Inline code">{"</>"}</button>
+                      ) : isMarkdownPreview ? (
+                        <div className="project-md-preview" aria-label="Markdown preview">
+                          {openProject.docMarkdown?.trim() ? (
+                            <ReactMarkdown>{openProject.docMarkdown}</ReactMarkdown>
+                          ) : (
+                            <p className="project-md-empty">Nothing to preview yet — switch to Edit and start writing.</p>
+                          )}
                         </div>
-                        <div className="project-md-split">
-                          <textarea
-                            ref={markdownRef}
-                            className="project-md-input"
-                            value={openProject.docMarkdown ?? ""}
-                            onChange={(event) => updateProject(openProject.id, { docMarkdown: event.target.value })}
-                            placeholder="Write Markdown here — the preview renders live on the right."
-                            aria-label="Project markdown"
-                            spellCheck={false}
-                          />
-                          <div className="project-md-preview" aria-label="Markdown preview">
-                            {openProject.docMarkdown?.trim() ? (
-                              <ReactMarkdown>{openProject.docMarkdown}</ReactMarkdown>
-                            ) : (
-                              <p className="project-md-empty">Preview appears here as you type.</p>
-                            )}
-                          </div>
-                        </div>
-                      </section>
-                    )}
+                      ) : (
+                        <textarea
+                          ref={markdownRef}
+                          className="project-md-input"
+                          value={openProject.docMarkdown ?? ""}
+                          onChange={(event) => updateProject(openProject.id, { docMarkdown: event.target.value })}
+                          placeholder="Write Markdown here, then use Preview to render it."
+                          aria-label="Project markdown"
+                          spellCheck={false}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

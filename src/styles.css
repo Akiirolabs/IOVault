@@ -950,9 +950,62 @@ textarea {
   min-width: 9rem;
 }
 
+.project-page-toolbar {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .project-page-modes {
   display: flex;
   gap: 0.5rem;
+}
+
+.project-page-toolbar-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 0.15rem 0.25rem;
+  background: rgba(125, 211, 252, 0.18);
+}
+
+.project-page-format {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.project-page-format button {
+  min-width: 2.1rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  border-radius: 0.55rem;
+  color: #9bd8f5;
+  background: rgba(56, 189, 248, 0.08);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.project-page-format button:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.18);
+}
+
+.project-md-toggle {
+  margin-left: auto;
+  border: 1px solid rgba(125, 211, 252, 0.3);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  color: #dff8ff;
+  background: rgba(56, 189, 248, 0.1);
+  cursor: pointer;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.project-md-toggle.active,
+.project-md-toggle:hover {
+  border-color: rgba(125, 211, 252, 0.55);
+  background: rgba(56, 189, 248, 0.2);
 }
 
 .project-page-modes button {
@@ -972,10 +1025,8 @@ textarea {
   background: rgba(56, 189, 248, 0.16);
 }
 
-.project-page-rich,
-.project-page-markdown {
+.project-page-body {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
   border: 1px solid rgba(125, 211, 252, 0.14);
   border-radius: 1rem;
@@ -988,17 +1039,10 @@ textarea {
   padding: 1.25rem 1.5rem;
 }
 
-.project-md-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: 0;
-}
-
 .project-md-input {
   min-height: 0;
   height: 100%;
   border: 0;
-  border-right: 1px solid rgba(125, 211, 252, 0.12);
   border-radius: 0;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   line-height: 1.6;
@@ -1058,17 +1102,6 @@ textarea {
   background: transparent;
 }
 
-@media (max-width: 760px) {
-  .project-md-split {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr 1fr;
-  }
-
-  .project-md-input {
-    border-right: 0;
-    border-bottom: 1px solid rgba(125, 211, 252, 0.12);
-  }
-}
 
 .project-block textarea {
   min-height: 15rem;
