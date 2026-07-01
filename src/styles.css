@@ -849,11 +849,225 @@ textarea {
   padding: 0.9rem;
 }
 
+.project-block-head {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.project-block-head input {
+  flex: 1;
+  min-width: 0;
+}
+
 .project-block input {
   border-color: transparent;
   background: transparent;
   font-size: 1.1rem;
   font-weight: 900;
+}
+
+.project-open-page {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  min-width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 0.7rem;
+  color: #7dd3fc;
+  background: rgba(56, 189, 248, 0.1);
+  cursor: pointer;
+}
+
+.project-open-page:hover {
+  border-color: rgba(125, 211, 252, 0.5);
+  background: rgba(56, 189, 248, 0.18);
+}
+
+.project-open-page svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* --- Project full-page document overlay (rich text + markdown) --- */
+.project-page-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.75rem, 3vw, 2.5rem);
+  background: rgba(1, 5, 18, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.project-page {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 1rem;
+  width: min(1100px, 100%);
+  height: 100%;
+  padding: 1.25rem;
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  border-radius: 1.25rem;
+  background: rgba(7, 18, 38, 0.96);
+  box-shadow: 0 30px 120px rgba(0, 0, 0, 0.5);
+}
+
+.project-page-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.project-page-back {
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 999px;
+  padding: 0.6rem 1rem;
+  color: #dff8ff;
+  background: rgba(56, 189, 248, 0.1);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.project-page-back:hover {
+  background: rgba(56, 189, 248, 0.2);
+}
+
+.project-page-title {
+  flex: 1;
+  min-width: 0;
+  border-color: transparent;
+  background: transparent;
+  font-size: clamp(1.3rem, 3vw, 2rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.project-page-head select {
+  width: auto;
+  min-width: 9rem;
+}
+
+.project-page-modes {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.project-page-modes button {
+  border: 1px solid rgba(125, 211, 252, 0.18);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  color: #9fb7cf;
+  background: rgba(56, 189, 248, 0.06);
+  cursor: pointer;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.project-page-modes button.active {
+  border-color: rgba(125, 211, 252, 0.5);
+  color: #f8fdff;
+  background: rgba(56, 189, 248, 0.16);
+}
+
+.project-page-rich,
+.project-page-markdown {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.project-page-editor {
+  min-height: 0;
+  overflow: auto;
+  padding: 1.25rem 1.5rem;
+}
+
+.project-md-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 0;
+}
+
+.project-md-input {
+  min-height: 0;
+  height: 100%;
+  border: 0;
+  border-right: 1px solid rgba(125, 211, 252, 0.12);
+  border-radius: 0;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  line-height: 1.6;
+}
+
+.project-md-preview {
+  min-height: 0;
+  overflow: auto;
+  padding: 1.25rem 1.5rem;
+  color: #dff8ff;
+  line-height: 1.7;
+}
+
+.project-md-empty {
+  color: #6b859c;
+  font-style: italic;
+}
+
+.project-md-preview > :first-child {
+  margin-top: 0;
+}
+
+.project-md-preview h1,
+.project-md-preview h2,
+.project-md-preview h3 {
+  margin: 0.9rem 0 0.5rem;
+  color: #f8fdff;
+}
+
+.project-md-preview ul,
+.project-md-preview ol {
+  margin: 0 0 0.7rem;
+  padding-left: 1.3rem;
+}
+
+.project-md-preview a {
+  color: #7dd3fc;
+}
+
+.project-md-preview code {
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.4rem;
+  background: rgba(2, 8, 23, 0.6);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.85em;
+}
+
+.project-md-preview pre {
+  overflow: auto;
+  padding: 0.75rem;
+  border-radius: 0.6rem;
+  background: rgba(2, 8, 23, 0.6);
+}
+
+.project-md-preview pre code {
+  padding: 0;
+  background: transparent;
+}
+
+@media (max-width: 760px) {
+  .project-md-split {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  .project-md-input {
+    border-right: 0;
+    border-bottom: 1px solid rgba(125, 211, 252, 0.12);
+  }
 }
 
 .project-block textarea {

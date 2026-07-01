@@ -10,6 +10,7 @@ import type { IconType } from "react-icons";
 import { FaLinkedin } from "react-icons/fa";
 import {
   HiOutlineAcademicCap,
+  HiOutlineArrowsPointingOut,
   HiOutlineBeaker,
   HiOutlineBolt,
   HiOutlineBookOpen,
@@ -130,6 +131,10 @@ type ProjectBlock = {
   title: string;
   status: Status;
   body: string;
+  /** Full-page rich-text document (HTML), edited in the project page overlay */
+  docHtml?: string;
+  /** Full-page Markdown document, edited + previewed in the project page overlay */
+  docMarkdown?: string;
 };
 
 /** Result of a GitHub Actions test-status lookup (UI-only, not persisted) */
@@ -451,12 +456,16 @@ function App() {
   const [isGithubOpen, setIsGithubOpen] = useState(false);
   const [githubStatus, setGithubStatus] = useState<GithubTestStatus | null>(null);
   const [isGithubLoading, setIsGithubLoading] = useState(false);
+  const [openProjectId, setOpenProjectId] = useState<string | null>(null);
+  const [projectDocMode, setProjectDocMode] = useState<"rich" | "markdown">("rich");
+  const markdownRef = useRef<HTMLTextAreaElement>(null);
 
   // --- Derived values for the active page / snippet / project counts ---
   const activeSnippet = vaultState.code.snippets.find((snippet) => snippet.id === activeSnippetId);
   const activeNavItem = navItems.find((item) => item.key === activePage) || navItems[0];
   const activeNavIconId = vaultState.settings.navIcons[activeNavItem.key];
   const ActivePageIcon = (activeNavIconId && ICONS_BY_ID[activeNavIconId]) || activeNavItem.defaultIcon;
+  const openProject = vaultState.projects.blocks.find((block) => block.id === openProjectId) || null;
   const projectStats = useMemo(() => {
     const active = vaultState.projects.blocks.filter((block) => block.status === "In progress").length;
     const done = vaultState.projects.blocks.filter((block) => block.status === "Done").length;
@@ -626,6 +635,25 @@ function App() {
       return { ...prev, code: { ...prev.code, snippets: [snippet, ...prev.code.snippets] } };
     });
     setActiveSnippetId(id);
+  }
+
+  /** Wraps the current textarea selection with Markdown syntax in the open project page */
+  function wrapProjectMarkdown(before: string, after: string) {
+    const element = markdownRef.current;
+    if (!element || openProjectId === null) return;
+
+    const { selectionStart, selectionEnd, value } = element;
+    const selected = value.slice(selectionStart, selectionEnd);
+    const next = value.slice(0, selectionStart) + before + selected + after + value.slice(selectionEnd);
+
+    updateProject(openProjectId, { docMarkdown: next });
+
+    // Restore focus + caret after React re-renders the controlled textarea.
+    requestAnimationFrame(() => {
+      element.focus();
+      const caret = selectionStart + before.length + selected.length + after.length;
+      element.setSelectionRange(caret, caret);
+    });
   }
 
   function addProjectBlock() {
@@ -1135,11 +1163,25 @@ function App() {
               <section className="project-board">
                 {vaultState.projects.blocks.map((block) => (
                   <article className="project-block" key={block.id}>
-                    <input
-                      value={block.title}
-                      onChange={(event) => updateProject(block.id, { title: event.target.value })}
-                      aria-label={`${block.title} title`}
-                    />
+                    <div className="project-block-head">
+                      <input
+                        value={block.title}
+                        onChange={(event) => updateProject(block.id, { title: event.target.value })}
+                        aria-label={`${block.title} title`}
+                      />
+                      <button
+                        className="project-open-page"
+                        type="button"
+                        onClick={() => {
+                          setProjectDocMode("rich");
+                          setOpenProjectId(block.id);
+                        }}
+                        aria-label={`Open ${block.title} as a full page`}
+                        title="Open as full page"
+                      >
+                        <HiOutlineArrowsPointingOut aria-hidden="true" />
+                      </button>
+                    </div>
                     <select
                       value={block.status}
                       onChange={(event) => updateProject(block.id, { status: event.target.value as Status })}
@@ -1157,6 +1199,115 @@ function App() {
                   </article>
                 ))}
               </section>
+
+              {openProject && (
+                <div
+                  className="project-page-overlay"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={`${openProject.title} page`}
+                >
+                  <div className="project-page">
+                    <header className="project-page-head">
+                      <button
+                        className="project-page-back"
+                        type="button"
+                        onClick={() => setOpenProjectId(null)}
+                      >
+                        Back
+                      </button>
+                      <input
+                        className="project-page-title"
+                        value={openProject.title}
+                        onChange={(event) => updateProject(openProject.id, { title: event.target.value })}
+                        aria-label="Project title"
+                      />
+                      <select
+                        value={openProject.status}
+                        onChange={(event) =>
+                          updateProject(openProject.id, { status: event.target.value as Status })
+                        }
+                        aria-label="Project status"
+                      >
+                        <option value="Planned">Planned</option>
+                        <option value="In progress">In progress</option>
+                        <option value="Done">Done</option>
+                      </select>
+                    </header>
+
+                    <div className="project-page-modes" role="tablist" aria-label="Editor mode">
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={projectDocMode === "rich"}
+                        className={projectDocMode === "rich" ? "active" : ""}
+                        onClick={() => setProjectDocMode("rich")}
+                      >
+                        Rich Text
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={projectDocMode === "markdown"}
+                        className={projectDocMode === "markdown" ? "active" : ""}
+                        onClick={() => setProjectDocMode("markdown")}
+                      >
+                        Markdown
+                      </button>
+                    </div>
+
+                    {projectDocMode === "rich" ? (
+                      <section className="project-page-rich">
+                        <div className="write-format-bar" role="toolbar" aria-label="Rich text formatting">
+                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("bold"); }} aria-label="Bold">B</button>
+                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("italic"); }} aria-label="Italic">I</button>
+                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("underline"); }} aria-label="Underline">U</button>
+                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("formatBlock", "h2"); }} aria-label="Heading">H</button>
+                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("insertUnorderedList"); }} aria-label="Bullet list">•</button>
+                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("insertOrderedList"); }} aria-label="Numbered list">1.</button>
+                        </div>
+                        <RichTextEditor
+                          key={`project-rich-${openProject.id}`}
+                          className="rich-editor project-page-editor"
+                          html={openProject.docHtml ?? ""}
+                          onChange={(docHtml) => updateProject(openProject.id, { docHtml })}
+                          role="textbox"
+                          ariaMultiline
+                          ariaLabel="Project rich text document"
+                        />
+                      </section>
+                    ) : (
+                      <section className="project-page-markdown">
+                        <div className="write-format-bar" role="toolbar" aria-label="Markdown formatting">
+                          <button type="button" onClick={() => wrapProjectMarkdown("**", "**")} aria-label="Bold">B</button>
+                          <button type="button" onClick={() => wrapProjectMarkdown("_", "_")} aria-label="Italic">I</button>
+                          <button type="button" onClick={() => wrapProjectMarkdown("## ", "")} aria-label="Heading">H</button>
+                          <button type="button" onClick={() => wrapProjectMarkdown("- ", "")} aria-label="Bullet list">•</button>
+                          <button type="button" onClick={() => wrapProjectMarkdown("`", "`")} aria-label="Inline code">{"</>"}</button>
+                        </div>
+                        <div className="project-md-split">
+                          <textarea
+                            ref={markdownRef}
+                            className="project-md-input"
+                            value={openProject.docMarkdown ?? ""}
+                            onChange={(event) => updateProject(openProject.id, { docMarkdown: event.target.value })}
+                            placeholder="Write Markdown here — the preview renders live on the right."
+                            aria-label="Project markdown"
+                            spellCheck={false}
+                          />
+                          <div className="project-md-preview" aria-label="Markdown preview">
+                            {openProject.docMarkdown?.trim() ? (
+                              <ReactMarkdown>{openProject.docMarkdown}</ReactMarkdown>
+                            ) : (
+                              <p className="project-md-empty">Preview appears here as you type.</p>
+                            )}
+                          </div>
+                        </div>
+                      </section>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>
