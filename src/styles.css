@@ -24,7 +24,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: auto;
   background: #020817;
 }
 
@@ -229,6 +229,7 @@ textarea:focus-visible,
   display: grid;
   grid-template-columns: 4.25rem minmax(0, 1fr);
   gap: 1rem;
+  width: max(100%, 960px);
   padding: 1rem 1rem 1rem 0.75rem;
   transition: grid-template-columns 180ms ease;
 }
@@ -411,7 +412,7 @@ textarea:focus-visible,
 /* --- Shared panel chrome: cards, toolbars, inputs (all workspace pages) --- */
 .page-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  grid-template-columns: minmax(520px, 1.25fr) minmax(320px, 0.75fr);
   gap: 1rem;
 }
 
@@ -924,47 +925,26 @@ textarea {
   }
 }
 
-/* --- Responsive: stack columns on tablet/phone --- */
+/* --- Responsive: preserve the workspace layout on smaller screens --- */
 @media (max-width: 1100px) {
-  .page-grid,
-  .two-column,
-  .project-board {
-    grid-template-columns: 1fr;
-  }
-
   .floating-snippet {
-    position: static;
-    width: 100%;
-    max-height: none;
+    width: 440px;
   }
 }
 
 @media (max-width: 760px) {
-  .vault-dashboard,
+  .vault-dashboard {
+    grid-template-columns: 4.25rem minmax(0, 1fr);
+    padding: 1rem 1rem 1rem 0.75rem;
+  }
+
   .vault-dashboard.nav-open {
-    grid-template-columns: 1fr;
-    padding: 0.75rem;
-  }
-
-  .workspace-nav {
-    position: relative;
-    top: auto;
-    height: auto;
-    flex-direction: row;
-    overflow-x: auto;
-  }
-
-  .workspace-nav strong {
-    display: none !important;
+    grid-template-columns: 14rem minmax(0, 1fr);
   }
 
   .learning-pull-button,
   .learning-drawer {
-    left: 1rem;
-  }
-
-  .calendar-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    left: 5.5rem;
   }
 }
 
