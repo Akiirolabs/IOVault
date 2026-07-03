@@ -540,6 +540,106 @@ function AuthScreen({ onAuthed }: { onAuthed: (user: AuthUser, isSignup: boolean
   );
 }
 
+// --- Text format menu: a single "A̲" trigger that opens formatting options ---
+
+type FormatAction = {
+  id: string;
+  label: string;
+  title: string;
+  command?: string;
+  value?: string;
+  className?: string;
+};
+
+const FORMAT_ACTIONS: FormatAction[] = [
+  { id: "heading", label: "H", title: "Heading", command: "formatBlock", value: "h2" },
+  { id: "bold", label: "B", title: "Bold", command: "bold", className: "tf-bold" },
+  { id: "italic", label: "I", title: "Italic", command: "italic", className: "tf-italic" },
+  { id: "underline", label: "U", title: "Underline", command: "underline", className: "tf-underline" },
+  { id: "strike", label: "S", title: "Strikethrough", command: "strikeThrough", className: "tf-strike" },
+  { id: "highlight", label: "A", title: "Highlight", command: "hiliteColor", value: "#fde047", className: "tf-highlight" },
+  { id: "bullet", label: "•", title: "Bulleted list", command: "insertUnorderedList" },
+  { id: "number", label: "1.", title: "Numbered list", command: "insertOrderedList" },
+  { id: "link", label: "link", title: "Link" },
+  { id: "code", label: "code", title: "Code" },
+];
+
+function TextFormatMenu({ onCommand }: { onCommand: (command: string, value?: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [isOpen]);
+
+  function runAction(action: FormatAction) {
+    if (action.id === "link") {
+      const url = window.prompt("Link URL (https://...)");
+      if (url) onCommand("createLink", url);
+      return;
+    }
+    if (action.id === "code") {
+      const selected = window.getSelection()?.toString() ?? "";
+      onCommand("insertHTML", `<code>${escapeHtml(selected)}</code>`);
+      return;
+    }
+    if (action.command) onCommand(action.command, action.value);
+  }
+
+  return (
+    <div className="text-format" ref={containerRef}>
+      <button
+        type="button"
+        className="text-format-trigger"
+        data-tooltip="Text Format"
+        aria-label="Text Format"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onMouseDown={(event) => {
+          event.preventDefault();
+          setIsOpen((open) => !open);
+        }}
+      >
+        <span className="tf-a">A</span>
+      </button>
+
+      {isOpen && (
+        <div className="text-format-menu" role="menu" aria-label="Text format options">
+          {FORMAT_ACTIONS.map((action) => (
+            <button
+              key={action.id}
+              type="button"
+              role="menuitem"
+              className={`tf-option ${action.className ?? ""}`}
+              title={action.title}
+              aria-label={action.title}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                runAction(action);
+              }}
+            >
+              {action.id === "link" ? (
+                <HiOutlineLink aria-hidden="true" />
+              ) : action.id === "code" ? (
+                <HiOutlineCodeBracket aria-hidden="true" />
+              ) : (
+                action.label
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   // --- UI state (not persisted): which screen/panels are open ---
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -1237,56 +1337,7 @@ function App() {
             <div className="write-workspace">
               <section className="editor-panel write-panel">
                 <div className="write-format-bar" role="toolbar" aria-label="Text formatting">
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      applyWriteFormat("bold");
-                    }}
-                    aria-label="Bold"
-                  >
-                    B
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      applyWriteFormat("italic");
-                    }}
-                    aria-label="Italic"
-                  >
-                    I
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      applyWriteFormat("underline");
-                    }}
-                    aria-label="Underline"
-                  >
-                    U
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      applyWriteFormat("formatBlock", "h2");
-                    }}
-                    aria-label="Heading"
-                  >
-                    H
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      applyWriteFormat("insertUnorderedList");
-                    }}
-                    aria-label="Bullet list"
-                  >
-                    •
-                  </button>
+                  <TextFormatMenu onCommand={applyWriteFormat} />
                 </div>
                 <RichTextEditor
                   className="rich-editor write-canvas"
@@ -1503,12 +1554,7 @@ function App() {
 
                       {projectDocMode === "rich" ? (
                         <div className="project-page-format">
-                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("bold"); }} aria-label="Bold">B</button>
-                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("italic"); }} aria-label="Italic">I</button>
-                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("underline"); }} aria-label="Underline">U</button>
-                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("formatBlock", "h2"); }} aria-label="Heading">H</button>
-                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("insertUnorderedList"); }} aria-label="Bullet list">•</button>
-                          <button type="button" onMouseDown={(e) => { e.preventDefault(); applyWriteFormat("insertOrderedList"); }} aria-label="Numbered list">1.</button>
+                          <TextFormatMenu onCommand={applyWriteFormat} />
                         </div>
                       ) : (
                         <>

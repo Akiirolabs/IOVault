@@ -694,6 +694,126 @@ textarea {
   background: rgba(56, 189, 248, 0.18);
 }
 
+/* --- Text Format menu: single "A̲" trigger + popover of options --- */
+.text-format {
+  position: relative;
+  display: inline-flex;
+}
+
+.text-format-trigger {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 0.6rem;
+  color: #cfe9f7;
+  background: rgba(56, 189, 248, 0.08);
+  cursor: pointer;
+}
+
+.text-format-trigger:hover,
+.text-format-trigger[aria-expanded="true"] {
+  border-color: rgba(125, 211, 252, 0.55);
+  background: rgba(56, 189, 248, 0.2);
+}
+
+/* The "A" with an underscore */
+.tf-a {
+  display: inline-block;
+  padding-bottom: 1px;
+  border-bottom: 2px solid currentColor;
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* Hover tooltip that reads "Text Format" */
+.text-format-trigger[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  z-index: 50;
+  transform: translateX(-50%);
+  padding: 0.35rem 0.6rem;
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 0.5rem;
+  background: rgba(2, 8, 23, 0.95);
+  color: #eaf8ff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.text-format-trigger[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+.text-format-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 45;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 2rem));
+  padding: 0.45rem;
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 0.9rem;
+  background: rgba(7, 18, 38, 0.98);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(18px);
+}
+
+.tf-option {
+  display: grid;
+  place-items: center;
+  min-width: 2.1rem;
+  height: 2.1rem;
+  padding: 0 0.5rem;
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  border-radius: 0.55rem;
+  color: #cfe9f7;
+  background: rgba(56, 189, 248, 0.08);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.tf-option:hover {
+  border-color: rgba(125, 211, 252, 0.5);
+  background: rgba(56, 189, 248, 0.2);
+}
+
+.tf-option svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.tf-option.tf-italic {
+  font-style: italic;
+}
+
+.tf-option.tf-underline {
+  text-decoration: underline;
+}
+
+.tf-option.tf-strike {
+  text-decoration: line-through;
+}
+
+.tf-option.tf-highlight {
+  color: #1a2e05;
+  background: #a3e635;
+  border-color: #a3e635;
+}
+
 .write-canvas {
   min-height: calc(100vh - 11rem);
   padding: 1.25rem 1.5rem 2rem;
