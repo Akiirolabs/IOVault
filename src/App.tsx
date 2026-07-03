@@ -557,7 +557,7 @@ const FORMAT_ACTIONS: FormatAction[] = [
   { id: "italic", label: "I", title: "Italic", command: "italic", className: "tf-italic" },
   { id: "underline", label: "U", title: "Underline", command: "underline", className: "tf-underline" },
   { id: "strike", label: "S", title: "Strikethrough", command: "strikeThrough", className: "tf-strike" },
-  { id: "highlight", label: "A", title: "Highlight", command: "hiliteColor", value: "#fde047", className: "tf-highlight" },
+  { id: "highlight", label: "A", title: "Highlight", command: "hiliteColor", value: "#a3e635", className: "tf-highlight" },
   { id: "bullet", label: "•", title: "Bulleted list", command: "insertUnorderedList" },
   { id: "number", label: "1.", title: "Numbered list", command: "insertOrderedList" },
   { id: "link", label: "link", title: "Link" },
