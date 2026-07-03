@@ -224,6 +224,121 @@ textarea:focus-visible,
   outline-offset: 4px;
 }
 
+/* --- Auth (sign in / sign up) screen --- */
+.auth-wrap {
+  width: min(420px, calc(100vw - 2rem));
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: clamp(1.5rem, 4vw, 2.5rem);
+  text-align: left;
+}
+
+.auth-mode-label {
+  margin: 0;
+  color: #cfe9f7;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.auth-form input {
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  border-radius: 0.9rem;
+  background: rgba(2, 8, 23, 0.55);
+}
+
+.auth-form .unlock-button {
+  margin-top: 0.35rem;
+  justify-self: stretch;
+  text-align: center;
+}
+
+.auth-error {
+  margin: 0;
+  color: #fecaca;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.auth-switch {
+  margin-top: 1.1rem;
+  border: 0;
+  color: #7dd3fc;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.auth-switch:hover {
+  text-decoration: underline;
+}
+
+/* --- Account box + sync status in the workspace topline --- */
+.account-box {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin-left: auto;
+}
+
+.account-email {
+  max-width: 12rem;
+  overflow: hidden;
+  color: #cfe9f7;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sync-pill {
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sync-pill.sync-saving {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.4);
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.sync-pill.sync-saved,
+.sync-pill.sync-idle {
+  color: #a7f3d0;
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.sync-pill.sync-error {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.sign-out {
+  border: 1px solid rgba(125, 211, 252, 0.2);
+  border-radius: 999px;
+  padding: 0.5rem 0.85rem;
+  color: #dff8ff;
+  background: rgba(56, 189, 248, 0.08);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.sign-out:hover {
+  background: rgba(56, 189, 248, 0.18);
+}
+
 /* --- Dashboard layout: collapsible left nav + main content --- */
 .vault-dashboard {
   display: grid;

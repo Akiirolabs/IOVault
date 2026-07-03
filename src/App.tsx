@@ -440,6 +440,106 @@ function RichTextEditor({ html, onChange, className, role, ariaLabel, ariaMultil
   );
 }
 
+// --- Auth: token storage + authenticated fetch + sign-in screen ---
+
+const tokenKey = "io-vault-token";
+
+type AuthUser = { id: string; email: string };
+
+/** fetch wrapper that attaches the Bearer token (if any) and JSON headers. */
+async function apiFetch(path: string, options: RequestInit = {}) {
+  const token = localStorage.getItem(tokenKey);
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string> | undefined),
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return fetch(path, { ...options, headers });
+}
+
+function AuthScreen({ onAuthed }: { onAuthed: (user: AuthUser, isSignup: boolean) => void }) {
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await apiFetch(`/api/auth/${mode}`, {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      const data = (await response.json()) as { token?: string; user?: AuthUser; error?: string };
+
+      if (!response.ok || !data.token || !data.user) {
+        throw new Error(data.error || "Something went wrong.");
+      }
+
+      localStorage.setItem(tokenKey, data.token);
+      onAuthed(data.user, mode === "signup");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <main className="home-screen" aria-label="IO Vault sign in">
+      <div className="orb orb-one" />
+      <div className="orb orb-two" />
+      <div className="orb orb-three" />
+      <div className="grid-overlay" />
+      <section className="title-wrap auth-wrap">
+        <p className="kicker">Welcome to</p>
+        <h1>IO Vault</h1>
+        <form className="auth-form" onSubmit={submit}>
+          <p className="auth-mode-label">
+            {mode === "login" ? "Sign in to your vault" : "Create your vault"}
+          </p>
+          <input
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="Email"
+            autoComplete="email"
+            aria-label="Email"
+            required
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Password (min 8 characters)"
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            aria-label="Password"
+            required
+          />
+          {error && <p className="auth-error" role="alert">{error}</p>}
+          <button className="unlock-button" type="submit" disabled={isLoading}>
+            {isLoading ? "Please wait..." : mode === "login" ? "Sign In" : "Sign Up"}
+          </button>
+        </form>
+        <button
+          className="auth-switch"
+          type="button"
+          onClick={() => {
+            setMode((current) => (current === "login" ? "signup" : "login"));
+            setError(null);
+          }}
+        >
+          {mode === "login" ? "Need an account? Sign up" : "Have an account? Sign in"}
+        </button>
+      </section>
+    </main>
+  );
+}
+
 function App() {
   // --- UI state (not persisted): which screen/panels are open ---
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -460,6 +560,10 @@ function App() {
   const [projectDocMode, setProjectDocMode] = useState<"rich" | "markdown">("rich");
   const [isMarkdownPreview, setIsMarkdownPreview] = useState(false);
   const markdownRef = useRef<HTMLTextAreaElement>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [syncState, setSyncState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const syncTimer = useRef<number | null>(null);
 
   // --- Derived values for the active page / snippet / project counts ---
   const activeSnippet = vaultState.code.snippets.find((snippet) => snippet.id === activeSnippetId);
@@ -479,9 +583,113 @@ function App() {
     setVaultState((previous) => {
       const nextState = reducer(previous);
       localStorage.setItem(storageKey, JSON.stringify(nextState));
+      scheduleServerSync(nextState);
       return nextState;
     });
   }
+
+  // --- Server sync: persist the VaultState to the SQL backend per user ---
+
+  async function pushVaultToServer(state: VaultState) {
+    setSyncState("saving");
+    try {
+      const response = await apiFetch("/api/vault", {
+        method: "PUT",
+        body: JSON.stringify({ data: state }),
+      });
+      if (!response.ok) throw new Error("save failed");
+      setSyncState("saved");
+    } catch {
+      setSyncState("error");
+    }
+  }
+
+  /** Debounced push so we don't hit the DB on every keystroke. */
+  function scheduleServerSync(state: VaultState) {
+    if (!localStorage.getItem(tokenKey)) return;
+    if (syncTimer.current) window.clearTimeout(syncTimer.current);
+    syncTimer.current = window.setTimeout(() => {
+      void pushVaultToServer(state);
+    }, 800);
+  }
+
+  async function loadVaultFromServer(migrateLocal: boolean) {
+    try {
+      const response = await apiFetch("/api/vault");
+      if (!response.ok) return;
+      const { data } = (await response.json()) as { data: unknown };
+
+      if (data) {
+        const normalized = normalizeVaultState(data);
+        setVaultState(normalized);
+        localStorage.setItem(storageKey, JSON.stringify(normalized));
+      } else if (migrateLocal) {
+        // First time on the server for this returning user: upload local cache.
+        const local = getSavedVaultState();
+        setVaultState(local);
+        await pushVaultToServer(local);
+      } else {
+        setVaultState(defaultVaultState);
+        localStorage.setItem(storageKey, JSON.stringify(defaultVaultState));
+      }
+    } catch {
+      // Offline: keep whatever is in local cache.
+    }
+  }
+
+  async function handleAuthed(user: AuthUser, isSignup: boolean) {
+    setAuthUser(user);
+    await loadVaultFromServer(isSignup);
+  }
+
+  function signOut() {
+    if (syncTimer.current) window.clearTimeout(syncTimer.current);
+    localStorage.removeItem(tokenKey);
+    localStorage.removeItem(storageKey);
+    setAuthUser(null);
+    setIsUnlocked(false);
+    setVaultState(defaultVaultState);
+    setSyncState("idle");
+  }
+
+  // On mount: if a token exists, verify it and load the user's vault from SQL.
+  useEffect(() => {
+    const token = localStorage.getItem(tokenKey);
+    if (!token) {
+      setIsAuthReady(true);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await apiFetch("/api/auth/me");
+        if (!response.ok) throw new Error("invalid session");
+        const { user } = (await response.json()) as { user: AuthUser };
+        if (cancelled) return;
+        setAuthUser(user);
+        await loadVaultFromServer(true);
+      } catch {
+        localStorage.removeItem(tokenKey);
+      } finally {
+        if (!cancelled) setIsAuthReady(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const syncLabel =
+    syncState === "saving"
+      ? "Saving…"
+      : syncState === "error"
+        ? "Offline"
+        : syncState === "saved"
+          ? "Saved"
+          : "Synced";
 
   function updateCode(updates: Partial<VaultState["code"]>) {
     saveVaultState((prev) => ({ ...prev, code: { ...prev.code, ...updates } }));
@@ -773,6 +981,24 @@ function App() {
     </>
   );
 
+  // --- Auth gate: verify session, then require sign-in before the app ---
+
+  if (!isAuthReady) {
+    return (
+      <main className="home-screen" aria-label="Loading IO Vault">
+        <div className="grid-overlay" />
+        <section className="title-wrap">
+          <p className="kicker">IO Vault</p>
+          <h1>Loading…</h1>
+        </section>
+      </main>
+    );
+  }
+
+  if (!authUser) {
+    return <AuthScreen onAuthed={handleAuthed} />;
+  }
+
   // --- Unlock / landing screen (animated hero before entering the workspace) ---
 
   if (!isUnlocked) {
@@ -788,6 +1014,9 @@ function App() {
             <h1>IO Vault</h1>
             <button className="unlock-button" type="button" onClick={() => setIsUnlocked(true)}>
               Unlock
+            </button>
+            <button className="auth-switch" type="button" onClick={signOut}>
+              Sign out ({authUser.email})
             </button>
           </section>
         </main>
@@ -867,6 +1096,13 @@ function App() {
                 <ActivePageIcon aria-hidden="true" />
               </p>
               <h1>{activeNavItem.label}</h1>
+            </div>
+            <div className="account-box">
+              <span className={`sync-pill sync-${syncState}`} title="Server sync status">{syncLabel}</span>
+              <span className="account-email">{authUser.email}</span>
+              <button className="sign-out" type="button" onClick={signOut}>
+                Sign out
+              </button>
             </div>
           </header>
 
