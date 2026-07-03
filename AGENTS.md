@@ -6,7 +6,13 @@ Personal productivity dashboard: a Vite + React + TypeScript single-page app wit
 
 ### Services
 - Frontend (Vite dev server): `http://localhost:5173` — this IS the product; required to run/test anything.
-- API (Express, `server/index.js`): `http://localhost:8787` — OPTIONAL. Only powers AI features (the "Agent" drawer and Career "AI Revise"). The dashboard, all page editors, and localStorage persistence work fully without it.
+- API (Express, `server/index.js`): `http://localhost:8787` — now REQUIRED for the normal flow: it powers user sign-in/sign-up and per-user vault storage (`/api/auth/*`, `/api/vault`) in addition to the optional AI features (`/api/agent`). The app shows a sign-in screen first and loads/saves the vault via this API. `localStorage` is still used as an offline cache.
+
+### Auth + database
+- SQL store: SQLite via `better-sqlite3`, file at `server/data/iovault.db` (git-ignored, auto-created on first run; `server/db.js` runs `CREATE TABLE IF NOT EXISTS`). No manual DB setup needed. Override path with `DATABASE_FILE`.
+- Tables: `users` (id, email, password_hash) and `workspaces` (user_id, data = full `VaultState` JSON, updated_at). See `docs/architecture.md`.
+- Auth: `server/auth.js` — bcrypt hashing + JWT. `JWT_SECRET` is optional locally (a dev fallback is used); set it in prod. Frontend stores the token in `localStorage` under `io-vault-token`.
+- To reset all accounts/data locally, delete `server/data/` and restart the API.
 
 ### Running
 - `npm run dev` starts both Vite + Express together (via `concurrently`). Use `npm run dev:web` for frontend-only.

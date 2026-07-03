@@ -19,7 +19,7 @@ Planned button row (left → right), all sitting next to the title:
 
 | Feature | Description | Status |
 | --- | --- | --- |
-| Server, sign-in & SQL database | User accounts + a free SQL backend that stores all user data (currently `localStorage` only) | 🔜 Planned — see [`server-and-auth.md`](./server-and-auth.md) |
+| Server, sign-in & SQL database | User accounts + a SQL backend (SQLite) that stores all user data per user, synced from the client | ✅ Implemented — see [`server-and-auth.md`](./server-and-auth.md) and [`architecture.md`](./architecture.md) |
 
 ## Shared conventions
 

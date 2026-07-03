@@ -1,6 +1,19 @@
-# Server, Sign-In & SQL Database (Planned)
+# Server, Sign-In & SQL Database
 
-Move persistence from browser `localStorage` to a real backend: users **sign in**, and all their workspace data (the full `VaultState`) is saved to a **free SQL database** and synced across devices.
+> **Status: Implemented (v1).** Users sign in and their full `VaultState` is stored per-user in a SQL database. See [`architecture.md`](./architecture.md) for diagrams.
+
+## What shipped (v1)
+
+- **Database:** SQLite (free, zero-config, file at `server/data/iovault.db`, git-ignored, auto-created). It's a real SQL DB and is swappable for hosted Postgres later (see "Recommended stack" below).
+- **Backend (`server/`):**
+  - `db.js` — SQLite connection + schema (`users`, `workspaces`) + query helpers.
+  - `auth.js` — `bcryptjs` password hashing, `jsonwebtoken` JWTs, and a `requireAuth` middleware.
+  - `index.js` — routes: `POST /api/auth/signup`, `POST /api/auth/login`, `GET /api/auth/me`, `GET /api/vault`, `PUT /api/vault` (plus the existing `/api/agent`).
+- **Frontend (`src/App.tsx`):** a sign-in/sign-up `AuthScreen`, token stored in `localStorage` (`io-vault-token`), an authed `apiFetch`, an auth gate before the app, vault **load on login**, **debounced save** (~800ms) on every edit, a sync-status pill + Sign out in the top bar, and `localStorage` kept as an offline cache.
+- **Model:** v1 stores the entire `VaultState` as a JSON blob per user in `workspaces.data` (see below).
+- **Env:** `JWT_SECRET` (optional; a dev fallback is used locally), `DATABASE_FILE` (optional path override). Reminder: the Express server reads env at startup and does not hot-reload — restart `npm run dev` after changing env.
+
+The sections below document the design and the production upgrade path (hosted Postgres / Supabase).
 
 ## Goal
 
