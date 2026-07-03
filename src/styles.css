@@ -728,11 +728,12 @@ textarea {
   line-height: 1;
 }
 
-/* Hover tooltip that reads "Text Format" */
+/* Hover tooltip that reads "Text Format" (below the trigger so it isn't clipped
+   by editor panels that use overflow: hidden) */
 .text-format-trigger[data-tooltip]::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: calc(100% + 0.5rem);
+  top: calc(100% + 0.5rem);
   left: 50%;
   z-index: 50;
   transform: translateX(-50%);
@@ -751,6 +752,11 @@ textarea {
 
 .text-format-trigger[data-tooltip]:hover::after {
   opacity: 1;
+}
+
+/* Hide the tooltip while the menu is open (menu occupies the same space) */
+.text-format-trigger[aria-expanded="true"][data-tooltip]:hover::after {
+  opacity: 0;
 }
 
 .text-format-menu {
