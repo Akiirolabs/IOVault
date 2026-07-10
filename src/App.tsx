@@ -4,11 +4,13 @@
  * Flow: unlock screen → dashboard with workspace pages (Code, Write, Learning, Career, Projects).
  * All workspace data persists to localStorage. AI features call POST /api/agent (see server/index.js).
  */
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import type { IconType } from "react-icons";
 import { FaLinkedin } from "react-icons/fa";
 import {
   HiOutlineAcademicCap,
+  HiOutlineArrowsPointingOut,
   HiOutlineBeaker,
   HiOutlineBolt,
   HiOutlineBookOpen,
@@ -129,6 +131,25 @@ type ProjectBlock = {
   title: string;
   status: Status;
   body: string;
+  /** Full-page rich-text document (HTML), edited in the project page overlay */
+  docHtml?: string;
+  /** Full-page Markdown document, edited + previewed in the project page overlay */
+  docMarkdown?: string;
+};
+
+/** Result of a GitHub Actions test-status lookup (UI-only, not persisted) */
+type GithubTestStatus = {
+  state: "ok" | "error";
+  message: string;
+  run?: {
+    name: string;
+    status: string;
+    conclusion: string | null;
+    branch: string;
+    commit: string;
+    url: string;
+    updatedAt: string;
+  };
 };
 
 type VaultState = {
@@ -152,6 +173,9 @@ type VaultState = {
   };
   write: {
     docHtml: string;
+  };
+  github: {
+    repo: string;
   };
   settings: {
     navIcons: Record<PageKey, IconId>;
@@ -200,6 +224,9 @@ const defaultVaultState: VaultState = {
   },
   write: {
     docHtml: "",
+  },
+  github: {
+    repo: "",
   },
   settings: {
     navIcons: {
@@ -277,6 +304,10 @@ function normalizeVaultState(raw: unknown): VaultState {
     write: {
       ...defaultVaultState.write,
       ...(typeof parsed.write === "object" && parsed.write ? parsed.write : {}),
+    },
+    github: {
+      ...defaultVaultState.github,
+      ...(typeof parsed.github === "object" && parsed.github ? parsed.github : {}),
     },
     settings: {
       ...defaultVaultState.settings,
@@ -369,6 +400,246 @@ function answerBasicQuestion(question: string) {
   return null;
 }
 
+// --- Rich text editor: uncontrolled contentEditable ---
+// The DOM content is seeded once on mount from `html`, then left uncontrolled.
+// Re-binding `dangerouslySetInnerHTML` to state on every keystroke would make
+// React reset innerHTML each input, sending the caret to the start and
+// producing reversed text. `onChange` still fires so edits persist to state.
+
+type RichTextEditorProps = {
+  html: string;
+  onChange: (html: string) => void;
+  className?: string;
+  role?: string;
+  ariaLabel?: string;
+  ariaMultiline?: boolean;
+};
+
+function RichTextEditor({ html, onChange, className, role, ariaLabel, ariaMultiline }: RichTextEditorProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (node && node.innerHTML !== html) {
+      node.innerHTML = html;
+    }
+    // Seed once on mount only; the element is uncontrolled while editing.
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={className}
+      contentEditable
+      suppressContentEditableWarning
+      role={role}
+      aria-label={ariaLabel}
+      aria-multiline={ariaMultiline}
+      onInput={(event) => onChange(event.currentTarget.innerHTML)}
+    />
+  );
+}
+
+// --- Auth: token storage + authenticated fetch + sign-in screen ---
+
+const tokenKey = "io-vault-token";
+
+type AuthUser = { id: string; email: string };
+
+/** fetch wrapper that attaches the Bearer token (if any) and JSON headers. */
+async function apiFetch(path: string, options: RequestInit = {}) {
+  const token = localStorage.getItem(tokenKey);
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string> | undefined),
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return fetch(path, { ...options, headers });
+}
+
+function AuthScreen({ onAuthed }: { onAuthed: (user: AuthUser, isSignup: boolean) => void }) {
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await apiFetch(`/api/auth/${mode}`, {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      const data = (await response.json()) as { token?: string; user?: AuthUser; error?: string };
+
+      if (!response.ok || !data.token || !data.user) {
+        throw new Error(data.error || "Something went wrong.");
+      }
+
+      localStorage.setItem(tokenKey, data.token);
+      onAuthed(data.user, mode === "signup");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <main className="home-screen" aria-label="IO Vault sign in">
+      <div className="orb orb-one" />
+      <div className="orb orb-two" />
+      <div className="orb orb-three" />
+      <div className="grid-overlay" />
+      <section className="title-wrap auth-wrap">
+        <p className="kicker">Welcome to</p>
+        <h1>IO Vault</h1>
+        <form className="auth-form" onSubmit={submit}>
+          <p className="auth-mode-label">
+            {mode === "login" ? "Sign in to your vault" : "Create your vault"}
+          </p>
+          <input
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="Email"
+            autoComplete="email"
+            aria-label="Email"
+            required
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Password (min 8 characters)"
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            aria-label="Password"
+            required
+          />
+          {error && <p className="auth-error" role="alert">{error}</p>}
+          <button className="unlock-button" type="submit" disabled={isLoading}>
+            {isLoading ? "Please wait..." : mode === "login" ? "Sign In" : "Sign Up"}
+          </button>
+        </form>
+        <button
+          className="auth-switch"
+          type="button"
+          onClick={() => {
+            setMode((current) => (current === "login" ? "signup" : "login"));
+            setError(null);
+          }}
+        >
+          {mode === "login" ? "Need an account? Sign up" : "Have an account? Sign in"}
+        </button>
+      </section>
+    </main>
+  );
+}
+
+// --- Text format menu: a single "A̲" trigger that opens formatting options ---
+
+type FormatAction = {
+  id: string;
+  label: string;
+  title: string;
+  command?: string;
+  value?: string;
+  className?: string;
+};
+
+const FORMAT_ACTIONS: FormatAction[] = [
+  { id: "heading", label: "H", title: "Heading", command: "formatBlock", value: "h2" },
+  { id: "bold", label: "B", title: "Bold", command: "bold", className: "tf-bold" },
+  { id: "italic", label: "I", title: "Italic", command: "italic", className: "tf-italic" },
+  { id: "underline", label: "U", title: "Underline", command: "underline", className: "tf-underline" },
+  { id: "strike", label: "S", title: "Strikethrough", command: "strikeThrough", className: "tf-strike" },
+  { id: "highlight", label: "A", title: "Highlight", command: "hiliteColor", value: "#a3e635", className: "tf-highlight" },
+  { id: "bullet", label: "•", title: "Bulleted list", command: "insertUnorderedList" },
+  { id: "number", label: "1.", title: "Numbered list", command: "insertOrderedList" },
+  { id: "link", label: "link", title: "Link" },
+  { id: "code", label: "code", title: "Code" },
+];
+
+function TextFormatMenu({ onCommand }: { onCommand: (command: string, value?: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [isOpen]);
+
+  function runAction(action: FormatAction) {
+    if (action.id === "link") {
+      const url = window.prompt("Link URL (https://...)");
+      if (url) onCommand("createLink", url);
+      return;
+    }
+    if (action.id === "code") {
+      const selected = window.getSelection()?.toString() ?? "";
+      onCommand("insertHTML", `<code>${escapeHtml(selected)}</code>`);
+      return;
+    }
+    if (action.command) onCommand(action.command, action.value);
+  }
+
+  return (
+    <div className="text-format" ref={containerRef}>
+      <button
+        type="button"
+        className="text-format-trigger"
+        data-tooltip="Text Format"
+        aria-label="Text Format"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onMouseDown={(event) => {
+          event.preventDefault();
+          setIsOpen((open) => !open);
+        }}
+      >
+        <span className="tf-a">A</span>
+      </button>
+
+      {isOpen && (
+        <div className="text-format-menu" role="menu" aria-label="Text format options">
+          {FORMAT_ACTIONS.map((action) => (
+            <button
+              key={action.id}
+              type="button"
+              role="menuitem"
+              className={`tf-option ${action.className ?? ""}`}
+              title={action.title}
+              aria-label={action.title}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                runAction(action);
+              }}
+            >
+              {action.id === "link" ? (
+                <HiOutlineLink aria-hidden="true" />
+              ) : action.id === "code" ? (
+                <HiOutlineCodeBracket aria-hidden="true" />
+              ) : (
+                action.label
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   // --- UI state (not persisted): which screen/panels are open ---
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -382,12 +653,24 @@ function App() {
   const [assistantAnswer, setAssistantAnswer] = useState("Ask the agent anything or have it search this workspace.");
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
   const [isResumeLoading, setIsResumeLoading] = useState(false);
+  const [isGithubOpen, setIsGithubOpen] = useState(false);
+  const [githubStatus, setGithubStatus] = useState<GithubTestStatus | null>(null);
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
+  const [openProjectId, setOpenProjectId] = useState<string | null>(null);
+  const [projectDocMode, setProjectDocMode] = useState<"rich" | "markdown">("rich");
+  const [isMarkdownPreview, setIsMarkdownPreview] = useState(false);
+  const markdownRef = useRef<HTMLTextAreaElement>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [syncState, setSyncState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const syncTimer = useRef<number | null>(null);
 
   // --- Derived values for the active page / snippet / project counts ---
   const activeSnippet = vaultState.code.snippets.find((snippet) => snippet.id === activeSnippetId);
   const activeNavItem = navItems.find((item) => item.key === activePage) || navItems[0];
   const activeNavIconId = vaultState.settings.navIcons[activeNavItem.key];
   const ActivePageIcon = (activeNavIconId && ICONS_BY_ID[activeNavIconId]) || activeNavItem.defaultIcon;
+  const openProject = vaultState.projects.blocks.find((block) => block.id === openProjectId) || null;
   const projectStats = useMemo(() => {
     const active = vaultState.projects.blocks.filter((block) => block.status === "In progress").length;
     const done = vaultState.projects.blocks.filter((block) => block.status === "Done").length;
@@ -400,9 +683,113 @@ function App() {
     setVaultState((previous) => {
       const nextState = reducer(previous);
       localStorage.setItem(storageKey, JSON.stringify(nextState));
+      scheduleServerSync(nextState);
       return nextState;
     });
   }
+
+  // --- Server sync: persist the VaultState to the SQL backend per user ---
+
+  async function pushVaultToServer(state: VaultState) {
+    setSyncState("saving");
+    try {
+      const response = await apiFetch("/api/vault", {
+        method: "PUT",
+        body: JSON.stringify({ data: state }),
+      });
+      if (!response.ok) throw new Error("save failed");
+      setSyncState("saved");
+    } catch {
+      setSyncState("error");
+    }
+  }
+
+  /** Debounced push so we don't hit the DB on every keystroke. */
+  function scheduleServerSync(state: VaultState) {
+    if (!localStorage.getItem(tokenKey)) return;
+    if (syncTimer.current) window.clearTimeout(syncTimer.current);
+    syncTimer.current = window.setTimeout(() => {
+      void pushVaultToServer(state);
+    }, 800);
+  }
+
+  async function loadVaultFromServer(migrateLocal: boolean) {
+    try {
+      const response = await apiFetch("/api/vault");
+      if (!response.ok) return;
+      const { data } = (await response.json()) as { data: unknown };
+
+      if (data) {
+        const normalized = normalizeVaultState(data);
+        setVaultState(normalized);
+        localStorage.setItem(storageKey, JSON.stringify(normalized));
+      } else if (migrateLocal) {
+        // First time on the server for this returning user: upload local cache.
+        const local = getSavedVaultState();
+        setVaultState(local);
+        await pushVaultToServer(local);
+      } else {
+        setVaultState(defaultVaultState);
+        localStorage.setItem(storageKey, JSON.stringify(defaultVaultState));
+      }
+    } catch {
+      // Offline: keep whatever is in local cache.
+    }
+  }
+
+  async function handleAuthed(user: AuthUser, isSignup: boolean) {
+    setAuthUser(user);
+    await loadVaultFromServer(isSignup);
+  }
+
+  function signOut() {
+    if (syncTimer.current) window.clearTimeout(syncTimer.current);
+    localStorage.removeItem(tokenKey);
+    localStorage.removeItem(storageKey);
+    setAuthUser(null);
+    setIsUnlocked(false);
+    setVaultState(defaultVaultState);
+    setSyncState("idle");
+  }
+
+  // On mount: if a token exists, verify it and load the user's vault from SQL.
+  useEffect(() => {
+    const token = localStorage.getItem(tokenKey);
+    if (!token) {
+      setIsAuthReady(true);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await apiFetch("/api/auth/me");
+        if (!response.ok) throw new Error("invalid session");
+        const { user } = (await response.json()) as { user: AuthUser };
+        if (cancelled) return;
+        setAuthUser(user);
+        await loadVaultFromServer(true);
+      } catch {
+        localStorage.removeItem(tokenKey);
+      } finally {
+        if (!cancelled) setIsAuthReady(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const syncLabel =
+    syncState === "saving"
+      ? "Saving…"
+      : syncState === "error"
+        ? "Offline"
+        : syncState === "saved"
+          ? "Saved"
+          : "Synced";
 
   function updateCode(updates: Partial<VaultState["code"]>) {
     saveVaultState((prev) => ({ ...prev, code: { ...prev.code, ...updates } }));
@@ -414,6 +801,101 @@ function App() {
 
   function updateWrite(updates: Partial<VaultState["write"]>) {
     saveVaultState((prev) => ({ ...prev, write: { ...prev.write, ...updates } }));
+  }
+
+  function updateGithub(updates: Partial<VaultState["github"]>) {
+    saveVaultState((prev) => ({ ...prev, github: { ...prev.github, ...updates } }));
+  }
+
+  function updateCalendarFocus(index: number) {
+    const current = vaultState.learning.calendarFocus[index] ?? "";
+    const next = window.prompt(`Focus for Day ${index + 1}`, current);
+
+    if (next === null) return;
+
+    const trimmed = next.trim();
+    if (!trimmed) return;
+
+    updateLearning({
+      calendarFocus: vaultState.learning.calendarFocus.map((value, position) =>
+        position === index ? trimmed : value,
+      ),
+    });
+  }
+
+  // --- GitHub: latest Actions test status via the public GitHub API ---
+
+  async function checkGithubTests() {
+    const repo = vaultState.github.repo
+      .trim()
+      .replace(/^https?:\/\/github\.com\//i, "")
+      .replace(/\.git$/i, "")
+      .replace(/\/+$/, "");
+
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+      setGithubStatus({ state: "error", message: "Enter a repository as owner/repository." });
+      return;
+    }
+
+    setIsGithubLoading(true);
+    setGithubStatus(null);
+
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${repo}/actions/runs?per_page=1`,
+        { headers: { Accept: "application/vnd.github+json" } },
+      );
+
+      if (response.status === 404) {
+        throw new Error("Repository not found or it has no public Actions.");
+      }
+      if (response.status === 403) {
+        throw new Error("GitHub API rate limit reached. Try again later.");
+      }
+      if (!response.ok) {
+        throw new Error(`GitHub API error (${response.status}).`);
+      }
+
+      const data = (await response.json()) as {
+        workflow_runs?: Array<{
+          name?: string;
+          display_title?: string;
+          status?: string;
+          conclusion?: string | null;
+          head_branch?: string;
+          head_commit?: { message?: string };
+          html_url?: string;
+          updated_at?: string;
+        }>;
+      };
+      const run = data.workflow_runs?.[0];
+
+      if (!run) {
+        setGithubStatus({ state: "ok", message: `No workflow runs found for ${repo}.` });
+        return;
+      }
+
+      setGithubStatus({
+        state: "ok",
+        message: `Latest run for ${repo}`,
+        run: {
+          name: run.name || run.display_title || "Workflow",
+          status: run.status || "unknown",
+          conclusion: run.conclusion ?? null,
+          branch: run.head_branch || "—",
+          commit: run.head_commit?.message?.split("\n")[0] || "—",
+          url: run.html_url || `https://github.com/${repo}/actions`,
+          updatedAt: run.updated_at ? new Date(run.updated_at).toLocaleString() : "—",
+        },
+      });
+    } catch (error) {
+      setGithubStatus({
+        state: "error",
+        message: error instanceof Error ? error.message : "Could not check tests.",
+      });
+    } finally {
+      setIsGithubLoading(false);
+    }
   }
 
   function updateSettings(updates: Partial<VaultState["settings"]>) {
@@ -462,6 +944,25 @@ function App() {
       return { ...prev, code: { ...prev.code, snippets: [snippet, ...prev.code.snippets] } };
     });
     setActiveSnippetId(id);
+  }
+
+  /** Wraps the current textarea selection with Markdown syntax in the open project page */
+  function wrapProjectMarkdown(before: string, after: string) {
+    const element = markdownRef.current;
+    if (!element || openProjectId === null) return;
+
+    const { selectionStart, selectionEnd, value } = element;
+    const selected = value.slice(selectionStart, selectionEnd);
+    const next = value.slice(0, selectionStart) + before + selected + after + value.slice(selectionEnd);
+
+    updateProject(openProjectId, { docMarkdown: next });
+
+    // Restore focus + caret after React re-renders the controlled textarea.
+    requestAnimationFrame(() => {
+      element.focus();
+      const caret = selectionStart + before.length + selected.length + after.length;
+      element.setSelectionRange(caret, caret);
+    });
   }
 
   function addProjectBlock() {
@@ -570,13 +1071,33 @@ function App() {
           </button>
         </form>
 
-        <div className="agent-response">{assistantAnswer}</div>
+        <div className="agent-response">
+          <ReactMarkdown>{assistantAnswer}</ReactMarkdown>
+        </div>
         <div className="agent-key-note">
           Model: <code>{AI_MODEL}</code>
         </div>
       </aside>
     </>
   );
+
+  // --- Auth gate: verify session, then require sign-in before the app ---
+
+  if (!isAuthReady) {
+    return (
+      <main className="home-screen" aria-label="Loading IO Vault">
+        <div className="grid-overlay" />
+        <section className="title-wrap">
+          <p className="kicker">IO Vault</p>
+          <h1>Loading…</h1>
+        </section>
+      </main>
+    );
+  }
+
+  if (!authUser) {
+    return <AuthScreen onAuthed={handleAuthed} />;
+  }
 
   // --- Unlock / landing screen (animated hero before entering the workspace) ---
 
@@ -593,6 +1114,9 @@ function App() {
             <h1>IO Vault</h1>
             <button className="unlock-button" type="button" onClick={() => setIsUnlocked(true)}>
               Unlock
+            </button>
+            <button className="auth-switch" type="button" onClick={signOut}>
+              Sign out ({authUser.email})
             </button>
           </section>
         </main>
@@ -673,6 +1197,13 @@ function App() {
               </p>
               <h1>{activeNavItem.label}</h1>
             </div>
+            <div className="account-box">
+              <span className={`sync-pill sync-${syncState}`} title="Server sync status">{syncLabel}</span>
+              <span className="account-email">{authUser.email}</span>
+              <button className="sign-out" type="button" onClick={signOut}>
+                Sign out
+              </button>
+            </div>
           </header>
 
           {/* Page: Code Vault — editor, syntax preview, notes, saved snippets */}
@@ -692,8 +1223,18 @@ function App() {
                     <option value="css">CSS</option>
                   </select>
                   <button type="button" onClick={addSnippet}>Save Snippet</button>
-                  <button type="button">GitHub</button>
-                  <button type="button">Tests</button>
+                  <button type="button" onClick={() => setIsGithubOpen((value) => !value)}>
+                    GitHub
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsGithubOpen(true);
+                      checkGithubTests();
+                    }}
+                  >
+                    Tests
+                  </button>
                 </div>
                 <textarea
                   className="code-input"
@@ -711,12 +1252,10 @@ function App() {
 
               <section className="editor-panel rich-panel">
                 <div className="panel-label">Notes</div>
-                <div
+                <RichTextEditor
                   className="rich-editor"
-                  contentEditable
-                  suppressContentEditableWarning
-                  onInput={(event) => updateCode({ notesHtml: event.currentTarget.innerHTML })}
-                  dangerouslySetInnerHTML={{ __html: vaultState.code.notesHtml }}
+                  html={vaultState.code.notesHtml}
+                  onChange={(notesHtml) => updateCode({ notesHtml })}
                 />
               </section>
 
@@ -746,6 +1285,50 @@ function App() {
                   <pre><code dangerouslySetInnerHTML={{ __html: highlightCode(activeSnippet.code) }} /></pre>
                 </div>
               )}
+
+              {isGithubOpen && (
+                <div className="github-card">
+                  <div className="panel-toolbar">
+                    <strong>GitHub Test Status</strong>
+                    <button type="button" onClick={() => setIsGithubOpen(false)}>Hide</button>
+                  </div>
+                  <div className="github-card-body">
+                    <input
+                      value={vaultState.github.repo}
+                      onChange={(event) => updateGithub({ repo: event.target.value })}
+                      placeholder="owner/repository"
+                      aria-label="GitHub repository"
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") checkGithubTests();
+                      }}
+                    />
+                    <button type="button" onClick={checkGithubTests} disabled={isGithubLoading}>
+                      {isGithubLoading ? "Checking..." : "Check tests"}
+                    </button>
+
+                    {githubStatus && (
+                      <div className={`github-result ${githubStatus.state}`}>
+                        <p>{githubStatus.message}</p>
+                        {githubStatus.run && (
+                          <ul>
+                            <li><span>Workflow</span><strong>{githubStatus.run.name}</strong></li>
+                            <li><span>Status</span><strong>{githubStatus.run.status}</strong></li>
+                            <li><span>Result</span><strong>{githubStatus.run.conclusion ?? "pending"}</strong></li>
+                            <li><span>Branch</span><strong>{githubStatus.run.branch}</strong></li>
+                            <li><span>Commit</span><strong>{githubStatus.run.commit}</strong></li>
+                            <li><span>Updated</span><strong>{githubStatus.run.updatedAt}</strong></li>
+                            <li>
+                              <a href={githubStatus.run.url} target="_blank" rel="noreferrer">
+                                View on GitHub
+                              </a>
+                            </li>
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -754,66 +1337,15 @@ function App() {
             <div className="write-workspace">
               <section className="editor-panel write-panel">
                 <div className="write-format-bar" role="toolbar" aria-label="Text formatting">
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      applyWriteFormat("bold");
-                    }}
-                    aria-label="Bold"
-                  >
-                    B
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      applyWriteFormat("italic");
-                    }}
-                    aria-label="Italic"
-                  >
-                    I
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      applyWriteFormat("underline");
-                    }}
-                    aria-label="Underline"
-                  >
-                    U
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      applyWriteFormat("formatBlock", "h2");
-                    }}
-                    aria-label="Heading"
-                  >
-                    H
-                  </button>
-                  <button
-                    type="button"
-                    onMouseDown={(event) => {
-                      event.preventDefault();
-                      applyWriteFormat("insertUnorderedList");
-                    }}
-                    aria-label="Bullet list"
-                  >
-                    •
-                  </button>
+                  <TextFormatMenu onCommand={applyWriteFormat} />
                 </div>
-                <div
+                <RichTextEditor
                   className="rich-editor write-canvas"
-                  contentEditable
-                  suppressContentEditableWarning
+                  html={vaultState.write.docHtml}
+                  onChange={(docHtml) => updateWrite({ docHtml })}
                   role="textbox"
-                  aria-multiline="true"
-                  aria-label="Write"
-                  onInput={(event) => updateWrite({ docHtml: event.currentTarget.innerHTML })}
-                  dangerouslySetInnerHTML={{ __html: vaultState.write.docHtml }}
+                  ariaMultiline
+                  ariaLabel="Write"
                 />
               </section>
             </div>
@@ -843,12 +1375,10 @@ function App() {
 
               <section className="editor-panel documentation-panel">
                 <div className="panel-label">Documentation Notes</div>
-                <div
+                <RichTextEditor
                   className="rich-editor document-space"
-                  contentEditable
-                  suppressContentEditableWarning
-                  onInput={(event) => updateLearning({ docHtml: event.currentTarget.innerHTML })}
-                  dangerouslySetInnerHTML={{ __html: vaultState.learning.docHtml }}
+                  html={vaultState.learning.docHtml}
+                  onChange={(docHtml) => updateLearning({ docHtml })}
                 />
               </section>
 
@@ -856,7 +1386,12 @@ function App() {
                 <div className="panel-label">Mini Calendar</div>
                 <div className="calendar-grid">
                   {vaultState.learning.calendarFocus.map((day, index) => (
-                    <button key={`${day}-${index}`} type="button">
+                    <button
+                      key={`${day}-${index}`}
+                      type="button"
+                      onClick={() => updateCalendarFocus(index)}
+                      title="Click to edit this day's focus"
+                    >
                       <span>Day {index + 1}</span>
                       <strong>{day}</strong>
                     </button>
@@ -916,11 +1451,26 @@ function App() {
               <section className="project-board">
                 {vaultState.projects.blocks.map((block) => (
                   <article className="project-block" key={block.id}>
-                    <input
-                      value={block.title}
-                      onChange={(event) => updateProject(block.id, { title: event.target.value })}
-                      aria-label={`${block.title} title`}
-                    />
+                    <div className="project-block-head">
+                      <input
+                        value={block.title}
+                        onChange={(event) => updateProject(block.id, { title: event.target.value })}
+                        aria-label={`${block.title} title`}
+                      />
+                      <button
+                        className="project-open-page"
+                        type="button"
+                        onClick={() => {
+                          setProjectDocMode("rich");
+                          setIsMarkdownPreview(false);
+                          setOpenProjectId(block.id);
+                        }}
+                        aria-label={`Open ${block.title} as a full page`}
+                        title="Open as full page"
+                      >
+                        <HiOutlineArrowsPointingOut aria-hidden="true" />
+                      </button>
+                    </div>
                     <select
                       value={block.status}
                       onChange={(event) => updateProject(block.id, { status: event.target.value as Status })}
@@ -938,6 +1488,129 @@ function App() {
                   </article>
                 ))}
               </section>
+
+              {openProject && (
+                <div
+                  className="project-page-overlay"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={`${openProject.title} page`}
+                >
+                  <div className="project-page">
+                    <header className="project-page-head">
+                      <button
+                        className="project-page-back"
+                        type="button"
+                        onClick={() => setOpenProjectId(null)}
+                      >
+                        Back
+                      </button>
+                      <input
+                        className="project-page-title"
+                        value={openProject.title}
+                        onChange={(event) => updateProject(openProject.id, { title: event.target.value })}
+                        aria-label="Project title"
+                      />
+                      <select
+                        value={openProject.status}
+                        onChange={(event) =>
+                          updateProject(openProject.id, { status: event.target.value as Status })
+                        }
+                        aria-label="Project status"
+                      >
+                        <option value="Planned">Planned</option>
+                        <option value="In progress">In progress</option>
+                        <option value="Done">Done</option>
+                      </select>
+                    </header>
+
+                    <div className="project-page-toolbar" role="toolbar" aria-label="Document tools">
+                      <div className="project-page-modes" role="group" aria-label="Editor mode">
+                        <button
+                          type="button"
+                          aria-pressed={projectDocMode === "rich"}
+                          className={projectDocMode === "rich" ? "active" : ""}
+                          onClick={() => {
+                            setProjectDocMode("rich");
+                            setIsMarkdownPreview(false);
+                          }}
+                        >
+                          Rich Text
+                        </button>
+                        <button
+                          type="button"
+                          aria-pressed={projectDocMode === "markdown"}
+                          className={projectDocMode === "markdown" ? "active" : ""}
+                          onClick={() => {
+                            setProjectDocMode("markdown");
+                            setIsMarkdownPreview(false);
+                          }}
+                        >
+                          Markdown
+                        </button>
+                      </div>
+
+                      <span className="project-page-toolbar-divider" aria-hidden="true" />
+
+                      {projectDocMode === "rich" ? (
+                        <div className="project-page-format">
+                          <TextFormatMenu onCommand={applyWriteFormat} />
+                        </div>
+                      ) : (
+                        <>
+                          <div className="project-page-format">
+                            <button type="button" disabled={isMarkdownPreview} onClick={() => wrapProjectMarkdown("**", "**")} aria-label="Bold">B</button>
+                            <button type="button" disabled={isMarkdownPreview} onClick={() => wrapProjectMarkdown("_", "_")} aria-label="Italic">I</button>
+                            <button type="button" disabled={isMarkdownPreview} onClick={() => wrapProjectMarkdown("## ", "")} aria-label="Heading">H</button>
+                            <button type="button" disabled={isMarkdownPreview} onClick={() => wrapProjectMarkdown("- ", "")} aria-label="Bullet list">•</button>
+                            <button type="button" disabled={isMarkdownPreview} onClick={() => wrapProjectMarkdown("`", "`")} aria-label="Inline code">{"</>"}</button>
+                          </div>
+                          <button
+                            type="button"
+                            className={`project-md-toggle ${isMarkdownPreview ? "active" : ""}`}
+                            aria-pressed={isMarkdownPreview}
+                            onClick={() => setIsMarkdownPreview((value) => !value)}
+                          >
+                            {isMarkdownPreview ? "Edit" : "Preview"}
+                          </button>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="project-page-body">
+                      {projectDocMode === "rich" ? (
+                        <RichTextEditor
+                          key={`project-rich-${openProject.id}`}
+                          className="rich-editor project-page-editor"
+                          html={openProject.docHtml ?? ""}
+                          onChange={(docHtml) => updateProject(openProject.id, { docHtml })}
+                          role="textbox"
+                          ariaMultiline
+                          ariaLabel="Project rich text document"
+                        />
+                      ) : isMarkdownPreview ? (
+                        <div className="project-md-preview" aria-label="Markdown preview">
+                          {openProject.docMarkdown?.trim() ? (
+                            <ReactMarkdown>{openProject.docMarkdown}</ReactMarkdown>
+                          ) : (
+                            <p className="project-md-empty">Nothing to preview yet — switch to Edit and start writing.</p>
+                          )}
+                        </div>
+                      ) : (
+                        <textarea
+                          ref={markdownRef}
+                          className="project-md-input"
+                          value={openProject.docMarkdown ?? ""}
+                          onChange={(event) => updateProject(openProject.id, { docMarkdown: event.target.value })}
+                          placeholder="Write Markdown here, then use Preview to render it."
+                          aria-label="Project markdown"
+                          spellCheck={false}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>
