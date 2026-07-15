@@ -38,6 +38,8 @@ import {
 } from "react-icons/hi2";
 import { SiCoursera, SiGithub, SiNotion } from "react-icons/si";
 import { AI_MODEL } from "./aiConfig";
+import CodeVaultWorkspace from "./codeVault/CodeVaultWorkspace";
+import type { CodeSnippet } from "./codeVault/types";
 
 // --- Types: shape of each workspace page and full saved state ---
 
@@ -112,13 +114,6 @@ const ICONS_BY_ID: Record<IconId, IconType> = ICON_OPTIONS.reduce(
   },
   {} as Record<IconId, IconType>,
 );
-
-type CodeSnippet = {
-  id: string;
-  title: string;
-  language: string;
-  code: string;
-};
 
 type LearningConnection = {
   name: string;
@@ -1206,130 +1201,13 @@ function App() {
             </div>
           </header>
 
-          {/* Page: Code Vault — editor, syntax preview, notes, saved snippets */}
+          {/* Page: Code Vault — GitHub-backed browser IDE + scratch snippets */}
           {activePage === "code" && (
-            <div className="code-workspace page-grid">
-              <section className="editor-panel code-editor-panel">
-                <div className="panel-toolbar">
-                  <select
-                    value={vaultState.code.language}
-                    onChange={(event) => updateCode({ language: event.target.value })}
-                    aria-label="Code language"
-                  >
-                    <option value="tsx">TSX</option>
-                    <option value="ts">TypeScript</option>
-                    <option value="js">JavaScript</option>
-                    <option value="py">Python</option>
-                    <option value="css">CSS</option>
-                  </select>
-                  <button type="button" onClick={addSnippet}>Save Snippet</button>
-                  <button type="button" onClick={() => setIsGithubOpen((value) => !value)}>
-                    GitHub
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsGithubOpen(true);
-                      checkGithubTests();
-                    }}
-                  >
-                    Tests
-                  </button>
-                </div>
-                <textarea
-                  className="code-input"
-                  value={vaultState.code.editor}
-                  onChange={(event) => updateCode({ editor: event.target.value })}
-                  spellCheck={false}
-                  aria-label="Code editor"
-                />
-              </section>
-
-              <section className="editor-panel syntax-panel">
-                <div className="panel-label">Syntax Preview</div>
-                <pre><code dangerouslySetInnerHTML={{ __html: highlightCode(vaultState.code.editor) }} /></pre>
-              </section>
-
-              <section className="editor-panel rich-panel">
-                <div className="panel-label">Notes</div>
-                <RichTextEditor
-                  className="rich-editor"
-                  html={vaultState.code.notesHtml}
-                  onChange={(notesHtml) => updateCode({ notesHtml })}
-                />
-              </section>
-
-              <aside className="snippet-strip">
-                {vaultState.code.snippets.map((snippet) => (
-                  <button
-                    className={activeSnippetId === snippet.id ? "snippet-card active" : "snippet-card"}
-                    key={snippet.id}
-                    type="button"
-                    onClick={() => setActiveSnippetId(snippet.id)}
-                  >
-                    <strong>{snippet.title}</strong>
-                    <span>{snippet.language}</span>
-                  </button>
-                ))}
-              </aside>
-
-              {activeSnippet && (
-                <div className="floating-snippet">
-                  <div className="panel-toolbar">
-                    <strong>{activeSnippet.title}</strong>
-                    <button type="button" onClick={() => updateCode({ editor: activeSnippet.code, language: activeSnippet.language })}>
-                      Open
-                    </button>
-                    <button type="button" onClick={() => setActiveSnippetId(null)}>Hide</button>
-                  </div>
-                  <pre><code dangerouslySetInnerHTML={{ __html: highlightCode(activeSnippet.code) }} /></pre>
-                </div>
-              )}
-
-              {isGithubOpen && (
-                <div className="github-card">
-                  <div className="panel-toolbar">
-                    <strong>GitHub Test Status</strong>
-                    <button type="button" onClick={() => setIsGithubOpen(false)}>Hide</button>
-                  </div>
-                  <div className="github-card-body">
-                    <input
-                      value={vaultState.github.repo}
-                      onChange={(event) => updateGithub({ repo: event.target.value })}
-                      placeholder="owner/repository"
-                      aria-label="GitHub repository"
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") checkGithubTests();
-                      }}
-                    />
-                    <button type="button" onClick={checkGithubTests} disabled={isGithubLoading}>
-                      {isGithubLoading ? "Checking..." : "Check tests"}
-                    </button>
-
-                    {githubStatus && (
-                      <div className={`github-result ${githubStatus.state}`}>
-                        <p>{githubStatus.message}</p>
-                        {githubStatus.run && (
-                          <ul>
-                            <li><span>Workflow</span><strong>{githubStatus.run.name}</strong></li>
-                            <li><span>Status</span><strong>{githubStatus.run.status}</strong></li>
-                            <li><span>Result</span><strong>{githubStatus.run.conclusion ?? "pending"}</strong></li>
-                            <li><span>Branch</span><strong>{githubStatus.run.branch}</strong></li>
-                            <li><span>Commit</span><strong>{githubStatus.run.commit}</strong></li>
-                            <li><span>Updated</span><strong>{githubStatus.run.updatedAt}</strong></li>
-                            <li>
-                              <a href={githubStatus.run.url} target="_blank" rel="noreferrer">
-                                View on GitHub
-                              </a>
-                            </li>
-                          </ul>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            <CodeVaultWorkspace
+              code={vaultState.code}
+              githubSuggestion={vaultState.github.repo}
+              updateCode={updateCode}
+            />
           )}
 
           {/* Page: Write — blank rich-text canvas (no labels or starter copy) */}

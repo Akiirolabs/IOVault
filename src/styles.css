@@ -869,6 +869,335 @@ textarea {
   overflow: hidden;
 }
 
+/* --- Code Vault browser mini IDE --- */
+.code-ide {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.72fr) minmax(440px, 1.7fr) minmax(300px, 1fr);
+  gap: 0.8rem;
+  min-height: calc(100vh - 8.5rem);
+}
+
+.code-ide > .editor-panel {
+  min-width: 0;
+  min-height: calc(100vh - 8.5rem);
+}
+
+.code-explorer,
+.code-assistant,
+.code-editor-workbench {
+  display: flex;
+  flex-direction: column;
+}
+
+.ide-repo-bar,
+.editor-actions,
+.assistant-controls,
+.change-actions {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.7rem;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.1);
+}
+
+.ide-repo-bar select,
+.assistant-controls select {
+  min-width: 0;
+  padding: 0.58rem 0.65rem;
+}
+
+.ide-tabs,
+.open-file-tabs {
+  display: flex;
+  gap: 0.2rem;
+  overflow-x: auto;
+  padding: 0.5rem 0.6rem 0;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.1);
+}
+
+.ide-tabs button,
+.open-file-tabs button {
+  border-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 0.7rem 0.7rem 0 0;
+  color: #91a9bd;
+  background: transparent;
+  white-space: nowrap;
+}
+
+.ide-tabs button.active,
+.open-file-tabs button.active {
+  color: #e9faff;
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(125, 211, 252, 0.2);
+}
+
+.ide-tabs button span {
+  margin-left: 0.3rem;
+  color: #7dd3fc;
+}
+
+.explorer-scroll,
+.assistant-pane,
+.changes-pane {
+  min-height: 0;
+  overflow: auto;
+  padding: 0.7rem;
+}
+
+.explorer-scroll {
+  flex: 1;
+}
+
+.explorer-action,
+.file-row {
+  width: 100%;
+  margin-bottom: 0.3rem;
+  border-color: transparent;
+  padding: 0.52rem 0.62rem;
+  text-align: left;
+  background: transparent;
+}
+
+.explorer-action {
+  color: #7dd3fc;
+  border-color: rgba(125, 211, 252, 0.12);
+}
+
+.file-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #bfd6e5;
+}
+
+.file-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-row small {
+  flex: 0 0 auto;
+  color: #647c91;
+}
+
+.file-row:hover,
+.file-row.active {
+  color: #f0fbff;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.editor-actions {
+  justify-content: flex-end;
+  min-height: 3.2rem;
+  color: #8ca6ba;
+  font-size: 0.78rem;
+}
+
+.editor-actions > span {
+  margin-right: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-toggle {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  color: #9eb5c7;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.context-toggle input,
+.change-card input {
+  width: auto;
+}
+
+.monaco-frame {
+  flex: 1;
+  min-height: 32rem;
+  overflow: hidden;
+  background: #071226;
+}
+
+.editor-loading,
+.editor-empty {
+  display: grid;
+  height: 100%;
+  min-height: 32rem;
+  place-items: center;
+  color: #7892a7;
+}
+
+.assistant-pane,
+.changes-pane {
+  flex: 1;
+}
+
+.assistant-controls {
+  padding: 0 0 0.75rem;
+  border: 0;
+}
+
+.context-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.context-list strong {
+  width: 100%;
+  color: #7dd3fc;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.context-list span {
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(125, 211, 252, 0.13);
+  border-radius: 999px;
+  padding: 0.28rem 0.48rem;
+  color: #b9d2e2;
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assistant-answer {
+  min-height: 8rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(125, 211, 252, 0.1);
+  border-radius: 0.85rem;
+  padding: 0.8rem;
+  color: #cce1ec;
+  background: rgba(2, 8, 23, 0.42);
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.assistant-pane textarea {
+  min-height: 9rem;
+  margin-bottom: 0.55rem;
+}
+
+.primary-action {
+  border-color: rgba(56, 189, 248, 0.42);
+  color: #06131e;
+  background: linear-gradient(135deg, #7dd3fc, #67e8f9);
+  font-weight: 900;
+}
+
+.assistant-pane > .primary-action {
+  width: 100%;
+  margin-top: 0.65rem;
+}
+
+.changes-pane h3 {
+  margin: 0 0 0.8rem;
+  color: #effbff;
+}
+
+.change-card {
+  margin-bottom: 0.65rem;
+  border: 1px solid rgba(248, 113, 113, 0.18);
+  border-radius: 0.85rem;
+  padding: 0.7rem;
+  background: rgba(20, 9, 20, 0.35);
+}
+
+.change-card.accepted {
+  border-color: rgba(52, 211, 153, 0.28);
+  background: rgba(6, 35, 31, 0.38);
+}
+
+.change-card label {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  color: #d8edf6;
+  font-size: 0.78rem;
+}
+
+.change-card p,
+.change-warning {
+  color: #9fb7c7;
+  font-size: 0.77rem;
+  line-height: 1.45;
+}
+
+.change-card pre {
+  max-height: 17rem;
+  overflow: auto;
+  border-radius: 0.65rem;
+  padding: 0.65rem;
+  color: #c9e7ef;
+  background: #030a16;
+  font-size: 0.7rem;
+  white-space: pre-wrap;
+}
+
+.change-warning,
+.ide-error {
+  color: #fecaca;
+}
+
+.change-actions {
+  flex-wrap: wrap;
+  padding: 0.7rem 0;
+  border: 0;
+}
+
+.pr-link {
+  display: block;
+  border-radius: 0.75rem;
+  padding: 0.7rem;
+  color: #a7f3d0;
+  background: rgba(16, 185, 129, 0.1);
+  text-align: center;
+}
+
+.ide-error,
+.ide-busy {
+  margin: 0.6rem;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 0.7rem;
+  padding: 0.65rem;
+  font-size: 0.78rem;
+}
+
+.ide-busy {
+  color: #bae6fd;
+  border-color: rgba(125, 211, 252, 0.2);
+}
+
+@media (max-width: 1180px) {
+  .code-ide {
+    grid-template-columns: minmax(210px, 0.7fr) minmax(420px, 1.5fr);
+  }
+
+  .code-assistant {
+    grid-column: 1 / -1;
+    min-height: 28rem !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .code-ide {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .code-ide > .editor-panel {
+    min-height: 26rem;
+  }
+}
+
 /* --- Code Vault: GitHub Actions test-status card --- */
 .github-card {
   position: fixed;

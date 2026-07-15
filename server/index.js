@@ -8,6 +8,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import OpenAI from "openai";
+import crypto from "node:crypto";
 
 // Load API keys: .env.local overrides, then optional .env
 dotenv.config({ path: ".env.local", override: true });
@@ -27,11 +28,35 @@ import {
   signToken,
   verifyPassword,
 } from "./auth.js";
+import {
+  consumeGithubState,
+  createGithubState,
+  deleteGithubInstallation,
+  deleteScratchFile,
+  getGithubInstallation,
+  getPatchSet,
+  listScratchFiles,
+  saveGithubInstallation,
+  savePatchSet,
+  savePublication,
+  upsertScratchFile,
+} from "./code-db.js";
+import {
+  getInstallationDetails,
+  githubConfigured,
+  listInstallationRepositories,
+  publishPatch,
+  repositoryFile,
+  repositoryTree,
+  validRepositoryPath,
+} from "./github.js";
 
 const app = express();
 const port = Number(process.env.API_PORT || 8787);
 const model = "gpt-4o-mini";
 const apiKey = process.env.OPENAI_API_KEY;
+const codeModelBalanced = process.env.OPENAI_CODE_MODEL_BALANCED || "gpt-5.4-mini";
+const codeModelBest = process.env.OPENAI_CODE_MODEL_BEST || "gpt-5.6";
 
 app.use(express.json({ limit: "2mb" }));
 
@@ -177,6 +202,183 @@ app.post("/api/agent", async (request, response) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`IO Vault API running on http://localhost:${port}`);
+// --- Code Vault: GitHub App, scratch workspaces, AI patches, and publishing ---
+
+app.post("/api/code/github/connect", requireAuth, (request, response) => {
+  if (!githubConfigured()) {
+    response.status(503).json({ error: "Configure GITHUB_APP_ID, GITHUB_PRIVATE_KEY, and GITHUB_APP_SLUG first." });
+    return;
+  }
+  const state = crypto.randomBytes(24).toString("hex");
+  createGithubState(state, request.userId);
+  response.json({ installUrl: `https://github.com/apps/${encodeURIComponent(process.env.GITHUB_APP_SLUG)}/installations/new?state=${state}` });
 });
+
+app.get("/api/code/github/callback", async (request, response) => {
+  const state = String(request.query.state || "");
+  const installationId = String(request.query.installation_id || "");
+  const userId = consumeGithubState(state);
+  const appOrigin = process.env.APP_ORIGIN || "http://localhost:5173";
+  if (!userId || !/^\d+$/.test(installationId)) {
+    response.redirect(`${appOrigin}/?github=error`);
+    return;
+  }
+  try {
+    const installation = await getInstallationDetails(installationId);
+    saveGithubInstallation(userId, installationId, installation.account?.login || null);
+    response.redirect(`${appOrigin}/?github=connected`);
+  } catch (error) {
+    console.error("GitHub installation callback failed:", error);
+    response.redirect(`${appOrigin}/?github=error`);
+  }
+});
+
+app.get("/api/code/github/repositories", requireAuth, async (request, response) => {
+  const configured = githubConfigured();
+  const connected = Boolean(getGithubInstallation(request.userId));
+  if (!configured || !connected) {
+    response.json({ configured, connected, repositories: [] });
+    return;
+  }
+  try {
+    response.json({ configured, connected, repositories: await listInstallationRepositories(request.userId) });
+  } catch (error) {
+    response.status(error.status || 502).json({ error: error.message });
+  }
+});
+
+app.delete("/api/code/github/disconnect", requireAuth, (request, response) => {
+  deleteGithubInstallation(request.userId);
+  response.json({ ok: true });
+});
+
+app.get("/api/code/github/tree", requireAuth, async (request, response) => {
+  try {
+    response.json(await repositoryTree(request.userId, String(request.query.repository || ""), String(request.query.ref || "")));
+  } catch (error) {
+    response.status(error.status || 502).json({ error: error.message });
+  }
+});
+
+app.get("/api/code/github/file", requireAuth, async (request, response) => {
+  try {
+    response.json(await repositoryFile(request.userId, String(request.query.repository || ""), String(request.query.ref || ""), String(request.query.path || "")));
+  } catch (error) {
+    response.status(error.status || 502).json({ error: error.message });
+  }
+});
+
+app.get("/api/code/scratch", requireAuth, (request, response) => {
+  response.json({ files: listScratchFiles(request.userId, String(request.query.workspaceId || "scratch")) });
+});
+
+app.put("/api/code/scratch/:id", requireAuth, (request, response) => {
+  const file = request.body || {};
+  if (!validRepositoryPath(file.path) || typeof file.content !== "string" || file.content.length > 1024 * 1024) {
+    response.status(400).json({ error: "Invalid scratch file." });
+    return;
+  }
+  upsertScratchFile(request.userId, { id: request.params.id, workspaceId: String(file.workspaceId || "scratch"), path: file.path, language: String(file.language || "plaintext"), content: file.content });
+  response.json({ ok: true });
+});
+
+app.delete("/api/code/scratch/:id", requireAuth, (request, response) => {
+  response.json({ ok: deleteScratchFile(request.userId, request.params.id) });
+});
+
+const codePatchSchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["summary", "explanation", "warnings", "changes"],
+  properties: {
+    summary: { type: "string" },
+    explanation: { type: "string" },
+    warnings: { type: "array", items: { type: "string" } },
+    changes: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["operation", "path", "content", "rationale"],
+        properties: {
+          operation: { type: "string", enum: ["create", "update", "delete"] },
+          path: { type: "string" },
+          content: { type: "string" },
+          rationale: { type: "string" },
+        },
+      },
+    },
+  },
+};
+
+app.post("/api/code/assist/stream", requireAuth, async (request, response) => {
+  response.setHeader("Content-Type", "text/event-stream");
+  response.setHeader("Cache-Control", "no-cache");
+  response.setHeader("Connection", "keep-alive");
+  const send = (payload) => response.write(`data: ${JSON.stringify(payload)}\n\n`);
+  const files = Array.isArray(request.body?.files) ? request.body.files : [];
+  const totalCharacters = files.reduce((total, file) => total + String(file?.content || "").length, 0);
+  if (!apiKey || apiKey === "your_key_here") {
+    send({ type: "error", error: "Missing OPENAI_API_KEY in .env.local." }); response.end(); return;
+  }
+  if (!String(request.body?.prompt || "").trim() || files.length < 1 || files.length > 12 || totalCharacters > 300_000) {
+    send({ type: "error", error: "Provide 1–12 context files totaling no more than 300,000 characters." }); response.end(); return;
+  }
+  if (files.some((file) => !validRepositoryPath(file.path) || typeof file.content !== "string")) {
+    send({ type: "error", error: "One or more context files has an invalid path or content." }); response.end(); return;
+  }
+  send({ type: "status", message: "Analyzing selected context…" });
+  try {
+    const openai = new OpenAI({ apiKey });
+    const result = await openai.responses.create({
+      model: request.body.quality === "best" ? codeModelBest : codeModelBalanced,
+      instructions: "You are the IO Vault coding assistant. Work only from the supplied task and context files. Return safe, minimal, complete-file changes. Never invent hidden repository content. For questions or explanations that need no edit, return an empty changes array. Deletions must use an empty content string.",
+      input: JSON.stringify({ action: request.body.action, task: request.body.prompt, repository: request.body.repository || null, baseBranch: request.body.baseBranch || null, scratchpad: request.body.scratchpad || null, files }),
+      text: { format: { type: "json_schema", name: "code_patch", strict: true, schema: codePatchSchema } },
+    });
+    const parsed = JSON.parse(result.output_text || "{}");
+    const changes = (Array.isArray(parsed.changes) ? parsed.changes : []).map((change) => ({ ...change, id: crypto.randomUUID(), accepted: true }));
+    if (changes.some((change) => !validRepositoryPath(change.path) || (change.operation !== "delete" && typeof change.content !== "string"))) throw new Error("The assistant returned an invalid file path or change.");
+    const patchSet = {
+      id: crypto.randomUUID(),
+      summary: parsed.summary || "Code changes",
+      explanation: parsed.explanation || "",
+      warnings: Array.isArray(parsed.warnings) ? parsed.warnings : [],
+      contextFiles: files.map((file) => file.path),
+      repository: request.body.repository || undefined,
+      baseBranch: request.body.baseBranch || undefined,
+      baseSha: request.body.baseSha || undefined,
+      changes,
+    };
+    savePatchSet(request.userId, patchSet);
+    send({ type: "result", patchSet });
+  } catch (error) {
+    console.error("Code assistant failed:", error);
+    send({ type: "error", error: "The coding assistant could not produce a valid patch. Check model access and try again." });
+  } finally {
+    response.end();
+  }
+});
+
+app.post("/api/code/publish", requireAuth, async (request, response) => {
+  const row = getPatchSet(request.userId, String(request.body?.patchSetId || ""));
+  if (!row) { response.status(404).json({ error: "Patch set not found." }); return; }
+  const acceptedIds = new Set(Array.isArray(request.body?.acceptedChangeIds) ? request.body.acceptedChangeIds : []);
+  const patchSet = { ...row.data, changes: row.data.changes.map((change) => ({ ...change, accepted: acceptedIds.has(change.id) })) };
+  if (!patchSet.repository || !patchSet.baseBranch || !patchSet.baseSha) { response.status(400).json({ error: "Only GitHub-backed patch sets can be published." }); return; }
+  try {
+    const publication = await publishPatch(request.userId, patchSet, String(request.body?.title || patchSet.summary), request.body?.draft !== false);
+    savePublication(request.userId, { patchSetId: patchSet.id, repository: patchSet.repository, ...publication });
+    response.json(publication);
+  } catch (error) {
+    response.status(error.status || 502).json({ error: error.message });
+  }
+});
+
+export { app };
+
+if (process.env.NODE_ENV !== "test") {
+  app.listen(port, () => {
+    console.log(`IO Vault API running on http://localhost:${port}`);
+  });
+}

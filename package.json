@@ -8,6 +8,7 @@
     "dev:web": "vite",
     "dev:api": "node server/index.js",
     "build": "tsc -b && vite build",
+    "test": "vitest run",
     "preview": "vite preview"
   },
   "_comments": {
@@ -18,6 +19,7 @@
     "preview": "Serve the production build locally"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "@vitejs/plugin-react": "latest",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.11.1",
@@ -25,6 +27,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "monaco-editor": "^0.55.1",
     "openai": "^6.34.0",
     "react": "latest",
     "react-dom": "latest",
@@ -34,7 +37,13 @@
     "vite": "latest"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "@types/react-dom": "latest",
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^29.1.1",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.10"
   }
 }
