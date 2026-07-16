@@ -37,6 +37,19 @@ function languageFromPath(path: string) {
   return ({ tsx: "typescript", ts: "typescript", jsx: "javascript", js: "javascript", mjs: "javascript", py: "python", css: "css", html: "html", json: "json", md: "markdown", yml: "yaml", yaml: "yaml", sh: "shell" } as Record<string, string>)[extension || ""] || "plaintext";
 }
 
+function snippetExtension(language: string) {
+  return ({ typescript: "ts", ts: "ts", tsx: "tsx", javascript: "js", js: "js", jsx: "jsx", python: "py", py: "py", css: "css", html: "html", json: "json", markdown: "md", yaml: "yml", shell: "sh" } as Record<string, string>)[language.toLowerCase()] || "txt";
+}
+
+function snippetFilename(snippet: CodeSnippet) {
+  return /\.[A-Za-z0-9]+$/.test(snippet.title) ? snippet.title : `${snippet.title}.${snippetExtension(snippet.language)}`;
+}
+
+function snippetLanguage(snippet: CodeSnippet, filename = snippetFilename(snippet)) {
+  const detected = languageFromPath(filename);
+  return detected === "plaintext" ? languageFromPath(`file.${snippetExtension(snippet.language)}`) : detected;
+}
+
 function basename(path: string) {
   return path.split("/").pop() || path;
 }
@@ -69,6 +82,7 @@ export default function CodeVaultWorkspace({ code, githubSuggestion, updateCode 
   const [error, setError] = useState<string | null>(null);
   const [publishUrl, setPublishUrl] = useState<string | null>(null);
   const [undoSnapshot, setUndoSnapshot] = useState<CodeFile[] | null>(null);
+  const [snippetNameDrafts, setSnippetNameDrafts] = useState<Record<string, string>>({});
 
   const activeFile = files.find((file) => file.id === activeFileId) || null;
   const contextFiles = files.filter((file) => file.selectedContext);
@@ -207,6 +221,44 @@ export default function CodeVaultWorkspace({ code, githubSuggestion, updateCode 
     };
     updateCode({ snippets: [snippet, ...code.snippets] });
     setExplorerTab("snippets");
+  }
+
+  function renameSnippet(snippet: CodeSnippet, value: string) {
+    const filename = basename(value).trim();
+    if (!filename) return;
+    const detected = languageFromPath(filename);
+    updateCode({
+      snippets: code.snippets.map((item) => item.id === snippet.id ? {
+        ...item,
+        title: filename,
+        language: detected === "plaintext" ? item.language : detected,
+        updatedAt: new Date().toISOString(),
+      } : item),
+    });
+    setSnippetNameDrafts((current) => {
+      const next = { ...current };
+      delete next[snippet.id];
+      return next;
+    });
+  }
+
+  async function openSnippet(snippet: CodeSnippet) {
+    const filename = snippetFilename(snippet);
+    const file: CodeFile = {
+      id: `scratch:${crypto.randomUUID()}`,
+      workspaceId: "scratch",
+      path: filename,
+      language: snippetLanguage(snippet, filename),
+      content: snippet.code,
+      originalContent: snippet.code,
+      source: "scratch",
+      dirty: false,
+      selectedContext: true,
+      lastOpenedAt: Date.now(),
+    };
+    await Promise.all([saveCodeFile(file), saveRemoteScratchFile(file).catch(() => ({ ok: false }))]);
+    setFiles((current) => [...current, file]);
+    setActiveFileId(file.id);
   }
 
   async function askAssistant() {
@@ -358,12 +410,27 @@ export default function CodeVaultWorkspace({ code, githubSuggestion, updateCode 
               ))}
             </>
           ) : code.snippets.map((snippet) => (
-            <button className="snippet-card" type="button" key={snippet.id} onClick={() => {
-              const file: CodeFile = { id: `scratch:${crypto.randomUUID()}`, workspaceId: "scratch", path: `${snippet.title}.${snippet.language}`, language: snippet.language, content: snippet.code, originalContent: snippet.code, source: "scratch", dirty: false, selectedContext: true, lastOpenedAt: Date.now() };
-              void Promise.all([saveCodeFile(file), saveRemoteScratchFile(file).catch(() => ({ ok: false }))]); setFiles((current) => [...current, file]); setActiveFileId(file.id);
-            }}>
-              <strong>{snippet.title}</strong><span>{snippet.language}{snippet.source ? ` · ${snippet.source.repository}` : ""}</span>
-            </button>
+            <article className="snippet-card snippet-edit-card" key={snippet.id}>
+              <input
+                aria-label={`Snippet filename ${snippet.title}`}
+                value={snippetNameDrafts[snippet.id] ?? snippetFilename(snippet)}
+                onChange={(event) => setSnippetNameDrafts((current) => ({ ...current, [snippet.id]: event.target.value }))}
+                onBlur={(event) => renameSnippet(snippet, event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") event.currentTarget.blur();
+                  if (event.key === "Escape") {
+                    setSnippetNameDrafts((current) => {
+                      const next = { ...current };
+                      delete next[snippet.id];
+                      return next;
+                    });
+                  }
+                }}
+                spellCheck={false}
+              />
+              <span>{snippetLanguage(snippet)}{snippet.source ? ` · ${snippet.source.repository}` : ""}</span>
+              <button type="button" onClick={() => void openSnippet(snippet)}>Open</button>
+            </article>
           ))}
         </div>
       </aside>

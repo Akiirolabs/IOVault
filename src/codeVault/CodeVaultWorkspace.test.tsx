@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import CodeVaultWorkspace from "./CodeVaultWorkspace";
 
@@ -13,10 +13,17 @@ vi.mock("./api", () => ({
 
 describe("Code Vault workspace", () => {
   it("renders Explorer, editor, Assistant, and preserved snippets", async () => {
-    render(<CodeVaultWorkspace code={{ language: "tsx", editor: "const value = 1", notesHtml: "<p>notes</p>", snippets: [{ id: "one", title: "Example", language: "ts", code: "const value = 1" }] }} githubSuggestion="" updateCode={vi.fn()} />);
+    const updateCode = vi.fn();
+    render(<CodeVaultWorkspace code={{ language: "tsx", editor: "const value = 1", notesHtml: "<p>notes</p>", snippets: [{ id: "one", title: "Example", language: "ts", code: "const value = 1" }] }} githubSuggestion="" updateCode={updateCode} />);
     expect(screen.getByRole("button", { name: /Files/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Snippets 1/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Assistant" })).toBeInTheDocument();
     expect(await screen.findByTestId("monaco-editor")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Snippets 1/i }));
+    const filename = screen.getByRole("textbox", { name: "Snippet filename Example" });
+    expect(filename).toHaveValue("Example.ts");
+    fireEvent.change(filename, { target: { value: "helper.py" } });
+    fireEvent.blur(filename);
+    expect(updateCode).toHaveBeenCalledWith(expect.objectContaining({ snippets: [expect.objectContaining({ title: "helper.py", language: "python" })] }));
   });
 });
