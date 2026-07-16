@@ -1029,6 +1029,25 @@ textarea {
   white-space: nowrap;
 }
 
+.active-file-name {
+  min-width: 8rem;
+  max-width: 20rem;
+  margin-right: auto;
+  border: 0;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 0;
+  padding: 0.35rem 0.2rem;
+  color: #dff7ff;
+  background: transparent;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+}
+
+.active-file-name:focus {
+  border-bottom-color: #7dd3fc;
+  outline: none;
+}
+
 .context-toggle {
   display: inline-flex;
   gap: 0.45rem;

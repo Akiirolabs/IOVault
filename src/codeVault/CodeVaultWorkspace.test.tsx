@@ -19,6 +19,7 @@ describe("Code Vault workspace", () => {
     expect(screen.getByRole("button", { name: /Snippets 1/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Assistant" })).toBeInTheDocument();
     expect(await screen.findByTestId("monaco-editor")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "File name" })).toHaveValue("Untitled.tsx");
     fireEvent.click(screen.getByRole("button", { name: /Snippets 1/i }));
     const filename = screen.getByRole("textbox", { name: "Snippet filename Example" });
     expect(filename).toHaveValue("Example.ts");

@@ -88,7 +88,7 @@ const statements = {
   upsertScratch: db.prepare(`
     INSERT INTO scratch_files (id, user_id, workspace_id, path, language, content, updated_at)
     VALUES (@id, @userId, @workspaceId, @path, @language, @content, datetime('now'))
-    ON CONFLICT(user_id, workspace_id, path) DO UPDATE SET language = excluded.language, content = excluded.content, updated_at = datetime('now')
+    ON CONFLICT(id) DO UPDATE SET workspace_id = excluded.workspace_id, path = excluded.path, language = excluded.language, content = excluded.content, updated_at = datetime('now')
   `),
   deleteScratch: db.prepare("DELETE FROM scratch_files WHERE id = ? AND user_id = ?"),
 };

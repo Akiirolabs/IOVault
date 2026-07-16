@@ -83,6 +83,7 @@ export default function CodeVaultWorkspace({ code, githubSuggestion, updateCode 
   const [publishUrl, setPublishUrl] = useState<string | null>(null);
   const [undoSnapshot, setUndoSnapshot] = useState<CodeFile[] | null>(null);
   const [snippetNameDrafts, setSnippetNameDrafts] = useState<Record<string, string>>({});
+  const [fileNameDraft, setFileNameDraft] = useState<string | null>(null);
 
   const activeFile = files.find((file) => file.id === activeFileId) || null;
   const contextFiles = files.filter((file) => file.selectedContext);
@@ -195,6 +196,19 @@ export default function CodeVaultWorkspace({ code, githubSuggestion, updateCode 
       }
       return next;
     }));
+  }
+
+  function renameActiveScratchFile(value: string) {
+    if (!activeFile || activeFile.source !== "scratch") return;
+    const filename = basename(value).trim();
+    setFileNameDraft(null);
+    if (!filename || files.some((file) => file.id !== activeFile.id && file.workspaceId === activeFile.workspaceId && file.path === filename)) {
+      setError(!filename ? "File name cannot be empty." : `A file named ${filename} already exists.`);
+      return;
+    }
+    const detected = languageFromPath(filename);
+    updateFile(activeFile.id, { path: filename, language: detected === "plaintext" ? activeFile.language : detected });
+    setError(null);
   }
 
   async function addScratchFile() {
@@ -444,7 +458,20 @@ export default function CodeVaultWorkspace({ code, githubSuggestion, updateCode 
           ))}
         </div>
         <div className="editor-actions">
-          <span>{activeFile?.path || "No file open"}</span>
+          {activeFile?.source === "scratch" ? (
+            <input
+              className="active-file-name"
+              aria-label="File name"
+              value={fileNameDraft ?? activeFile.path}
+              onChange={(event) => setFileNameDraft(event.target.value)}
+              onBlur={(event) => renameActiveScratchFile(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") event.currentTarget.blur();
+                if (event.key === "Escape") setFileNameDraft(null);
+              }}
+              spellCheck={false}
+            />
+          ) : <span title={activeFile?.path}>{activeFile?.path || "No file open"}</span>}
           {activeFile && <label className="context-toggle"><input type="checkbox" checked={activeFile.selectedContext} onChange={(event) => updateFile(activeFile.id, { selectedContext: event.target.checked })} /> AI context</label>}
           <button type="button" disabled={!activeFile} onClick={saveActiveSnippet}>Save snippet</button>
         </div>
