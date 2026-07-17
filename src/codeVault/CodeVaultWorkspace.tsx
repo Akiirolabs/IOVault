@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import type { CodeSnippet } from "./types";
 import type { AssistantAction, CodeFile, PatchSet, RepositorySummary, RepositoryTreeEntry } from "./types";
-import { beginGithubConnection, deleteRemoteScratchFile, disconnectGithub, listRemoteScratchFiles, listRepositories, loadRepositoryFile, loadRepositoryTree, publishPatchSet, requestCodeAssistance, saveRemoteScratchFile } from "./api";
+import { beginGithubConnection, createManualPatchSet, deleteRemoteScratchFile, disconnectGithub, listRemoteScratchFiles, listRepositories, loadRepositoryFile, loadRepositoryTree, publishPatchSet, requestCodeAssistance, saveRemoteScratchFile } from "./api";
 import { deleteCodeFile, listWorkspaceFiles, saveCodeFile } from "./storage";
 import { migrateLegacyEditor } from "./migration";
 
@@ -211,6 +211,68 @@ export default function CodeVaultWorkspace({ code, githubSuggestion, updateCode 
     setError(null);
   }
 
+  async function deleteActiveFile() {
+    if (!activeFile) return;
+    const isRepositoryFile = activeFile.source === "github";
+    const message = isRepositoryFile
+      ? `Stage ${activeFile.path} for deletion in a draft pull request?`
+      : `Permanently delete ${activeFile.path}?`;
+    if (!window.confirm(message)) return;
+    setIsBusy(true);
+    setError(null);
+    try {
+      if (isRepositoryFile) {
+        const deletionPatch = await createManualPatchSet({
+          repository: activeFile.repository || repository,
+          baseBranch,
+          baseSha,
+          summary: `Delete ${activeFile.path}`,
+          changes: [{ operation: "delete", path: activeFile.path, content: "", rationale: "File deletion requested by the user." }],
+        });
+        setPatchSet(deletionPatch);
+        setRightTab("changes");
+        setAssistantStatus(`${activeFile.path} is staged for deletion. Review the change, then create a draft pull request.`);
+      } else {
+        await Promise.all([
+          deleteCodeFile(activeFile.id),
+          deleteRemoteScratchFile(activeFile.id).catch(() => ({ ok: false })),
+        ]);
+        const remaining = files.filter((file) => file.id !== activeFile.id);
+        setFiles(remaining);
+        setActiveFileId(remaining[0]?.id || null);
+        setFileNameDraft(null);
+        if (!remaining.length) updateCode({ editor: "", language: "ts" });
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not delete the file.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function deleteScratchFileFromList(file: CodeFile) {
+    if (file.source !== "scratch" || !window.confirm(`Permanently delete ${file.path}?`)) return;
+    setIsBusy(true);
+    setError(null);
+    try {
+      await Promise.all([
+        deleteCodeFile(file.id),
+        deleteRemoteScratchFile(file.id).catch(() => ({ ok: false })),
+      ]);
+      const remaining = files.filter((item) => item.id !== file.id);
+      setFiles(remaining);
+      if (activeFileId === file.id) {
+        setActiveFileId(remaining[0]?.id || null);
+        setFileNameDraft(null);
+      }
+      if (!remaining.length) updateCode({ editor: "", language: "ts" });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not delete the file.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
   async function addScratchFile() {
     const file = migrateLegacyEditor({ editor: "", language: "ts" });
     file.path = `scratch-${files.filter((item) => item.source === "scratch").length + 1}.ts`;
@@ -418,9 +480,12 @@ export default function CodeVaultWorkspace({ code, githubSuggestion, updateCode 
                   <span>{entry.path}</span><small>{entry.size ? `${Math.ceil(entry.size / 1024)} KB` : ""}</small>
                 </button>
               )) : files.map((file) => (
-                <button className={`file-row ${file.id === activeFileId ? "active" : ""}`} type="button" key={file.id} onClick={() => setActiveFileId(file.id)}>
-                  <span>{file.dirty ? "● " : ""}{file.path}</span>
-                </button>
+                <div className={`scratch-file-row ${file.id === activeFileId ? "active" : ""}`} key={file.id}>
+                  <button className="file-row" type="button" onClick={() => setActiveFileId(file.id)}>
+                    <span>{file.dirty ? "● " : ""}{file.path}</span>
+                  </button>
+                  <button className="scratch-delete" type="button" aria-label={`Delete ${file.path}`} disabled={isBusy} onClick={() => void deleteScratchFileFromList(file)}>×</button>
+                </div>
               ))}
             </>
           ) : code.snippets.map((snippet) => (
@@ -474,6 +539,7 @@ export default function CodeVaultWorkspace({ code, githubSuggestion, updateCode 
           ) : <span title={activeFile?.path}>{activeFile?.path || "No file open"}</span>}
           {activeFile && <label className="context-toggle"><input type="checkbox" checked={activeFile.selectedContext} onChange={(event) => updateFile(activeFile.id, { selectedContext: event.target.checked })} /> AI context</label>}
           <button type="button" disabled={!activeFile} onClick={saveActiveSnippet}>Save snippet</button>
+          <button className="danger-action" type="button" disabled={!activeFile || isBusy} onClick={() => void deleteActiveFile()}>Delete file</button>
         </div>
         <div className="monaco-frame">
           {activeFile ? (

@@ -286,6 +286,33 @@ app.delete("/api/code/scratch/:id", requireAuth, (request, response) => {
   response.json({ ok: deleteScratchFile(request.userId, request.params.id) });
 });
 
+app.post("/api/code/patch-sets", requireAuth, (request, response) => {
+  const repository = String(request.body?.repository || "");
+  const baseBranch = String(request.body?.baseBranch || "");
+  const baseSha = String(request.body?.baseSha || "");
+  const changes = Array.isArray(request.body?.changes) ? request.body.changes : [];
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository) || !baseBranch || !/^[a-f0-9]{40}$/i.test(baseSha) || changes.length < 1 || changes.length > 50) {
+    response.status(400).json({ error: "Invalid patch-set metadata." });
+    return;
+  }
+  const normalizedChanges = changes.map((change) => ({
+    id: crypto.randomUUID(),
+    operation: change.operation,
+    path: String(change.path || ""),
+    content: String(change.content || ""),
+    rationale: String(change.rationale || "Manual change"),
+    accepted: true,
+  }));
+  if (normalizedChanges.some((change) => !["create", "update", "delete"].includes(change.operation) || !validRepositoryPath(change.path) || change.content.length > 1024 * 1024)) {
+    response.status(400).json({ error: "One or more file changes is invalid." });
+    return;
+  }
+  const summary = String(request.body?.summary || "Manual code changes").slice(0, 200);
+  const patchSet = { id: crypto.randomUUID(), summary, explanation: summary, warnings: [], contextFiles: [], repository, baseBranch, baseSha, changes: normalizedChanges };
+  savePatchSet(request.userId, patchSet);
+  response.json({ patchSet });
+});
+
 const codePatchSchema = {
   type: "object",
   additionalProperties: false,

@@ -55,6 +55,19 @@ export async function deleteRemoteScratchFile(id: string) {
   return codeApi<{ ok: boolean }>(`/api/code/scratch/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
+export async function createManualPatchSet(input: {
+  repository: string;
+  baseBranch: string;
+  baseSha: string;
+  summary: string;
+  changes: Array<{ operation: "create" | "update" | "delete"; path: string; content: string; rationale: string }>;
+}) {
+  return codeApi<{ patchSet: PatchSet }>("/api/code/patch-sets", {
+    method: "POST",
+    body: JSON.stringify(input),
+  }).then((result) => result.patchSet);
+}
+
 export async function requestCodeAssistance(input: {
   action: AssistantAction;
   prompt: string;

@@ -1015,6 +1015,39 @@ textarea {
   background: rgba(56, 189, 248, 0.1);
 }
 
+.scratch-file-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  margin-bottom: 0.3rem;
+  border-radius: 0.6rem;
+}
+
+.scratch-file-row .file-row {
+  min-width: 0;
+  margin: 0;
+}
+
+.scratch-file-row:hover,
+.scratch-file-row.active {
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.scratch-delete {
+  margin-right: 0.25rem;
+  border-color: transparent;
+  padding: 0.2rem 0.45rem;
+  color: #fca5a5;
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.scratch-delete:hover:not(:disabled) {
+  border-color: rgba(248, 113, 113, 0.35);
+  background: rgba(127, 29, 29, 0.24);
+}
+
 .editor-actions {
   justify-content: flex-end;
   min-height: 3.2rem;
@@ -1137,6 +1170,17 @@ textarea {
   color: #06131e;
   background: linear-gradient(135deg, #7dd3fc, #67e8f9);
   font-weight: 900;
+}
+
+.danger-action {
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.18);
+}
+
+.danger-action:hover:not(:disabled) {
+  border-color: rgba(248, 113, 113, 0.65);
+  background: rgba(127, 29, 29, 0.32);
 }
 
 .assistant-pane > .primary-action {

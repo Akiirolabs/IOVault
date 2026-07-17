@@ -8,7 +8,7 @@ vi.mock("./api", () => ({
   listRemoteScratchFiles: vi.fn(async () => ({ files: [] })),
   saveRemoteScratchFile: vi.fn(async () => ({ ok: true })),
   deleteRemoteScratchFile: vi.fn(async () => ({ ok: true })),
-  beginGithubConnection: vi.fn(), disconnectGithub: vi.fn(), loadRepositoryFile: vi.fn(), loadRepositoryTree: vi.fn(), publishPatchSet: vi.fn(), requestCodeAssistance: vi.fn(),
+  beginGithubConnection: vi.fn(), createManualPatchSet: vi.fn(), disconnectGithub: vi.fn(), loadRepositoryFile: vi.fn(), loadRepositoryTree: vi.fn(), publishPatchSet: vi.fn(), requestCodeAssistance: vi.fn(),
 }));
 
 describe("Code Vault workspace", () => {
@@ -20,6 +20,8 @@ describe("Code Vault workspace", () => {
     expect(screen.getByRole("button", { name: "Assistant" })).toBeInTheDocument();
     expect(await screen.findByTestId("monaco-editor")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "File name" })).toHaveValue("Untitled.tsx");
+    expect(screen.getByRole("button", { name: "Delete file" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Delete Untitled.tsx" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: /Snippets 1/i }));
     const filename = screen.getByRole("textbox", { name: "Snippet filename Example" });
     expect(filename).toHaveValue("Example.ts");
