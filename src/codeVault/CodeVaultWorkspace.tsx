@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import type { BeforeMount } from "@monaco-editor/react";
 import type { CodeSnippet } from "./types";
 import type { AssistantAction, CodeFile, PatchSet, RepositorySummary, RepositoryTreeEntry } from "./types";
 import { beginGithubConnection, createManualPatchSet, deleteRemoteScratchFile, disconnectGithub, listRemoteScratchFiles, listRepositories, loadRepositoryFile, loadRepositoryTree, publishPatchSet, requestCodeAssistance, saveRemoteScratchFile } from "./api";
@@ -6,6 +7,25 @@ import { deleteCodeFile, listWorkspaceFiles, saveCodeFile } from "./storage";
 import { migrateLegacyEditor } from "./migration";
 
 const MonacoEditor = lazy(() => import("@monaco-editor/react"));
+
+const configureMonaco: BeforeMount = (monaco) => {
+  const diagnostics = {
+    noSemanticValidation: true,
+    noSyntaxValidation: false,
+    noSuggestionDiagnostics: true,
+  };
+  const compilerOptions = {
+    allowNonTsExtensions: true,
+    allowJs: true,
+    jsx: monaco.languages.typescript.JsxEmit.ReactJSX,
+    target: monaco.languages.typescript.ScriptTarget.ES2022,
+  };
+
+  monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(diagnostics);
+  monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions(diagnostics);
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions(compilerOptions);
+  monaco.languages.typescript.javascriptDefaults.setCompilerOptions(compilerOptions);
+};
 
 type CodeState = {
   language: string;
@@ -52,6 +72,11 @@ function snippetLanguage(snippet: CodeSnippet, filename = snippetFilename(snippe
 
 function basename(path: string) {
   return path.split("/").pop() || path;
+}
+
+function monacoModelPath(file: CodeFile) {
+  const safePath = file.path.split("/").map(encodeURIComponent).join("/");
+  return `inmemory://iovault/${encodeURIComponent(file.workspaceId)}/${encodeURIComponent(file.id)}/${safePath}`;
 }
 
 function stripHtml(value: string) {
@@ -545,10 +570,11 @@ export default function CodeVaultWorkspace({ code, githubSuggestion, updateCode 
           {activeFile ? (
             <Suspense fallback={<div className="editor-loading">Loading code editor…</div>}>
               <MonacoEditor
-                path={activeFile.id}
+                path={monacoModelPath(activeFile)}
                 language={activeFile.language}
                 theme="vs-dark"
                 value={activeFile.content}
+                beforeMount={configureMonaco}
                 onChange={(value) => updateFile(activeFile.id, { content: value || "", dirty: (value || "") !== activeFile.originalContent })}
                 options={{ minimap: { enabled: false }, fontSize: 14, wordWrap: "on", automaticLayout: true, scrollBeyondLastLine: false, padding: { top: 14 }, tabSize: 2 }}
               />
