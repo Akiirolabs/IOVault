@@ -34,6 +34,19 @@ db.exec(`
     data TEXT NOT NULL DEFAULT '{}',
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS ai_usage_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    route TEXT NOT NULL,
+    model TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    prompt_chars INTEGER NOT NULL,
+    context_bytes INTEGER NOT NULL,
+    input_tokens INTEGER,
+    output_tokens INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 
 const statements = {
@@ -48,6 +61,13 @@ const statements = {
     VALUES (@userId, @data, datetime('now'))
     ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, updated_at = datetime('now')
   `),
+  insertAiUsageEvent: db.prepare(`
+    INSERT INTO ai_usage_events
+      (user_id, route, model, outcome, prompt_chars, context_bytes, input_tokens, output_tokens)
+    VALUES
+      (@userId, @route, @model, @outcome, @promptChars, @contextBytes, @inputTokens, @outputTokens)
+  `),
+  listAiUsageEvents: db.prepare("SELECT * FROM ai_usage_events WHERE user_id = ? ORDER BY id DESC"),
 };
 
 export function createUser({ id, email, passwordHash }) {
@@ -76,6 +96,23 @@ export function getWorkspace(userId) {
 /** Upserts the full VaultState (as JSON) for a user. */
 export function saveWorkspace(userId, data) {
   statements.upsertWorkspace.run({ userId, data: JSON.stringify(data) });
+}
+
+export function recordAiUsageEvent(event) {
+  statements.insertAiUsageEvent.run({
+    userId: event.userId,
+    route: event.route,
+    model: event.model,
+    outcome: event.outcome,
+    promptChars: event.promptChars,
+    contextBytes: event.contextBytes,
+    inputTokens: event.inputTokens ?? null,
+    outputTokens: event.outputTokens ?? null,
+  });
+}
+
+export function listAiUsageEvents(userId) {
+  return statements.listAiUsageEvents.all(userId);
 }
 
 export default db;

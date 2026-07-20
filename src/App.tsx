@@ -442,7 +442,7 @@ const tokenKey = "io-vault-token";
 type AuthUser = { id: string; email: string };
 
 /** fetch wrapper that attaches the Bearer token (if any) and JSON headers. */
-async function apiFetch(path: string, options: RequestInit = {}) {
+export async function apiFetch(path: string, options: RequestInit = {}) {
   const token = localStorage.getItem(tokenKey);
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -977,9 +977,8 @@ function App() {
   // --- AI: shared fetch to /api/agent (proxied to Express in dev) ---
 
   async function requestAgent(message: string) {
-    const response = await fetch("/api/agent", {
+    const response = await apiFetch("/api/agent", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, vaultData: vaultState }),
     });
     const data = (await response.json()) as { answer?: string; error?: string };

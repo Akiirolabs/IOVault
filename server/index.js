@@ -19,6 +19,7 @@ import {
   findUserByEmail,
   findUserById,
   getWorkspace,
+  recordAiUsageEvent,
   saveWorkspace,
 } from "./db.js";
 import {
@@ -50,6 +51,7 @@ import {
   repositoryTree,
   validRepositoryPath,
 } from "./github.js";
+import { createAiRateLimiter, validateAgentRequest } from "./ai-security.js";
 
 const app = express();
 const port = Number(process.env.API_PORT || 8787);
@@ -57,6 +59,9 @@ const model = "gpt-4o-mini";
 const apiKey = process.env.OPENAI_API_KEY;
 const codeModelBalanced = process.env.OPENAI_CODE_MODEL_BALANCED || "gpt-5.4-mini";
 const codeModelBest = process.env.OPENAI_CODE_MODEL_BEST || "gpt-5.6";
+const aiRateLimiter = createAiRateLimiter();
+const aiLimiterCleanup = setInterval(() => aiRateLimiter.cleanup(), 60_000);
+aiLimiterCleanup.unref?.();
 
 app.use(express.json({ limit: "2mb" }));
 
@@ -152,25 +157,44 @@ app.put("/api/vault", requireAuth, (request, response) => {
  * Body: { message: string, vaultData?: object }
  * Returns: { answer: string, model: string } or { error: string }
  */
-app.post("/api/agent", async (request, response) => {
-  const message = String(request.body?.message || "").trim();
-  const vaultData = request.body?.vaultData || {};
+app.locals.aiConfigured = Boolean(apiKey && apiKey !== "your_key_here");
+app.locals.aiClient = app.locals.aiConfigured ? new OpenAI({ apiKey, timeout: 30_000, maxRetries: 1 }) : null;
+app.locals.aiRateLimiter = aiRateLimiter;
 
-  if (!message) {
-    response.status(400).json({ error: "Message is required." });
+app.post("/api/agent", requireAuth, aiRateLimiter.middleware, async (request, response) => {
+  const validation = validateAgentRequest(request.body);
+  if (validation.error) {
+    response.status(validation.status).json({ error: validation.error });
     return;
   }
+  const { message, serializedVault, contextBytes } = validation;
 
-  if (!apiKey || apiKey === "your_key_here") {
+  if (!app.locals.aiConfigured || !app.locals.aiClient) {
     response.status(400).json({
       error: "Missing OPENAI_API_KEY in .env.local.",
     });
     return;
   }
 
+  const audit = (outcome, usage = {}) => {
+    try {
+      recordAiUsageEvent({
+        userId: request.userId,
+        route: "/api/agent",
+        model,
+        outcome,
+        promptChars: message.length,
+        contextBytes,
+        inputTokens: usage.prompt_tokens,
+        outputTokens: usage.completion_tokens,
+      });
+    } catch (auditError) {
+      console.error("AI usage audit failed:", auditError?.name || "Unknown error");
+    }
+  };
+
   try {
-    const openai = new OpenAI({ apiKey });
-    const completion = await openai.chat.completions.create({
+    const completion = await app.locals.aiClient.chat.completions.create({
       model,
       temperature: 0.35,
       messages: [
@@ -184,21 +208,23 @@ app.post("/api/agent", async (request, response) => {
           // Full workspace snapshot so the model can answer in context
           content: JSON.stringify({
             message,
-            vaultData,
+            vaultData: JSON.parse(serializedVault),
           }),
         },
       ],
     });
+
+    audit("success", completion.usage);
 
     response.json({
       answer: completion.choices[0]?.message?.content || "I could not generate an answer.",
       model,
     });
   } catch (error) {
-    console.error("OpenAI request failed:", error);
-    response.status(500).json({
-      error: "OpenAI request failed. Check your API key and billing status.",
-    });
+    console.error("OpenAI request failed:", error?.name || "Unknown error");
+    const timedOut = error?.name === "APIConnectionTimeoutError" || error?.code === "ETIMEDOUT";
+    audit(timedOut ? "timeout" : "upstream_error");
+    response.status(timedOut ? 504 : 502).json({ error: timedOut ? "The AI service timed out. Try again." : "The AI service is temporarily unavailable." });
   }
 });
 
