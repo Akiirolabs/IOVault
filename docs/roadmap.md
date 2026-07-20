@@ -1,77 +1,48 @@
-# Roadmap
+# IO Vault Roadmap
 
-This file tracks planned work and implementation notes. Move completed items into `implementation-log.md`.
+The roadmap prioritizes security and data integrity before broad feature expansion. Completed work belongs in [implementation-log.md](implementation-log.md); detailed defects belong in [debug-system](debug-system/README.md).
 
-## Near Term
+## Status overview
 
-### Keep Docs In Sync With Code
+| Priority | Workstream | Status | Next outcome |
+|---:|---|---|---|
+| P0 | AI endpoint authentication and bounded context | **Complete** | Monitor quality and usage |
+| P0 | Production JWT secret and session storage | Planned | Fail closed; move to HttpOnly sessions |
+| P0 | System-wide abuse controls | Partial | Protect auth, GitHub, and code-assistant routes |
+| P1 | Conflict-safe workspace sync | Planned | Expected version + HTTP 409 workflow |
+| P1 | Rich-text sanitization and API schemas | Planned | Close stored-XSS and malformed-input paths |
+| P1 | Code Vault memory profiling | Planned | Baseline large-repository behavior |
+| P2 | Frontend/server modularization | Planned | Smaller tested feature boundaries |
+| P2 | Project table creator | Planned | Typed per-project rows and columns |
+| P3 | Flowchart and object mindmap | Planned | Manual then automatic graph screens |
 
-- Update the docs folder whenever app flow, data shape, API behavior, or layout behavior changes.
-- Add dated notes to `implementation-log.md` for every meaningful implementation change.
-- Update Mermaid diagrams when a flow or architecture boundary changes.
+## Delivery sequence
 
-### Improve Responsive Usability Without Changing Layout Shape
+```mermaid
+flowchart LR
+  A["Security hardening"] --> B["Conflict-safe sync"]
+  B --> C["Component/API boundaries"]
+  C --> D["Project table"]
+  D --> E["Manual flowchart"]
+  E --> F["Automatic object mindmap"]
+```
 
-Current policy keeps the same desktop structure on mobile and uses horizontal scrolling. Planned refinements should preserve that policy unless the product direction changes.
+## Near-term acceptance targets
 
-Possible implementation work:
+### Security and persistence
 
-- Add clear scroll affordance for narrow screens.
-- Ensure fixed drawers and floating panels do not cover key controls on mobile.
-- Test all pages at `390x844`, `768x1024`, and `1280x800`.
+Require `JWT_SECRET` in production, migrate browser-readable JWTs to HttpOnly sessions with CSRF protection, add route-specific quotas, sanitize rich text, and reject stale workspace saves.
 
-### Split App Into Smaller Components
+### Maintainability and performance
 
-`src/App.tsx` currently owns state, data normalization, page rendering, AI calls, and page-specific UI. This is workable, but future changes will be easier if the file is split.
+Add characterization tests before splitting `src/App.tsx` and `server/index.js`. Profile Code Vault with realistic multi-file repositories before moving file bodies out of broad React state.
 
-Possible implementation work:
+### Product expansion
 
-- `src/types.ts` for shared state types.
-- `src/storage.ts` for `defaultVaultState`, `normalizeVaultState`, and `getSavedVaultState`.
-- `src/ai.ts` for frontend AI request helpers and offline fallback behavior.
-- `src/components/AgentDrawer.tsx`.
-- `src/components/WorkspaceNav.tsx`.
-- `src/pages/CodeVault.tsx`, `WritePage.tsx`, `LearningPage.tsx`, `CareerPage.tsx`, `ProjectsPage.tsx`.
+Build the data table first because it requires no graph engine. Reuse one project overlay contract for the later manual flowchart and automatically laid-out object mindmap.
 
-### Align AI Model Configuration
+## Deferred
 
-`src/aiConfig.ts` and `server/index.js` both reference `gpt-4o-mini`. Keep them synchronized or move the backend model to environment configuration and return the active model to the UI.
-
-Possible implementation work:
-
-- Add `OPENAI_MODEL` support in `server/index.js`.
-- Keep `src/aiConfig.ts` as UI fallback text only.
-- Show the server-returned model after successful AI calls.
-
-## Later
-
-### Data Export And Import
-
-Add a way to export and import the saved `VaultState`.
-
-Possible implementation work:
-
-- Export JSON from localStorage.
-- Validate imported JSON with `normalizeVaultState`.
-- Add confirmation before replacing existing workspace state.
-
-### Tests
-
-Add focused tests around pure logic and high-risk UI behavior.
-
-Possible implementation work:
-
-- Unit tests for `normalizeVaultState`.
-- Unit tests for `highlightCode` and `answerBasicQuestion`.
-- Browser checks for responsive layout parity.
-- API tests for `/api/agent` validation behavior.
-
-### Persistence Upgrade
-
-LocalStorage is enough for the current app, but larger documents and cross-device sync may require a stronger persistence layer.
-
-Possible implementation work:
-
-- IndexedDB for larger local documents.
-- Optional backend persistence.
-- Auth-gated cloud sync.
+- Code execution, terminal access, dependency installation, and live preview in Code Vault.
+- Local-folder access outside GitHub and scratch workspaces.
+- Package/workspace splitting until deployment boundaries justify it.

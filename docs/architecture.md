@@ -1,104 +1,67 @@
-# Architecture — Server, Auth & SQL Sync
+# IO Vault Architecture
 
-Visual overview of how IO Vault changed from a purely client-side app (browser `localStorage`) to a signed-in app whose data is stored per user in a SQL database.
+IO Vault is a Vite/React SPA backed by an Express API and SQLite. Browser caches keep editing responsive; authenticated server storage is authoritative for user-owned records, while GitHub remains authoritative for connected repository files.
 
-## Before vs after
-
-```mermaid
-flowchart LR
-  subgraph Before["Before (client only)"]
-    B1[React app] -->|read/write| B2[(localStorage)]
-  end
-  subgraph After["After (accounts + SQL)"]
-    A1[React app] -->|cache| A2[(localStorage)]
-    A1 -->|"/api auth + vault (Bearer JWT)"| A3[Express API]
-    A3 -->|SQL| A4[(SQLite DB)]
-  end
-```
-
-## Components
+## System map
 
 ```mermaid
 flowchart TB
-  browser["Browser — React SPA (src/App.tsx)\nAuthScreen · apiFetch · vault sync"]
-  vite["Vite dev server :5173\nproxies /api → :8787"]
-  api["Express API :8787 (server/index.js)"]
-  authmod["server/auth.js\nbcrypt hash · JWT sign/verify · requireAuth"]
-  dbmod["server/db.js\nusers · workspaces"]
-  sqlite[("SQLite\nserver/data/iovault.db")]
-  openai["OpenAI API (optional)"]
-
-  browser -->|"/api/*"| vite --> api
-  api --> authmod
-  api --> dbmod --> sqlite
-  api -->|"/api/agent"| openai
-  browser -. "token + vault cache" .-> browser
+  User["Signed-in user"] --> SPA["React SPA :5173"]
+  SPA --> LS[("localStorage\nVaultState cache + JWT")]
+  SPA --> IDB[("IndexedDB\nCode Vault working cache")]
+  SPA -->|"/api/* via Vite proxy"| API["Express API :8787"]
+  API --> Auth["JWT auth"]
+  API --> DB[("SQLite\nusers, workspaces, code records, AI audits")]
+  API -->|"bounded selected context"| OpenAI["OpenAI"]
+  API -->|"short-lived installation token"| GitHub["GitHub App / repositories"]
 ```
 
-## Data model
+## Ownership boundaries
 
-```mermaid
-erDiagram
-  USERS ||--o| WORKSPACES : has
-  USERS {
-    text id PK
-    text email UK
-    text password_hash
-    text created_at
-  }
-  WORKSPACES {
-    text user_id PK_FK
-    text data "JSON: full VaultState"
-    text updated_at
-  }
-```
+| Data | Durable source | Browser copy | Notes |
+|---|---|---|---|
+| General workspace | SQLite `workspaces.data` | localStorage cache | Full `VaultState`; last-write-wins remains a known limitation |
+| Code snippets and notes | `VaultState` via SQLite | React/localStorage | Reusable globally; optional repository provenance |
+| Scratch files | SQLite code tables | IndexedDB working cache | User-scoped |
+| GitHub files | GitHub repository | IndexedDB bounded cache | Not stored in `VaultState` |
+| AI patch sets/publications | SQLite | Active React review state | Published changes become GitHub commits/PRs |
+| AI usage | SQLite metadata only | None | Never stores prompts or vault content |
 
-## Auth flow (sign up / sign in)
+## Main flows
+
+### Authentication and workspace sync
 
 ```mermaid
 sequenceDiagram
-  participant U as User
-  participant R as React app
-  participant A as Express API
+  actor U as User
+  participant R as React
+  participant A as Express
   participant D as SQLite
-  U->>R: enter email + password
-  R->>A: POST /api/auth/signup | /login
-  A->>D: insert user / lookup by email
-  A->>A: bcrypt hash / compare
-  A-->>R: { token (JWT), user }
-  R->>R: store token in localStorage
-  R->>A: GET /api/vault (Bearer token)
-  A->>D: SELECT workspace by user_id
-  A-->>R: { data: VaultState | null }
-  R->>R: hydrate state (or migrate local cache up)
+  U->>R: Sign up or sign in
+  R->>A: Auth request
+  A->>D: Create/verify user
+  A-->>R: JWT + user
+  R->>A: GET /api/vault with Bearer JWT
+  A-->>R: VaultState or null
+  U->>R: Edit workspace
+  R->>R: Update local cache immediately
+  R->>A: Debounced PUT /api/vault
+  A->>D: Upsert user workspace
 ```
 
-## Vault save (debounced sync on edit)
+### AI context policy
 
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant R as React app
-  participant A as Express API
-  participant D as SQLite
-  U->>R: edit a project / doc
-  R->>R: write localStorage immediately (instant UX)
-  R->>R: debounce ~800ms
-  R->>A: PUT /api/vault { data } (Bearer token)
-  A->>D: UPSERT workspaces(user_id, data)
-  A-->>R: { ok: true }
-  R->>R: sync pill → "Saved"
-```
+The general assistant sends no vault context by default. A visible checkbox can include only a bounded summary of the active page. The server ignores legacy `vaultData`, caps selected context at 64 KB, authenticates and rate-limits requests, and stores content-free usage metadata. Code Vault has a separate selected-file patch workflow documented in [code-vault-architecture.md](code-vault-architecture.md).
 
-## Endpoints
+## Core endpoints
 
-| Method | Path | Auth | Purpose |
-| --- | --- | --- | --- |
-| POST | `/api/auth/signup` | – | Create account → `{ token, user }` |
-| POST | `/api/auth/login` | – | Verify credentials → `{ token, user }` |
-| GET | `/api/auth/me` | Bearer | Current user |
-| GET | `/api/vault` | Bearer | Load the user's `VaultState` (or `null`) |
-| PUT | `/api/vault` | Bearer | Upsert the user's `VaultState` |
-| POST | `/api/agent` | – | Existing AI assistant route (unchanged) |
+| Group | Routes | Auth | Responsibility |
+|---|---|---|---|
+| Auth | `/api/auth/signup`, `/login`, `/me` | Public login/signup; Bearer for `/me` | User identity |
+| Vault | `GET/PUT /api/vault` | Bearer | Load/save `VaultState` |
+| General AI | `POST /api/agent` | Bearer + limits | Context-minimized assistant |
+| Code Vault | `/api/code/github/*`, `/scratch/*`, `/assist/stream`, `/publish` | Bearer | Repository, scratch, AI patch, and PR workflows |
 
-See [`server-and-auth.md`](./server-and-auth.md) for implementation details and the path to swap SQLite for hosted Postgres (Supabase/Neon) in production.
+## Known constraints
+
+Browser-readable JWTs, the development JWT-secret fallback, whole-workspace JSON persistence, and last-write-wins sync are tracked in [debug-system](debug-system/issue-register.md).

@@ -7,8 +7,9 @@ describe("AI request security", () => {
     expect(validateAgentRequest({}).status).toBe(400);
     expect(validateAgentRequest({ message: "x".repeat(8_000) }).message.length).toBe(8_000);
     expect(validateAgentRequest({ message: "x".repeat(8_001) }).status).toBe(413);
-    expect(validateAgentRequest({ message: "ok", vaultData: { text: "x".repeat(513 * 1024) } }).status).toBe(413);
-    expect(validateAgentRequest({ message: " ok ", vaultData: {} })).toMatchObject({ message: "ok", contextBytes: 2 });
+    expect(validateAgentRequest({ message: "ok", context: { text: "x".repeat(65 * 1024) } }).status).toBe(413);
+    expect(validateAgentRequest({ message: " ok ", context: {} })).toMatchObject({ message: "ok", contextBytes: 2 });
+    expect(validateAgentRequest({ message: "ok", vaultData: { ignored: true } })).toMatchObject({ context: null, contextBytes: 0 });
   });
 
   it("limits users and expires fixed windows", () => {

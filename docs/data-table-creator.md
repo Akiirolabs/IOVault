@@ -1,52 +1,33 @@
-# Data Table Creator (Planned)
+# Project Data Table
 
-A spreadsheet / database-style table builder per project: define typed **columns**, add **rows**, and edit **cells** inline. Third button in the project card action row.
+**Status:** planned; first project-screen expansion because v1 needs no graph dependency.
 
-## Entry point
+## Product intent
 
-- Add a button to `.project-block-head` (e.g. icon `HiOutlineTableCells`) next to the other action buttons.
-- Opens the shared overlay for this project in a "table" screen (`setOpenProjectScreen("table")`).
+Each project can own a lightweight typed table for tasks, research, inventories, or structured notes. It reuses the project overlay and persists with the project rather than becoming a separate spreadsheet product.
 
-## Proposed data model
+| Decision | v1 default |
+|---|---|
+| Column types | Text, number, date, checkbox, select |
+| Cell storage | Strings keyed by column ID; checkbox normalized consistently |
+| Editing | Controlled inline inputs |
+| Actions | Add/delete row and column; edit select options |
+| Deferred | Sorting, reordering, formulas, CSV export |
+
+## Proposed shape
 
 ```ts
-type ColumnType = "text" | "number" | "date" | "checkbox" | "select";
-
-type TableColumn = {
-  id: string;
-  name: string;
-  type: ColumnType;
-  options?: string[];   // for type "select"
-};
-
 type TableDoc = {
-  columns: TableColumn[];
-  rows: Array<Record<string, string>>;  // keyed by column id
+  columns: Array<{ id: string; name: string; type: "text" | "number" | "date" | "checkbox" | "select"; options?: string[] }>;
+  rows: Array<Record<string, string>>;
 };
-
-// on ProjectBlock:
-table?: TableDoc;
 ```
 
-Persist via `updateProject(id, { table: next })`. Default `{ columns: [], rows: [] }` in `normalizeVaultState`.
+Store `table?: TableDoc` on `ProjectBlock`, normalize missing data to empty arrays, remove deleted column keys from every row, and generate IDs with `crypto.randomUUID()`.
 
-## UX
+## Acceptance
 
-- Toolbar: **Add column** (name + type picker), **Add row**, delete column/row.
-- Render an HTML `<table>`; cells are inline-editable inputs whose control matches the column `type`:
-  - `text`/`number`/`date` → `<input type=...>`
-  - `checkbox` → `<input type="checkbox">`
-  - `select` → `<select>` populated from `options`
-- Editing a cell calls `updateProject` to write back into `table.rows`.
-- Optional niceties (later): reorder columns, sort by column, CSV export.
-
-## Implementation notes
-
-- Pure React + state; **no new dependencies** needed for v1.
-- Keep cell components controlled by the `TableDoc` in `VaultState`; write on change (debounce text inputs if needed).
-- Generate ids with `crypto.randomUUID()` (already used elsewhere in `src/App.tsx`).
-
-## Open questions
-
-- Do we need typed validation (e.g. reject non-numbers in a number column)? Start lenient (store strings), add validation later.
-- Column deletion should also strip that column's key from every row.
+- Existing projects load unchanged.
+- Typed controls edit and persist correctly after reload/sign-in.
+- Row/column deletion cannot leave inaccessible cell data.
+- Keyboard navigation and narrow-screen horizontal scrolling remain usable.

@@ -67,16 +67,16 @@ export function validateAgentRequest(body) {
     return { status: 413, error: "Message must be 8,000 characters or fewer." };
   }
 
-  const vaultData = body?.vaultData ?? {};
-  let serializedVault;
+  const context = body?.context ?? null;
+  let serializedContext = null;
   try {
-    serializedVault = JSON.stringify(vaultData);
+    if (context !== null) serializedContext = JSON.stringify(context);
   } catch {
-    return { status: 400, error: "Vault data must be valid JSON." };
+    return { status: 400, error: "Selected context must be valid JSON." };
   }
-  const contextBytes = Buffer.byteLength(serializedVault, "utf8");
-  if (contextBytes > 512 * 1024) {
-    return { status: 413, error: "Vault context must be 512 KB or smaller." };
+  const contextBytes = serializedContext === null ? 0 : Buffer.byteLength(serializedContext, "utf8");
+  if (contextBytes > 64 * 1024) {
+    return { status: 413, error: "Selected context must be 64 KB or smaller." };
   }
-  return { message, vaultData, serializedVault, contextBytes };
+  return { message, context, serializedContext, contextBytes };
 }

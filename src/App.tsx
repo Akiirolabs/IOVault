@@ -147,7 +147,7 @@ type GithubTestStatus = {
   };
 };
 
-type VaultState = {
+export type VaultState = {
   code: {
     language: string;
     editor: string;
@@ -176,6 +176,47 @@ type VaultState = {
     navIcons: Record<PageKey, IconId>;
   };
 };
+
+export type AgentContext = { scope: PageKey; data: unknown };
+
+function truncateAgentText(value: string, limit: number) {
+  return value.length > limit ? `${value.slice(0, limit)}\n[truncated]` : value;
+}
+
+function agentPlainText(html: string) {
+  const element = document.createElement("div");
+  element.innerHTML = html;
+  return element.textContent || "";
+}
+
+export function buildAgentContext(page: PageKey, state: VaultState): AgentContext {
+  if (page === "code") {
+    return { scope: page, data: {
+      language: state.code.language,
+      editor: truncateAgentText(state.code.editor, 12_000),
+      notes: truncateAgentText(agentPlainText(state.code.notesHtml), 8_000),
+      snippets: state.code.snippets.slice(0, 5).map((snippet) => ({ title: snippet.title, language: snippet.language, code: truncateAgentText(snippet.code, 4_000) })),
+      omittedSnippets: Math.max(0, state.code.snippets.length - 5),
+    } };
+  }
+  if (page === "learning") {
+    return { scope: page, data: {
+      notes: truncateAgentText(agentPlainText(state.learning.docHtml), 20_000),
+      connections: state.learning.connections.slice(0, 20),
+      calendarFocus: state.learning.calendarFocus.slice(0, 20),
+    } };
+  }
+  if (page === "career") {
+    return { scope: page, data: { resume: truncateAgentText(state.career.resume, 30_000) } };
+  }
+  if (page === "projects") {
+    return { scope: page, data: {
+      projects: state.projects.blocks.slice(0, 20).map((block) => ({ id: block.id, title: block.title, status: block.status, body: truncateAgentText(block.body, 2_000) })),
+      omittedProjects: Math.max(0, state.projects.blocks.length - 20),
+    } };
+  }
+  return { scope: page, data: { document: truncateAgentText(agentPlainText(state.write.docHtml), 30_000) } };
+}
 
 type NavItem = {
   key: PageKey;
@@ -645,6 +686,7 @@ function App() {
   const [activeSnippetId, setActiveSnippetId] = useState<string | null>("snippet-1");
   const [vaultState, setVaultState] = useState<VaultState>(getSavedVaultState);
   const [assistantQuestion, setAssistantQuestion] = useState("");
+  const [includeAgentContext, setIncludeAgentContext] = useState(false);
   const [assistantAnswer, setAssistantAnswer] = useState("Ask the agent anything or have it search this workspace.");
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
   const [isResumeLoading, setIsResumeLoading] = useState(false);
@@ -976,10 +1018,10 @@ function App() {
 
   // --- AI: shared fetch to /api/agent (proxied to Express in dev) ---
 
-  async function requestAgent(message: string) {
+  async function requestAgent(message: string, context?: AgentContext) {
     const response = await apiFetch("/api/agent", {
       method: "POST",
-      body: JSON.stringify({ message, vaultData: vaultState }),
+      body: JSON.stringify({ message, ...(context ? { context } : {}) }),
     });
     const data = (await response.json()) as { answer?: string; error?: string };
 
@@ -999,7 +1041,7 @@ function App() {
     setIsAssistantLoading(true);
 
     try {
-      setAssistantAnswer(await requestAgent(prompt));
+      setAssistantAnswer(await requestAgent(prompt, includeAgentContext ? buildAgentContext(activePage, vaultState) : undefined));
     } catch (error) {
       const fallback = answerBasicQuestion(prompt.toLowerCase());
       setAssistantAnswer(
@@ -1060,6 +1102,10 @@ function App() {
             onChange={(event) => setAssistantQuestion(event.target.value)}
             placeholder="Ask the agent to write, explain, revise, plan, or find..."
           />
+          <label className="context-toggle">
+            <input type="checkbox" checked={includeAgentContext} onChange={(event) => setIncludeAgentContext(event.target.checked)} />
+            Include {activeNavItem.label} context
+          </label>
           <button type="submit" disabled={isAssistantLoading}>
             {isAssistantLoading ? "Thinking..." : "Ask AI"}
           </button>

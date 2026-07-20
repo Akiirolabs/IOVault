@@ -1,62 +1,36 @@
-# Object Mindmap — Auto-Connecting Blocks (Planned)
+# Project Object Mindmap
 
-An object-oriented mindmap: the user adds **blocks** (objects) and defines relationships between them; the connector **lines are drawn automatically** by a layout engine — the user does not draw edges by hand. Fourth button in the project card action row.
+**Status:** planned after the manual flowchart. This is the automatic graph: relationships define edges and the layout engine positions blocks.
 
-> Distinction: the [flowchart / node map](./flowchart-node-map.md) is manual (drag to connect). This screen is automatic — links come from each block's declared relationships and are laid out/rendered for you.
+## Core distinction
 
-## Entry point
+Users edit objects, parents, cross-links, and key/value fields; they do not draw connectors. The renderer derives edges and recomputes a readable layout.
 
-- Add a button to `.project-block-head` (e.g. icon `HiOutlineCubeTransparent` or `HiOutlineRectangleGroup`) next to the other action buttons.
-- Opens the shared overlay for this project in a "mindmap" screen (`setOpenProjectScreen("mindmap")`).
+| Area | v1 direction |
+|---|---|
+| Object | ID, title, optional parent, optional relation IDs, key/value fields |
+| Layout | Top-down default with re-layout/fit action |
+| Rendering | React Flow plus Dagre for the first hierarchical version |
+| Persistence | Store blocks and relationships; recompute positions on open |
+| Validation | Prevent missing references; identify or reject parent cycles |
 
-## Proposed data model
-
-Relationships are stored **on the blocks**; positions and edges are computed, not stored (or cached only).
-
-```ts
-type MindmapBlock = {
-  id: string;
-  title: string;
-  parentId?: string;       // primary hierarchical link
-  linkIds?: string[];      // additional non-hierarchical relations
-  fields?: Array<{ key: string; value: string }>;  // object-style properties
-};
-
-type MindmapDoc = {
-  blocks: MindmapBlock[];
-  rootId?: string;
-};
-
-// on ProjectBlock:
-mindmap?: MindmapDoc;
+```mermaid
+flowchart LR
+  Objects["Blocks + relationships"] --> Edges["Derive hierarchy and cross-links"]
+  Edges --> Layout["Automatic layout"]
+  Layout --> Render["Nodes + connectors"]
 ```
 
-Persist via `updateProject(id, { mindmap: next })`. Default `{ blocks: [] }` in `normalizeVaultState`.
+```ts
+type MindmapDoc = {
+  blocks: Array<{ id: string; title: string; parentId?: string; linkIds?: string[]; fields?: Array<{ key: string; value: string }> }>;
+  rootId?: string;
+};
+```
 
-## Auto-connection behavior (the core idea)
+## Acceptance
 
-- The user adds a block and picks its `parentId` (and optional `linkIds`). They never place nodes or draw lines manually.
-- On every render, derive edges from the blocks:
-  - `parentId` → a hierarchy edge (block → parent).
-  - each `linkId` → a relation edge.
-- Run an **automatic layout** to compute `{x, y}` for each block, then draw connectors between the computed positions. Re-running layout after add/remove keeps the map tidy without manual dragging.
-
-## Implementation options
-
-- **Recommended:** [`@xyflow/react`](https://reactflow.dev) for rendering + a layout lib for positions:
-  - [`dagre`](https://github.com/dagrejs/dagre) (simple hierarchical/tree layout) or
-  - [`elkjs`](https://github.com/kieler/elkjs) (richer layered layouts).
-  Pipeline: blocks/relations → build graph → run layout → feed positioned nodes + auto-generated edges into React Flow (nodes non-draggable, or drag allowed but layout re-flows on structure change).
-- **Dependency-free alternative:** if only strict hierarchies are needed, implement a tree layout by hand (assign depth from `parentId`, space siblings evenly) and draw SVG connectors between parent/child centers. Good enough for a pure tree; use a lib once arbitrary `linkIds` (cross-links) are involved.
-
-## UX
-
-- Toolbar: **Add block**, set/change parent, add relation link, edit fields, delete block, **re-layout** / fit.
-- Add a block → choose its parent (or make it the root) → the line to the parent appears automatically and the map re-lays out.
-- Editing an object's `fields` shows key/value properties inside the block (the "object oriented" part).
-
-## Open questions
-
-- Layout direction (top-down tree vs left-right)? Recommend top-down default with a toggle.
-- Cycle handling for `linkIds` (auto layout must tolerate non-tree edges) — `elk`/`dagre` handle general graphs; a hand-rolled tree layout does not.
-- Whether to cache computed positions for stability across sessions, or always recompute on open (recompute is simpler and always tidy).
+- Add/change/delete relationships without orphaned references.
+- Layout remains deterministic enough to avoid disorienting movement.
+- Cross-links and cycles have defined behavior.
+- Saved object data survives reload even though positions are recomputed.

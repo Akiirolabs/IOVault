@@ -35,7 +35,7 @@ describe("AI agent security", () => {
   it("validates authenticated payloads before checking provider configuration", async () => {
     await request(app).post("/api/agent").set("Authorization", `Bearer ${token}`).send({}).expect(400);
     await request(app).post("/api/agent").set("Authorization", `Bearer ${token}`).send({ message: "x".repeat(8_001) }).expect(413);
-    await request(app).post("/api/agent").set("Authorization", `Bearer ${token}`).send({ message: "ok", vaultData: { text: "x".repeat(513 * 1024) } }).expect(413);
+    await request(app).post("/api/agent").set("Authorization", `Bearer ${token}`).send({ message: "ok", context: { text: "x".repeat(65 * 1024) } }).expect(413);
     const missingKey = await request(app).post("/api/agent").set("Authorization", `Bearer ${token}`).send({ message: "ok" }).expect(400);
     expect(missingKey.body.error).toMatch(/OPENAI_API_KEY/);
   });
@@ -52,14 +52,32 @@ describe("AI agent security", () => {
     const user = { id: `agent-success-${Date.now()}`, email: `success-${Date.now()}@example.com` };
     createUser({ ...user, passwordHash: "unused" });
     app.locals.aiConfigured = true;
-    app.locals.aiClient = { chat: { completions: { create: async () => ({ choices: [{ message: { content: "Done" } }], usage: { prompt_tokens: 12, completion_tokens: 4 } }) } } };
+    let outboundRequest;
+    app.locals.aiClient = { chat: { completions: { create: async (input) => { outboundRequest = input; return { choices: [{ message: { content: "Done" } }], usage: { prompt_tokens: 12, completion_tokens: 4 } }; } } } };
     const secret = "PRIVATE_VAULT_VALUE";
-    const result = await request(app).post("/api/agent").set("Authorization", `Bearer ${signToken(user)}`).send({ message: "Help", vaultData: { secret } }).expect(200);
+    const result = await request(app).post("/api/agent").set("Authorization", `Bearer ${signToken(user)}`).send({ message: "Help", context: { scope: "career", data: { resume: secret } } }).expect(200);
     expect(result.body.answer).toBe("Done");
+    expect(JSON.stringify(outboundRequest)).toContain(secret);
     const events = listAiUsageEvents(user.id);
     expect(events[0]).toMatchObject({ outcome: "success", prompt_chars: 4, input_tokens: 12, output_tokens: 4 });
     expect(JSON.stringify(events)).not.toContain(secret);
     expect(JSON.stringify(events)).not.toContain("Help");
+  });
+
+  it("ignores legacy full-vault payloads and sends only selected context", async () => {
+    const user = { id: `agent-context-${Date.now()}`, email: `context-${Date.now()}@example.com` };
+    createUser({ ...user, passwordHash: "unused" });
+    let outboundRequest;
+    app.locals.aiConfigured = true;
+    app.locals.aiClient = { chat: { completions: { create: async (input) => { outboundRequest = input; return { choices: [{ message: { content: "Done" } }] }; } } } };
+    await request(app).post("/api/agent").set("Authorization", `Bearer ${signToken(user)}`).send({
+      message: "Help",
+      vaultData: { secret: "ENTIRE_VAULT_SECRET" },
+      context: { scope: "projects", data: { title: "SELECTED_PROJECT" } },
+    }).expect(200);
+    const serialized = JSON.stringify(outboundRequest);
+    expect(serialized).toContain("SELECTED_PROJECT");
+    expect(serialized).not.toContain("ENTIRE_VAULT_SECRET");
   });
 
   it("maps provider timeout and upstream failures without leaking details", async () => {

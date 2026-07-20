@@ -154,7 +154,7 @@ app.put("/api/vault", requireAuth, (request, response) => {
 
 /**
  * AI agent endpoint — called from the frontend drawer and Career "AI Revise".
- * Body: { message: string, vaultData?: object }
+ * Body: { message: string, context?: { scope: string, data: object } }
  * Returns: { answer: string, model: string } or { error: string }
  */
 app.locals.aiConfigured = Boolean(apiKey && apiKey !== "your_key_here");
@@ -167,7 +167,7 @@ app.post("/api/agent", requireAuth, aiRateLimiter.middleware, async (request, re
     response.status(validation.status).json({ error: validation.error });
     return;
   }
-  const { message, serializedVault, contextBytes } = validation;
+  const { message, serializedContext, contextBytes } = validation;
 
   if (!app.locals.aiConfigured || !app.locals.aiClient) {
     response.status(400).json({
@@ -201,14 +201,14 @@ app.post("/api/agent", requireAuth, aiRateLimiter.middleware, async (request, re
         {
           role: "system",
           content:
-            "You are the IO Vault AI assistant. Be concise, helpful, and organized. Help with general questions like ChatGPT, and use the user's vault data when it is relevant to code, learning, career applications, integrations, reminders, or finding saved information.",
+            "You are the IO Vault AI assistant. Be concise, helpful, and organized. Use only the explicitly selected context included in the request. If context is absent or insufficient, say what information you need instead of assuming access to the user's vault.",
         },
         {
           role: "user",
           // Full workspace snapshot so the model can answer in context
           content: JSON.stringify({
             message,
-            vaultData: JSON.parse(serializedVault),
+            ...(serializedContext !== null ? { context: JSON.parse(serializedContext) } : {}),
           }),
         },
       ],

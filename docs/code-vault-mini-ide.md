@@ -1,31 +1,40 @@
-# Code Vault browser mini IDE
+# Code Vault Mini IDE
 
-Code Vault supports local scratch files immediately. GitHub-backed projects require a GitHub App so repository access uses short-lived installation tokens instead of personal access tokens.
+Code Vault is a three-pane coding workspace: Files/Snippets explorer, lazy-loaded Monaco editor, and Assistant/Changes review panel. It supports scratch work immediately and GitHub-backed work when a GitHub App is configured.
+
+## User workflow
+
+```mermaid
+flowchart LR
+  Open["Open scratch or GitHub file"] --> Edit["Edit in Monaco"]
+  Edit --> Select["Select AI context files"]
+  Select --> Propose["Request explanation or patch"]
+  Propose --> Review["Accept/reject per file"]
+  Review --> Apply["Apply or undo locally"]
+  Apply -->|"GitHub workspace"| PR["New branch + atomic commit + draft PR"]
+```
+
+## Capability and boundary chart
+
+| Capability | Behavior | Limit |
+|---|---|---|
+| Scratch files | Create, rename, edit, delete, cache offline, persist per user | No local-folder access |
+| Repository files | Browse and edit text from connected GitHub repositories | Binary/secret/ignored paths excluded; 1 MB/file |
+| Monaco | Syntax-aware editing, tabs, search, diagnostics, dirty state | Standalone semantic diagnostics are intentionally conservative |
+| Snippets | Global reusable snippets with editable filenames and optional provenance | Stored through workspace state |
+| Coding assistant | Ask, explain, review, fix, refactor, test, document | Checked files only; max 12 files / 300k characters |
+| Change review | Per-file diff, accept/reject, apply, undo | No automatic mutation before approval |
+| Publishing | New `iovault/*` branch, atomic commit, draft PR | No force push; stale SHA stops publication |
+
+Code Vault does not execute code, install dependencies, expose a terminal, or provide live preview.
 
 ## GitHub App setup
 
-1. Create a GitHub App owned by your account or organization.
-2. Set its setup URL to `http://localhost:8787/api/code/github/callback` for local development. Use the deployed API URL in production.
-3. Give it these repository permissions:
-   - Metadata: read
-   - Contents: read and write
-   - Pull requests: read and write
-   - Actions: read
-4. Generate a private key and copy the values from `.env.example` into `.env.local`.
-5. Restart `npm run dev`. Code Vault enables **Connect** when all three GitHub App values are present.
+1. Create a GitHub App and set the local callback/setup URL to `http://localhost:8787/api/code/github/callback`.
+2. Grant Metadata read, Contents read/write, Pull requests read/write, and Actions read.
+3. Generate a private key and add the values documented in `.env.example` to `.env.local`.
+4. Restart `npm run dev`; the Connect action enables when configuration is complete.
 
-The server stores the installation ID, never the generated installation token. Tokens are requested from GitHub when needed and expire automatically.
+Only the installation ID and repository metadata are stored. Installation tokens are generated server-side when needed and expire automatically.
 
-## Storage boundaries
-
-- `VaultState`: navigation, legacy code fields, notes, and snippet metadata.
-- IndexedDB: bounded 25 MB LRU cache of opened repository files and immediate scratch edits.
-- SQLite: durable scratch files, GitHub installation IDs, AI patch sets, and publication history.
-- GitHub: repository source of truth, branches, commits, and draft pull requests.
-
-Files over 1 MB, binary files, environment files, dependency folders, and common build outputs are not editable or sent to the assistant.
-
-## AI workflow
-
-The coding assistant receives only checked context files (maximum 12 files and 300,000 characters total), plus the task scratchpad when explicitly enabled. It returns a validated structured patch set. Users accept or reject each file before Code Vault creates a new `iovault/*` branch, one atomic commit, and a draft pull request.
-
+See [code-vault-architecture.md](code-vault-architecture.md) for system design and storage ownership.

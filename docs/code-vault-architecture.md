@@ -1,201 +1,88 @@
-# Code Vault Page Architecture
+# Code Vault Architecture
 
-Code Vault is a browser mini IDE built around three visible work areas: an Explorer, a Monaco editor, and an AI Assistant/Changes panel. GitHub is the source of truth for repositories, IndexedDB is the fast browser cache, and SQLite stores durable user-owned workspace records.
+Code Vault separates repository truth, browser working state, durable user records, and AI proposals so large files do not enter the general `VaultState` sync path.
 
-## Architecture chart
+## Components
 
-| Layer | Component | Responsibility | Reads from | Writes to |
-| --- | --- | --- | --- | --- |
-| UI | Files/Snippets Explorer | Select repositories, open files, create scratch files, and reuse snippets | GitHub repository API, IndexedDB, `VaultState` | Active workspace and file selection |
-| UI | Monaco Editor | Edit text files with syntax highlighting, tabs, diagnostics, and dirty-state tracking | Opened `CodeFile` records | IndexedDB and durable scratch-file API |
-| UI | Assistant | Select an AI action, model tier, context files, prompt, and optional scratchpad | Checked editor files and Code Vault notes | `/api/code/assist/stream` |
-| UI | Changes Review | Review, accept, reject, apply, undo, and publish proposed file changes | Stored `PatchSet` | Local working files and `/api/code/publish` |
-| Browser storage | IndexedDB | Cache opened repository files and immediate scratch edits with LRU eviction | GitHub/API responses | Maximum approximately 25 MB of browser data |
-| App state | `VaultState` | Preserve snippets, notes, legacy code fields, and navigation settings | SQLite workspace JSON and `localStorage` cache | Debounced `/api/vault` synchronization |
-| API | Express Code Vault routes | Authenticate requests, enforce limits, coordinate AI and GitHub operations | Bearer JWT, request payloads | SQLite, OpenAI, and GitHub APIs |
-| Database | SQLite Code Vault tables | Store scratch files, GitHub installation IDs, AI patch sets, sessions, and publication history | Express server | Durable user-scoped records |
-| AI | OpenAI Responses API | Explain code and generate structured, complete-file patch proposals | Maximum 12 explicitly selected files and optional scratchpad | Validated structured `PatchSet` |
-| Repository | GitHub App integration | Read repository trees/files and create branches, commits, and draft pull requests | Short-lived installation token | GitHub repository |
+| Layer | Responsibility | Source / destination |
+|---|---|---|
+| Explorer | Repository selection, file tree, scratch files, global snippets | GitHub API, IndexedDB, workspace snippets |
+| Monaco workbench | Tabs, syntax, editing, dirty state, context selection | Active `CodeFile` models and IndexedDB |
+| Assistant/Changes | Selected context, structured patch, per-file review, apply/undo | `/api/code/assist/stream`, SQLite patch sets |
+| Express code routes | Authentication, path/size limits, AI/GitHub orchestration | `/api/code/*` |
+| SQLite | Scratch files, installation IDs, sessions, patches, publications | Durable user-scoped records |
+| GitHub App | Trees/files and reviewed publication | Short-lived installation token |
+| OpenAI | Explanations and structured file operations | Maximum 12 selected files; optional scratchpad |
 
-## Page layout map
-
-```mermaid
-flowchart LR
-  subgraph Page["Code Vault page"]
-    direction LR
-
-    subgraph Explorer["Explorer panel"]
-      Repo["Repository selector"]
-      Files["Files tab"]
-      Snippets["Snippets tab"]
-      NewScratch["New scratch file"]
-    end
-
-    subgraph Workbench["Editor workbench"]
-      Tabs["Open file tabs"]
-      ContextToggle["AI context toggle"]
-      Monaco["Monaco editor"]
-      SaveSnippet["Save snippet"]
-    end
-
-    subgraph RightPanel["Assistant / Changes panel"]
-      Assistant["Assistant actions"]
-      ContextList["Visible context list"]
-      Prompt["Task prompt"]
-      Scratchpad["Optional task scratchpad"]
-      Review["Per-file change review"]
-      Apply["Apply / undo"]
-      Publish["Create draft PR"]
-    end
-  end
-
-  Repo --> Files
-  NewScratch --> Tabs
-  Files --> Tabs
-  Snippets --> Tabs
-  Tabs --> Monaco
-  ContextToggle --> ContextList
-  Monaco --> SaveSnippet
-  SaveSnippet --> Snippets
-  ContextList --> Assistant
-  Prompt --> Assistant
-  Scratchpad --> Assistant
-  Assistant --> Review
-  Review --> Apply
-  Review --> Publish
-```
-
-## System architecture map
+## System map
 
 ```mermaid
 flowchart TB
-  User["Signed-in user"]
-
-  subgraph Browser["React browser application"]
-    CV["CodeVaultWorkspace"]
-    Explorer["Files / Snippets Explorer"]
-    Editor["Lazy-loaded Monaco editor"]
-    Assistant["Assistant / Changes UI"]
-    IDB[("IndexedDB\n25 MB bounded cache")]
-    Vault["VaultState\nsnippets + notes + legacy fields"]
-  end
-
-  subgraph Server["Express API"]
-    Auth["JWT authentication"]
-    CodeRoutes["/api/code/*"]
-    VaultRoutes["/api/vault"]
-    Validation["Path, size, context, and stale-SHA validation"]
-    GithubService["GitHub App service"]
-    AIService["OpenAI Responses service"]
-  end
-
-  DB[("SQLite")]
-  OpenAI["OpenAI Responses API"]
-  GitHub["GitHub repositories"]
-
-  User --> CV
-  CV --> Explorer
-  CV --> Editor
-  CV --> Assistant
-
-  Explorer <--> IDB
-  Editor <--> IDB
-  Explorer <--> Vault
-  Assistant -->|"Selected files only"| CodeRoutes
-  Vault --> VaultRoutes
-
-  CodeRoutes --> Auth
-  VaultRoutes --> Auth
-  Auth --> Validation
-  Validation --> AIService
-  Validation --> GithubService
-
-  AIService -->|"Structured request"| OpenAI
-  OpenAI -->|"Validated patch proposal"| AIService
-
-  GithubService -->|"Short-lived installation token"| GitHub
-  GitHub -->|"Trees, files, refs, commits, PRs"| GithubService
-
-  CodeRoutes <--> DB
-  VaultRoutes <--> DB
-  VaultRoutes --> Vault
+  U["Signed-in user"] --> UI["CodeVaultWorkspace"]
+  UI --> EX["Files / Snippets"]
+  UI --> MON["Lazy Monaco editor"]
+  UI --> REV["Assistant / Changes"]
+  EX <--> IDB[("IndexedDB\n25 MB LRU cache")]
+  MON <--> IDB
+  REV -->|"selected files only"| API["Authenticated /api/code/*"]
+  API <--> DB[("SQLite code records")]
+  API -->|"structured request"| AI["OpenAI Responses API"]
+  API -->|"short-lived token"| GH["GitHub repositories"]
+  GH -->|"trees, files, refs"| API
+  API -->|"validated patch / publication"| REV
 ```
 
-## Storage ownership map
+## Storage ownership
 
-| Data | Browser memory | IndexedDB | `VaultState` | SQLite | GitHub |
-| --- | :---: | :---: | :---: | :---: | :---: |
-| Currently rendered file | Yes | Yes | No | Scratch only | Repository files |
-| Open repository file cache | Limited | Yes | No | No | Source of truth |
-| Unsaved repository edits | Active files | Yes | No | No | No |
-| Scratch files | Active files | Yes | Legacy mirror only | Yes | No |
-| Snippets and provenance | Active view | No | Yes | Through vault sync | Optional source reference |
-| Task notes | Active view | No | Yes | Through vault sync | No |
-| AI patch sets | Active review | No | No | Yes | Published result only |
-| GitHub installation token | No | No | No | No | Generated temporarily |
-| GitHub installation ID | No | No | No | Yes | Yes |
-| Branches, commits, and PRs | Metadata only | No | No | Publication history | Source of truth |
+| Data | Working copy | Durable source |
+|---|---|---|
+| Connected repository file | Monaco + IndexedDB | GitHub |
+| Unsaved repository edit | Monaco + IndexedDB | None until reviewed publication |
+| Scratch file | Monaco + IndexedDB | SQLite |
+| Snippet and provenance | React view | `VaultState` via workspace sync |
+| Task scratchpad | React view | `VaultState` notes |
+| Patch set / publication | Active review | SQLite; published result in GitHub |
+| Installation token | Server memory only | GitHub-generated, short-lived |
 
-## AI change workflow
+## AI and publication sequence
 
 ```mermaid
 sequenceDiagram
   actor U as User
-  participant UI as Code Vault UI
-  participant API as Express API
-  participant AI as OpenAI Responses API
+  participant UI as Code Vault
+  participant API as Express
+  participant AI as OpenAI
   participant DB as SQLite
   participant GH as GitHub
-
-  U->>UI: Select context files
-  U->>UI: Choose action and enter task
-  UI->>API: POST /api/code/assist/stream
-  Note over UI,API: Maximum 12 files and 300,000 characters
-  API->>API: Authenticate and validate paths/content
-  API->>AI: Task + explicitly selected context
-  AI-->>API: Structured explanation and file changes
-  API->>API: Validate every proposed change
-  API->>DB: Store user-owned PatchSet
-  API-->>UI: SSE result event
-
-  U->>UI: Accept or reject each file
-  U->>UI: Apply accepted changes locally
-  UI->>UI: Update IndexedDB working copy
-
-  opt Publish GitHub-backed changes
-    U->>UI: Create draft PR
-    UI->>API: POST /api/code/publish
-    API->>DB: Load owned PatchSet
-    API->>GH: Revalidate base branch SHA
-    alt Base branch is unchanged
-      API->>GH: Create blobs and atomic Git tree
-      API->>GH: Create commit and iovault/* branch
-      API->>GH: Open draft pull request
-      API->>DB: Store publication history
-      API-->>UI: Branch, commit, and PR URL
-    else Base branch changed
-      API-->>UI: 409 stale-base conflict
+  U->>UI: Check files and submit task
+  UI->>API: Authenticated selected context
+  API->>API: Validate count, size, and paths
+  API->>AI: Task + selected files
+  AI-->>API: Structured explanation + operations
+  API->>API: Validate every proposed operation
+  API->>DB: Save owned patch set
+  API-->>UI: Stream result
+  U->>UI: Accept/reject and apply/undo
+  opt Publish
+    UI->>API: Approved changes + patch set ID
+    API->>GH: Revalidate base SHA
+    alt Current
+      API->>GH: Atomic tree + commit + new branch + draft PR
+      API->>DB: Save publication history
+    else Stale
+      API-->>UI: 409 conflict; no mutation
     end
   end
 ```
 
-## Safety and resource boundaries
+## Safety limits
 
-```mermaid
-flowchart LR
-  Request["File or AI request"] --> Auth{"Authenticated?"}
-  Auth -->|No| Reject401["Reject: 401"]
-  Auth -->|Yes| Path{"Safe repository path?"}
-  Path -->|No| RejectPath["Reject traversal or secret path"]
-  Path -->|Yes| Size{"Within limits?"}
-  Size -->|No| RejectSize["Reject oversized context/file"]
-  Size -->|Yes| Binary{"Text file?"}
-  Binary -->|No| RejectBinary["Reject binary file"]
-  Binary -->|Yes| Review["Generate reviewable proposal"]
-  Review --> Approval{"User accepted changes?"}
-  Approval -->|No| Stop["No repository mutation"]
-  Approval -->|Yes| Fresh{"Base SHA still current?"}
-  Fresh -->|No| Conflict["Stop with stale-base conflict"]
-  Fresh -->|Yes| DraftPR["Atomic commit + draft PR"]
-```
+- Authentication and user ownership on every Code Vault endpoint.
+- Safe relative repository paths; dependency, build, secret, ignored, binary, and oversized files rejected.
+- Explicit AI context only; optional scratchpad is opt-in.
+- Patch operations validated before storage and again before publication.
+- No force push, existing-branch overwrite, terminal, code execution, or automatic dependency installation.
 
+## Known tradeoffs
+
+Monaco models, React file state, undo snapshots, and IndexedDB can temporarily duplicate file contents. Profile realistic repositories before changing this architecture; see DBG-1014.

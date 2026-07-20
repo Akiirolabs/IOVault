@@ -2,10 +2,10 @@
 
 | Field | Detail |
 |---|---|
-| Status | **Confirmed** · Critical · 2026-07-19 |
-| Evidence | `src/App.tsx` sends `vaultState`; `server/index.js` serializes it into the OpenAI message |
+| Status | **Verified** · Critical · 2026-07-20 |
+| Evidence | Old client sent `vaultState`; server serialized it into every OpenAI request |
 | Impact | Privacy exposure, cost, latency, context overflow, prompt injection |
-| Fix | Send visible user-selected excerpts plus a small authorized retrieval set |
-| Verify | Capture outbound requests; assert excluded vault sections never appear |
-| Tradeoffs | Lower exposure and cost; retrieval can omit useful context; allow explicit expansion |
-| Next | Define context-selection UX and relevance tests |
+| Fix | No context by default; visible active-page opt-in; bounded summaries; 64 KB server limit; ignore legacy `vaultData` |
+| Verify | Tests prove selected data is sent, other pages and legacy vault secrets are excluded; 17 tests + build passed |
+| Tradeoffs | Stronger privacy and lower cost; selected context can omit relevant information |
+| Next | Monitor answer quality; add retrieval only if evidence justifies it |

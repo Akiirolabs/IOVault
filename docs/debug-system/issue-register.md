@@ -3,7 +3,7 @@
 | Code | Priority · Status | Problem | Primary path | Next action |
 |---|---|---|---|---|
 | DBG-1001 | Critical · **Verified** | Anonymous AI endpoint | `server/index.js` | Minimize context |
-| DBG-1002 | Critical · Confirmed | Full vault sent to OpenAI | `src/App.tsx` | Select/retrieve context |
+| DBG-1002 | Critical · **Verified** | Full vault sent to OpenAI | `src/App.tsx` | Monitor context quality |
 | DBG-1003 | Critical · Confirmed | JWT in localStorage | `src/App.tsx` | Design cookie + CSRF flow |
 | DBG-1004 | Critical · Confirmed | Production JWT fallback | `server/auth.js` | Fail closed in production |
 | DBG-1005 | Critical · Planned | Incomplete rate limits | `server/index.js` | Protect auth routes |

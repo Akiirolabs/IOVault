@@ -1,0 +1,4 @@
+interface:
+  display_name: "IO Vault Docs Sync"
+  short_description: "Keep IO Vault documentation aligned with verified code"
+  default_prompt: "Use $iovault-sync-docs to update all affected IO Vault documentation after this implementation run."

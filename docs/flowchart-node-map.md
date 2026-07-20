@@ -1,61 +1,29 @@
-# Flowchart / Node Map (Planned)
+# Project Flowchart / Node Map
 
-A free-form canvas where the user places **nodes** and draws **connectors** between them manually — a mindmap / flowchart style board. Second button in the project card action row.
+**Status:** planned after the data table. This is the manual graph: users position nodes and draw each connector.
 
-> Distinction: this is the **manual** graph (user draws every link). The [object mindmap](./object-mindmap.md) is the **automatic** graph (links are inferred from relationships).
+## v1 decisions
 
-## Entry point
+| Area | Direction |
+|---|---|
+| Entry | Project action opens the shared overlay in `flowchart` mode |
+| Nodes | ID, x/y position, label, optional color |
+| Edges | ID, source, target, optional label; directed by default |
+| Editing | Add, drag, connect, rename, delete, zoom, fit |
+| Persistence | `flowchart?: { nodes, edges }` on `ProjectBlock`; save positions on drag end |
 
-- Add a button to `.project-block-head` (e.g. icon `HiOutlineShare` or `HiOutlineMap`) next to the existing expand button.
-- On click, open the shared overlay for this project in a "flowchart" screen. Suggested approach: a `screen` discriminator alongside `openProjectId`, e.g. `setOpenProjectScreen("flowchart")` + `setOpenProjectId(block.id)`, so all screens reuse one overlay shell.
-
-## Proposed data model
-
-```ts
-type FlowNode = {
-  id: string;
-  x: number;          // canvas position
-  y: number;
-  label: string;
-  color?: string;
-};
-
-type FlowEdge = {
-  id: string;
-  from: string;       // FlowNode.id
-  to: string;         // FlowNode.id
-  label?: string;
-};
-
-type FlowchartDoc = {
-  nodes: FlowNode[];
-  edges: FlowEdge[];
-};
-
-// on ProjectBlock:
-flowchart?: FlowchartDoc;
+```mermaid
+flowchart LR
+  Add["Add node"] --> Place["Drag into position"]
+  Place --> Connect["Draw connector"]
+  Connect --> Persist["Persist nodes + edges"]
 ```
 
-Persist via `updateProject(id, { flowchart: next })`. Add a tolerant branch in `normalizeVaultState` (default `{ nodes: [], edges: [] }`).
+Use `@xyflow/react` unless dependency review rejects it; it already solves pan, zoom, dragging, and connectable handles. A custom SVG implementation avoids a dependency but adds substantial input, hit-testing, and geometry code.
 
-## UX
+## Acceptance
 
-- Toolbar: **Add node**, delete selected, edge label edit, zoom/fit, clear.
-- Create a node → it appears on the canvas; drag to reposition.
-- Draw an edge by dragging from one node's handle to another.
-- Double-click a node/edge to rename; select + Delete to remove.
-
-## Implementation options
-
-- **Recommended:** [`@xyflow/react`](https://reactflow.dev) (React Flow) — handles panning, zoom, draggable nodes, and connectable handles out of the box. Store its `nodes`/`edges` (mapped to `FlowchartDoc`) in `localStorage`.
-- **Dependency-free alternative:** an SVG canvas — absolutely-positioned node `<div>`s + an `<svg>` layer drawing `<path>`/`<line>` edges between node centers. More code (drag handling, hit-testing) but no new deps and matches the app's "no heavy libs" style.
-
-## Persistence & performance
-
-- Debounce position writes (e.g. on drag end) to avoid thrashing `localStorage` on every mouse move.
-- Keep node/edge counts reasonable; this is a per-project board, not a global graph.
-
-## Open questions
-
-- Should edges be directed (arrowheads) or plain lines? (Recommend directed with optional arrowhead toggle.)
-- Node shapes/colors — start with one rounded-rect style, add styling later.
+- Node and edge edits survive reload and account sync.
+- Deleting a node removes its edges.
+- Position writes are debounced or committed on drag end.
+- Keyboard deletion, focus, zoom, and narrow-screen use are tested.
