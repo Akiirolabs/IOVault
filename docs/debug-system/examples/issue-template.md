@@ -1,13 +1,13 @@
-# DBG-XXXX — Problem name
+# DBG-XXXX — Problem
 
-- Status / priority / last updated:
-- Repository evidence and affected services/files:
-- What is wrong and security/privacy/reliability/performance impact:
-- Best fix and why:
-- Example fix and implementation plan:
-- Dependencies/prerequisites and attempts:
-- Verification commands/results:
-- Pros / cons / regression risks / rollback:
-- Likely next fix / final outcome:
+| Field | Detail |
+|---|---|
+| Status | Unverified · Priority · YYYY-MM-DD |
+| Evidence | Real paths and observed behavior |
+| Impact | Security, privacy, reliability, performance |
+| Fix | Best fix, why, and minimal implementation |
+| Verify | Tests, commands, and actual result |
+| Tradeoffs | Pros, cons, risks, rollback |
+| Next | Dependency or likely next fix |
 
-Use “Needs verification” rather than inventing evidence.
+Use **Needs verification** instead of assumptions.

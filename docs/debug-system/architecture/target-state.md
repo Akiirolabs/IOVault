@@ -1,3 +1,11 @@
 # Target State
 
-Target architecture uses HttpOnly sessions, strict startup configuration, endpoint-specific abuse controls, selected/retrieved AI context, normalized versioned records, optimistic synchronization, sanitized rich text, and bounded feature routers/components. AI usage metadata supports cost controls without persisting user content. Distributed deployments replace in-memory counters with shared storage.
+```mermaid
+flowchart LR
+  UI["Bounded React features"] -->|"HttpOnly session + validated input"| API["Focused Express routers"]
+  API -->|"Versioned records"| DB["Normalized SQLite / future Postgres"]
+  API -->|"Selected minimal context"| AI["OpenAI + shared quotas"]
+  UI -->|"Reviewed patches"| GH["GitHub App"]
+```
+
+Sanitize rich text, fail closed on production secrets, and keep AI audits content-free.

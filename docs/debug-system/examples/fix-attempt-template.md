@@ -1,9 +1,5 @@
-# Date/time — DBG-XXXX
+# Fix Attempt Template — Append One Row
 
-- Hypothesis:
-- Files changed and fix attempted:
-- Selection rationale:
-- Commands/tests and summarized result:
-- Outcome: Successful / Unsuccessful / Partial / Rolled back
-- Pros / cons / new risks:
-- Follow-up and likely next fix:
+| Date | Code | Change | Result | Tradeoff | Next |
+|---|---|---|---|---|---|
+| YYYY-MM-DD | DBG-XXXX | Smallest complete fix | Successful / Failed / Partial / Rolled back + test summary | Main limitation or new risk | Next action |

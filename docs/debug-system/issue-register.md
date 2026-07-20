@@ -1,18 +1,18 @@
 # Issue Register
 
-| Code | Problem | Verified | Status | Priority | Primary files | Best fix | Likely next fix |
-|---|---|---:|---|---|---|---|---|
-| DBG-1001 | Unauthenticated AI endpoint | Yes | Verified | Critical | `server/index.js`, `src/App.tsx` | Auth, limits, timeout, audit | Minimize context; then quotas |
-| DBG-1002 | Entire vault sent to OpenAI | Yes | Confirmed | Critical | `src/App.tsx`, `server/index.js` | Selected/retrieved context only | Define context-selection UX |
-| DBG-1003 | JWT in localStorage | Yes | Confirmed | Critical | `src/App.tsx`, `server/auth.js` | HttpOnly secure cookie | Design CSRF handling |
-| DBG-1004 | Production JWT fallback | Yes | Confirmed | Critical | `server/auth.js` | Fail production startup | Secret rotation policy |
-| DBG-1005 | Incomplete rate limiting | Yes | Planned | Critical | `server/index.js`, `server/ai-security.js` | Endpoint-specific persistent quotas | Protect auth and GitHub routes |
-| DBG-1006 | Workspace JSON blob | Yes | Confirmed | High | `server/db.js` | Incremental normalization | Inventory record boundaries |
-| DBG-1007 | Conflict-unsafe sync | Yes | Confirmed | High | `server/db.js`, `server/index.js` | Optimistic version checks | Add 409 merge UX |
-| DBG-1008 | App component monolith | Yes | Confirmed | Medium | `src/App.tsx` | Extract bounded features | Characterization tests |
-| DBG-1009 | Server monolith | Yes | Confirmed | Medium | `server/index.js` | Routers/services | Extract AI router first |
-| DBG-1010 | Rich-text sanitization | Partial | Confirmed | High | `src/App.tsx` | Sanitize on input/render | Trace every HTML sink |
-| DBG-1011 | Input validation | Yes | Confirmed | High | `server/index.js` | Route schemas and shared errors | Inventory route contracts |
-| DBG-1012 | Dependency pinning | Yes | Confirmed | Medium | `package.json` | Pin intentional versions | Define update cadence |
-| DBG-1013 | Package separation | Yes | Confirmed | Low | `package.json` | Split only when deployment needs it | Document runtime boundaries |
-| DBG-1014 | Monaco/React state pressure | Partial | Confirmed | Medium | `src/codeVault/CodeVaultWorkspace.tsx` | Keep file bodies out of broad React state | Profile realistic repositories |
+| Code | Priority · Status | Problem | Primary path | Next action |
+|---|---|---|---|---|
+| DBG-1001 | Critical · **Verified** | Anonymous AI endpoint | `server/index.js` | Minimize context |
+| DBG-1002 | Critical · Confirmed | Full vault sent to OpenAI | `src/App.tsx` | Select/retrieve context |
+| DBG-1003 | Critical · Confirmed | JWT in localStorage | `src/App.tsx` | Design cookie + CSRF flow |
+| DBG-1004 | Critical · Confirmed | Production JWT fallback | `server/auth.js` | Fail closed in production |
+| DBG-1005 | Critical · Planned | Incomplete rate limits | `server/index.js` | Protect auth routes |
+| DBG-1006 | High · Confirmed | Workspace JSON blob | `server/db.js` | Define record boundaries |
+| DBG-1007 | High · Confirmed | Conflict-unsafe sync | `server/db.js` | Add expected version + 409 |
+| DBG-1010 | High · Partial | Rich-text sanitization | `src/App.tsx` | Trace HTML sinks |
+| DBG-1011 | High · Partial | Inconsistent validation | `server/index.js` | Inventory route contracts |
+| DBG-1008 | Medium · Confirmed | Frontend monolith | `src/App.tsx` | Add characterization tests |
+| DBG-1009 | Medium · Confirmed | Server monolith | `server/index.js` | Extract AI router |
+| DBG-1012 | Medium · Confirmed | Dependency drift | `package.json` | Define pin/update policy |
+| DBG-1014 | Medium · Partial | Editor state pressure | `src/codeVault/CodeVaultWorkspace.tsx` | Profile realistic repository |
+| DBG-1013 | Low · Confirmed | Single package boundary | `package.json` | Defer until justified |

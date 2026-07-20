@@ -1,7 +1,7 @@
 # Implementation Status
 
-| Code | Selected implementation | State | Verification |
-|---|---|---|---|
-| DBG-1001 | Bearer auth, user/IP limiter, payload bounds, 30-second OpenAI timeout, privacy-safe SQLite audit | Verified | `npm test`: 7 files and 15 tests passed; `npm run build` passed |
+| Code | State | Implementation | Evidence | Remaining limit |
+|---|---|---|---|---|
+| DBG-1001 | **Verified** | Auth, user/IP limits, request bounds, 30s timeout, metadata-only audit | 15 tests + production build passed | Full context (DBG-1002); distributed quotas (DBG-1005) |
 
-All other issues remain unimplemented. DBG-1001 does not resolve DBG-1002 or the broader quotas in DBG-1005.
+All other debug codes remain unimplemented.

@@ -1,12 +1,13 @@
 # IO Vault Debug System
 
-This directory is the source-controlled record for verified defects, implementation decisions, attempts, and test evidence. Update the Markdown register and CSV together; append attempts rather than rewriting history; never record secrets, prompts, or vault contents.
+| Start here | Purpose |
+|---|---|
+| [Issue register](issue-register.md) | Priority, status, owner paths, and next action |
+| [Implementation status](implementation-status.md) | What changed and whether it passed |
+| [Fix attempts](fix-attempts.md) | Append-only implementation history |
+| [Verification matrix](verification-matrix.md) | Tests and acceptance evidence |
+| [Service impact](service-impact-chart.md) | Cross-system blast radius |
+| [Issue details](issues/) | One compact technical record per debug code |
+| [Architecture](architecture/) · [Graphs](graphs/) | System context, dependencies, and fix order |
 
-## Workflow
-
-1. Verify the report against current code and capture paths and behavior.
-2. Set a status from the register vocabulary and choose the smallest safe fix.
-3. Record the attempt, run the listed checks, and preserve exact summarized results.
-4. Use `Verified` only when acceptance checks pass; use `Reopened` if later evidence contradicts the result.
-
-Current focus: DBG-1001. Full cost quotas are deferred to DBG-1005 and context minimization to DBG-1002.
+**Rule:** verify against current code, record real evidence, never store secrets or vault content, and use `Verified` only after tests and build pass.

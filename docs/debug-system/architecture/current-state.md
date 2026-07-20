@@ -1,5 +1,8 @@
 # Current State
 
-The React SPA stores its bearer JWT and an offline workspace cache in browser localStorage. `src/App.tsx` loads and saves a complete VaultState through Express. Express authenticates most data and Code Vault routes, persists the workspace as SQLite JSON, and calls OpenAI for the general and coding assistants. Code Vault also uses IndexedDB for bounded file caching and optional GitHub App endpoints.
-
-DBG-1001 now inserts auth, validation, throttling, timeout handling, and metadata-only auditing before and around the general OpenAI call. The authenticated request still contains the complete VaultState, tracked separately as DBG-1002.
+| Layer | Current behavior | Main risk |
+|---|---|---|
+| Browser | React SPA; JWT and offline vault cache in localStorage | DBG-1003, DBG-1010 |
+| API | Express auth, vault, AI, and GitHub routes | DBG-1005, DBG-1009, DBG-1011 |
+| Data | Full VaultState stored as SQLite JSON; Code Vault has dedicated records and IndexedDB cache | DBG-1006, DBG-1007 |
+| AI | General assistant is authenticated, bounded, throttled, timed out, and audited | Full vault context remains: DBG-1002 |
