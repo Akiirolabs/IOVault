@@ -7,7 +7,8 @@ The roadmap prioritizes security and data integrity before broad feature expansi
 | Priority | Workstream | Status | Next outcome |
 |---:|---|---|---|
 | P0 | AI endpoint authentication and bounded context | **Complete** | Monitor quality and usage |
-| P0 | Production JWT secret and session storage | Planned | Fail closed; move to HttpOnly sessions |
+| P0 | Cookie session migration | **Complete** | Monitor CSRF/session behavior |
+| P0 | Production JWT secret | Planned | Fail closed when configuration is absent |
 | P0 | System-wide abuse controls | Partial | Protect auth, GitHub, and code-assistant routes |
 | P1 | Conflict-safe workspace sync | Planned | Expected version + HTTP 409 workflow |
 | P1 | Rich-text sanitization and API schemas | Planned | Close stored-XSS and malformed-input paths |
@@ -31,7 +32,7 @@ flowchart LR
 
 ### Security and persistence
 
-Require `JWT_SECRET` in production, migrate browser-readable JWTs to HttpOnly sessions with CSRF protection, add route-specific quotas, sanitize rich text, and reject stale workspace saves.
+Require `JWT_SECRET` in production, add route-specific quotas, sanitize rich text, and reject stale workspace saves. HttpOnly SameSite sessions and CSRF headers are complete.
 
 ### Maintainability and performance
 

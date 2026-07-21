@@ -26,7 +26,9 @@ import {
   hashPassword,
   newId,
   requireAuth,
-  signToken,
+  requireCsrf,
+  setSessionCookie,
+  clearSessionCookie,
   verifyPassword,
 } from "./auth.js";
 import {
@@ -73,7 +75,7 @@ function publicUser(user) {
 
 /**
  * Sign up — create an account.
- * Body: { email, password } → { token, user } | { error }
+ * Body: { email, password } → HttpOnly session cookie + { user } | { error }
  */
 app.post("/api/auth/signup", async (request, response) => {
   const email = String(request.body?.email || "").trim().toLowerCase();
@@ -95,7 +97,8 @@ app.post("/api/auth/signup", async (request, response) => {
   try {
     const user = { id: newId(), email };
     await createUser({ id: user.id, email, passwordHash: await hashPassword(password) });
-    response.json({ token: signToken(user), user: publicUser(user) });
+    setSessionCookie(response, user);
+    response.json({ user: publicUser(user) });
   } catch (error) {
     console.error("Signup failed:", error);
     response.status(500).json({ error: "Could not create account." });
@@ -104,7 +107,7 @@ app.post("/api/auth/signup", async (request, response) => {
 
 /**
  * Log in — verify credentials.
- * Body: { email, password } → { token, user } | { error }
+ * Body: { email, password } → HttpOnly session cookie + { user } | { error }
  */
 app.post("/api/auth/login", async (request, response) => {
   const email = String(request.body?.email || "").trim().toLowerCase();
@@ -116,10 +119,11 @@ app.post("/api/auth/login", async (request, response) => {
     return;
   }
 
-  response.json({ token: signToken(user), user: publicUser(user) });
+  setSessionCookie(response, user);
+  response.json({ user: publicUser(user) });
 });
 
-/** Current user from the Bearer token. */
+/** Current user from the session cookie or API bearer token. */
 app.get("/api/auth/me", requireAuth, (request, response) => {
   const user = findUserById(request.userId);
   if (!user) {
@@ -129,6 +133,11 @@ app.get("/api/auth/me", requireAuth, (request, response) => {
   response.json({ user: { id: user.id, email: user.email } });
 });
 
+app.post("/api/auth/logout", requireAuth, requireCsrf, (_request, response) => {
+  clearSessionCookie(response);
+  response.json({ ok: true });
+});
+
 /** Load this user's saved VaultState (or null if none yet). */
 app.get("/api/vault", requireAuth, (request, response) => {
   const workspace = getWorkspace(request.userId);
@@ -136,7 +145,7 @@ app.get("/api/vault", requireAuth, (request, response) => {
 });
 
 /** Save (upsert) this user's full VaultState. */
-app.put("/api/vault", requireAuth, (request, response) => {
+app.put("/api/vault", requireAuth, requireCsrf, (request, response) => {
   const data = request.body?.data;
   if (!data || typeof data !== "object") {
     response.status(400).json({ error: "Vault data must be an object." });
@@ -161,7 +170,7 @@ app.locals.aiConfigured = Boolean(apiKey && apiKey !== "your_key_here");
 app.locals.aiClient = app.locals.aiConfigured ? new OpenAI({ apiKey, timeout: 30_000, maxRetries: 1 }) : null;
 app.locals.aiRateLimiter = aiRateLimiter;
 
-app.post("/api/agent", requireAuth, aiRateLimiter.middleware, async (request, response) => {
+app.post("/api/agent", requireAuth, requireCsrf, aiRateLimiter.middleware, async (request, response) => {
   const validation = validateAgentRequest(request.body);
   if (validation.error) {
     response.status(validation.status).json({ error: validation.error });
@@ -230,7 +239,7 @@ app.post("/api/agent", requireAuth, aiRateLimiter.middleware, async (request, re
 
 // --- Code Vault: GitHub App, scratch workspaces, AI patches, and publishing ---
 
-app.post("/api/code/github/connect", requireAuth, (request, response) => {
+app.post("/api/code/github/connect", requireAuth, requireCsrf, (request, response) => {
   if (!githubConfigured()) {
     response.status(503).json({ error: "Configure GITHUB_APP_ID, GITHUB_PRIVATE_KEY, and GITHUB_APP_SLUG first." });
     return;
@@ -273,7 +282,7 @@ app.get("/api/code/github/repositories", requireAuth, async (request, response) 
   }
 });
 
-app.delete("/api/code/github/disconnect", requireAuth, (request, response) => {
+app.delete("/api/code/github/disconnect", requireAuth, requireCsrf, (request, response) => {
   deleteGithubInstallation(request.userId);
   response.json({ ok: true });
 });
@@ -298,7 +307,7 @@ app.get("/api/code/scratch", requireAuth, (request, response) => {
   response.json({ files: listScratchFiles(request.userId, String(request.query.workspaceId || "scratch")) });
 });
 
-app.put("/api/code/scratch/:id", requireAuth, (request, response) => {
+app.put("/api/code/scratch/:id", requireAuth, requireCsrf, (request, response) => {
   const file = request.body || {};
   if (!validRepositoryPath(file.path) || typeof file.content !== "string" || file.content.length > 1024 * 1024) {
     response.status(400).json({ error: "Invalid scratch file." });
@@ -308,11 +317,11 @@ app.put("/api/code/scratch/:id", requireAuth, (request, response) => {
   response.json({ ok: true });
 });
 
-app.delete("/api/code/scratch/:id", requireAuth, (request, response) => {
+app.delete("/api/code/scratch/:id", requireAuth, requireCsrf, (request, response) => {
   response.json({ ok: deleteScratchFile(request.userId, request.params.id) });
 });
 
-app.post("/api/code/patch-sets", requireAuth, (request, response) => {
+app.post("/api/code/patch-sets", requireAuth, requireCsrf, (request, response) => {
   const repository = String(request.body?.repository || "");
   const baseBranch = String(request.body?.baseBranch || "");
   const baseSha = String(request.body?.baseSha || "");
@@ -364,7 +373,7 @@ const codePatchSchema = {
   },
 };
 
-app.post("/api/code/assist/stream", requireAuth, async (request, response) => {
+app.post("/api/code/assist/stream", requireAuth, requireCsrf, async (request, response) => {
   response.setHeader("Content-Type", "text/event-stream");
   response.setHeader("Cache-Control", "no-cache");
   response.setHeader("Connection", "keep-alive");
@@ -413,7 +422,7 @@ app.post("/api/code/assist/stream", requireAuth, async (request, response) => {
   }
 });
 
-app.post("/api/code/publish", requireAuth, async (request, response) => {
+app.post("/api/code/publish", requireAuth, requireCsrf, async (request, response) => {
   const row = getPatchSet(request.userId, String(request.body?.patchSetId || ""));
   if (!row) { response.status(404).json({ error: "Patch set not found." }); return; }
   const acceptedIds = new Set(Array.isArray(request.body?.acceptedChangeIds) ? request.body.acceptedChangeIds : []);

@@ -7,7 +7,7 @@
 | Area | Implementation | Primary path |
 |---|---|---|
 | API runtime | Express on `:8787`; Vite proxies `/api` during development | `server/index.js`, `vite.config.ts` |
-| Accounts | Email/password, bcrypt hashes, signed JWTs | `server/auth.js` |
+| Accounts | Email/password, bcrypt hashes, JWT-backed HttpOnly cookie sessions | `server/auth.js` |
 | Database | SQLite WAL database, auto-created and git-ignored | `server/db.js` |
 | Workspace sync | Load after login; local cache; debounced full-state upsert | `src/App.tsx`, `/api/vault` |
 | Code Vault records | GitHub installation metadata, scratch files, patch sets, publications | `server/code-db.js` |
@@ -24,8 +24,7 @@ sequenceDiagram
   U->>R: Email + password
   R->>A: POST signup/login
   A->>D: Create or verify user
-  A-->>R: JWT + public user
-  R->>R: Cache JWT in localStorage
+  A-->>R: HttpOnly SameSite cookie + public user
   R->>A: GET /api/vault
   A-->>R: User workspace
   U->>R: Edit
@@ -45,7 +44,9 @@ sequenceDiagram
 
 ## Security behavior
 
-- Protected routes derive user ownership from verified bearer JWTs.
+- Browser sessions use an HttpOnly, SameSite=Lax cookie; production cookies also use `Secure`.
+- Unsafe cookie-authenticated requests require `X-IOVault-CSRF: 1`; non-browser bearer authentication remains compatible and CSRF-exempt.
+- Authentication responses never expose the JWT, and startup removes the legacy `io-vault-token` localStorage value.
 - `/api/agent` requires auth, enforces user/IP limits, caps messages at 8,000 characters and selected context at 64 KB, uses a 30-second provider timeout, and returns generic upstream errors.
 - General AI ignores the legacy full-vault field and receives only explicitly selected active-page context.
 - GitHub App installation tokens are generated server-side and short-lived; only installation metadata is stored.
@@ -64,8 +65,7 @@ The API reads environment files only at startup. Restart `npm run dev` after cha
 ## Production path
 
 1. Fail startup when production secrets are absent.
-2. Replace browser-readable JWTs with HttpOnly, Secure, SameSite sessions and CSRF protection.
-3. Add persistent route-specific quotas and trusted-proxy configuration.
-4. Add optimistic workspace versions and HTTP 409 conflict handling.
-5. Normalize high-value entities only when query/history/sharing requirements justify migration.
-6. Move SQLite to managed Postgres or another shared datastore before multi-instance deployment.
+2. Add persistent route-specific quotas and trusted-proxy configuration.
+3. Add optimistic workspace versions and HTTP 409 conflict handling.
+4. Normalize high-value entities only when query/history/sharing requirements justify migration.
+5. Move SQLite to managed Postgres or another shared datastore before multi-instance deployment.

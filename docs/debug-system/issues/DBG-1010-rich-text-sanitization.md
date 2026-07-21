@@ -8,4 +8,4 @@
 | Fix | Allowlist sanitizer at ingress and every HTML sink; plain text where formatting is unnecessary |
 | Verify | Malicious HTML fixtures plus browser render/persistence checks |
 | Tradeoffs | Reduces XSS; may remove formatting, so back up content during migration |
-| Next | Trace every HTML consumer, then sanitize before DBG-1003 |
+| Next | Trace every HTML consumer and sanitize to reduce residual XSS risk |

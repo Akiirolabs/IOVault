@@ -18,6 +18,7 @@ IO Vault is a signed-in productivity workspace with SQL-backed sync, offline bro
 ## Current product boundaries
 
 - `VaultState` is synced as one per-user SQLite JSON record and cached in localStorage.
+- Authentication uses an HttpOnly SameSite session cookie; browser JavaScript never receives the JWT.
 - Code Vault keeps repository files out of `VaultState`; IndexedDB caches working files and SQLite stores user-owned scratch files, patch sets, and GitHub metadata.
 - General AI sends no vault context by default. Users can explicitly include a bounded summary of the active page.
 - Code Vault AI receives only checked files and an optional explicitly enabled scratchpad.

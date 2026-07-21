@@ -2,7 +2,7 @@
 import request from "supertest";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createUser, listAiUsageEvents } from "./db.js";
-import { signToken } from "./auth.js";
+import { SESSION_COOKIE_NAME, signToken } from "./auth.js";
 
 let app;
 beforeAll(async () => {
@@ -21,6 +21,39 @@ describe("Code Vault API authentication", () => {
     await request(app).get("/api/code/github/repositories").expect(401);
     const result = await request(app).get("/api/code/scratch").expect(401);
     expect(result.body.error).toBe("Not authenticated.");
+  });
+});
+
+describe("HttpOnly cookie sessions", () => {
+  it("sets a protected cookie without returning the JWT and supports logout", async () => {
+    const agent = request.agent(app);
+    const email = `cookie-${Date.now()}@example.com`;
+    const signup = await agent.post("/api/auth/signup").send({ email, password: "secure-password" }).expect(200);
+    expect(signup.body.user.email).toBe(email);
+    expect(signup.body.token).toBeUndefined();
+    const cookie = signup.headers["set-cookie"]?.[0] || "";
+    expect(cookie).toContain(`${SESSION_COOKIE_NAME}=`);
+    expect(cookie).toContain("HttpOnly");
+    expect(cookie).toContain("SameSite=Lax");
+
+    await agent.get("/api/auth/me").expect(200);
+    await agent.post("/api/auth/logout").expect(403);
+    const logout = await agent.post("/api/auth/logout").set("X-IOVault-CSRF", "1").expect(200);
+    expect(logout.headers["set-cookie"]?.[0]).toContain("Max-Age=0");
+    await agent.get("/api/auth/me").expect(401);
+
+    const login = await agent.post("/api/auth/login").send({ email, password: "secure-password" }).expect(200);
+    expect(login.body.token).toBeUndefined();
+    expect(login.headers["set-cookie"]?.[0]).toContain("HttpOnly");
+    await agent.get("/api/auth/me").expect(200);
+  });
+
+  it("requires CSRF protection for cookie-authenticated mutations", async () => {
+    const user = { id: `csrf-${Date.now()}`, email: `csrf-${Date.now()}@example.com` };
+    createUser({ ...user, passwordHash: "unused" });
+    const cookie = `${SESSION_COOKIE_NAME}=${signToken(user)}`;
+    await request(app).post("/api/agent").set("Cookie", cookie).send({ message: "hello" }).expect(403);
+    await request(app).post("/api/agent").set("Cookie", cookie).set("X-IOVault-CSRF", "1").send({}).expect(400);
   });
 });
 

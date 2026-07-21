@@ -7,10 +7,10 @@ IO Vault is a Vite/React SPA backed by an Express API and SQLite. Browser caches
 ```mermaid
 flowchart TB
   User["Signed-in user"] --> SPA["React SPA :5173"]
-  SPA --> LS[("localStorage\nVaultState cache + JWT")]
+  SPA --> LS[("localStorage\nVaultState cache only")]
   SPA --> IDB[("IndexedDB\nCode Vault working cache")]
-  SPA -->|"/api/* via Vite proxy"| API["Express API :8787"]
-  API --> Auth["JWT auth"]
+  SPA -->|"HttpOnly cookie + CSRF header\n/api/* via Vite proxy"| API["Express API :8787"]
+  API --> Auth["JWT-backed cookie session"]
   API --> DB[("SQLite\nusers, workspaces, code records, AI audits")]
   API -->|"bounded selected context"| OpenAI["OpenAI"]
   API -->|"short-lived installation token"| GitHub["GitHub App / repositories"]
@@ -40,8 +40,8 @@ sequenceDiagram
   U->>R: Sign up or sign in
   R->>A: Auth request
   A->>D: Create/verify user
-  A-->>R: JWT + user
-  R->>A: GET /api/vault with Bearer JWT
+  A-->>R: HttpOnly SameSite cookie + user
+  R->>A: GET /api/vault with cookie
   A-->>R: VaultState or null
   U->>R: Edit workspace
   R->>R: Update local cache immediately
@@ -57,11 +57,11 @@ The general assistant sends no vault context by default. A visible checkbox can 
 
 | Group | Routes | Auth | Responsibility |
 |---|---|---|---|
-| Auth | `/api/auth/signup`, `/login`, `/me` | Public login/signup; Bearer for `/me` | User identity |
-| Vault | `GET/PUT /api/vault` | Bearer | Load/save `VaultState` |
-| General AI | `POST /api/agent` | Bearer + limits | Context-minimized assistant |
-| Code Vault | `/api/code/github/*`, `/scratch/*`, `/assist/stream`, `/publish` | Bearer | Repository, scratch, AI patch, and PR workflows |
+| Auth | `/api/auth/signup`, `/login`, `/logout`, `/me` | Cookie session; CSRF on logout | User identity |
+| Vault | `GET/PUT /api/vault` | Cookie; CSRF on write | Load/save `VaultState` |
+| General AI | `POST /api/agent` | Cookie + CSRF + limits | Context-minimized assistant |
+| Code Vault | `/api/code/github/*`, `/scratch/*`, `/assist/stream`, `/publish` | Cookie; CSRF on mutations | Repository, scratch, AI patch, and PR workflows |
 
 ## Known constraints
 
-Browser-readable JWTs, the development JWT-secret fallback, whole-workspace JSON persistence, and last-write-wins sync are tracked in [debug-system](debug-system/issue-register.md).
+The development JWT-secret fallback, whole-workspace JSON persistence, and last-write-wins sync remain tracked in [debug-system](debug-system/issue-register.md). Bearer tokens remain supported for non-browser API compatibility but are no longer stored or returned to the SPA.

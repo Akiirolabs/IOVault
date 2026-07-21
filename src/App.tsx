@@ -476,21 +476,19 @@ function RichTextEditor({ html, onChange, className, role, ariaLabel, ariaMultil
   );
 }
 
-// --- Auth: token storage + authenticated fetch + sign-in screen ---
-
-const tokenKey = "io-vault-token";
+// --- Auth: HttpOnly cookie session + sign-in screen ---
 
 type AuthUser = { id: string; email: string };
 
-/** fetch wrapper that attaches the Bearer token (if any) and JSON headers. */
+/** Same-origin API wrapper; unsafe methods include the cookie-session CSRF header. */
 export async function apiFetch(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem(tokenKey);
+  const method = (options.method || "GET").toUpperCase();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string> | undefined),
   };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  return fetch(path, { ...options, headers });
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) headers["X-IOVault-CSRF"] = "1";
+  return fetch(path, { ...options, credentials: "same-origin", headers });
 }
 
 function AuthScreen({ onAuthed }: { onAuthed: (user: AuthUser, isSignup: boolean) => void }) {
@@ -510,13 +508,12 @@ function AuthScreen({ onAuthed }: { onAuthed: (user: AuthUser, isSignup: boolean
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-      const data = (await response.json()) as { token?: string; user?: AuthUser; error?: string };
+      const data = (await response.json()) as { user?: AuthUser; error?: string };
 
-      if (!response.ok || !data.token || !data.user) {
+      if (!response.ok || !data.user) {
         throw new Error(data.error || "Something went wrong.");
       }
 
-      localStorage.setItem(tokenKey, data.token);
       onAuthed(data.user, mode === "signup");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -743,7 +740,7 @@ function App() {
 
   /** Debounced push so we don't hit the DB on every keystroke. */
   function scheduleServerSync(state: VaultState) {
-    if (!localStorage.getItem(tokenKey)) return;
+    if (!authUser) return;
     if (syncTimer.current) window.clearTimeout(syncTimer.current);
     syncTimer.current = window.setTimeout(() => {
       void pushVaultToServer(state);
@@ -779,9 +776,10 @@ function App() {
     await loadVaultFromServer(isSignup);
   }
 
-  function signOut() {
+  async function signOut() {
     if (syncTimer.current) window.clearTimeout(syncTimer.current);
-    localStorage.removeItem(tokenKey);
+    await apiFetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
+    localStorage.removeItem("io-vault-token");
     localStorage.removeItem(storageKey);
     setAuthUser(null);
     setIsUnlocked(false);
@@ -789,13 +787,9 @@ function App() {
     setSyncState("idle");
   }
 
-  // On mount: if a token exists, verify it and load the user's vault from SQL.
+  // On mount: verify the HttpOnly cookie session and remove the legacy local token.
   useEffect(() => {
-    const token = localStorage.getItem(tokenKey);
-    if (!token) {
-      setIsAuthReady(true);
-      return;
-    }
+    localStorage.removeItem("io-vault-token");
 
     let cancelled = false;
     (async () => {
@@ -807,7 +801,7 @@ function App() {
         setAuthUser(user);
         await loadVaultFromServer(true);
       } catch {
-        localStorage.removeItem(tokenKey);
+        // No valid cookie session; the sign-in screen will be shown.
       } finally {
         if (!cancelled) setIsAuthReady(true);
       }

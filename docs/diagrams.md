@@ -17,6 +17,8 @@ flowchart TD
   Shell --> Projects["Projects"]
 ```
 
+The server establishes an HttpOnly SameSite cookie at login; unsafe browser requests also carry `X-IOVault-CSRF: 1`.
+
 ## Persistence flow
 
 ```mermaid

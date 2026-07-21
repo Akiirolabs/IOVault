@@ -1,6 +1,6 @@
 # Progress Command Center (IO Vault)
 
-Personal productivity dashboard: a Vite + React + TypeScript single-page app with a small Express API for optional AI features. All workspace data persists client-side in browser `localStorage` (no database).
+Personal productivity dashboard: a Vite + React + TypeScript SPA with a required Express API, per-user SQLite persistence, offline browser caching, optional AI features, and a GitHub-backed Code Vault mini IDE.
 
 ## Cursor Cloud specific instructions
 
@@ -10,8 +10,8 @@ Personal productivity dashboard: a Vite + React + TypeScript single-page app wit
 
 ### Auth + database
 - SQL store: SQLite via `better-sqlite3`, file at `server/data/iovault.db` (git-ignored, auto-created on first run; `server/db.js` runs `CREATE TABLE IF NOT EXISTS`). No manual DB setup needed. Override path with `DATABASE_FILE`.
-- Tables: `users` (id, email, password_hash) and `workspaces` (user_id, data = full `VaultState` JSON, updated_at). See `docs/architecture.md`.
-- Auth: `server/auth.js` — bcrypt hashing + JWT. `JWT_SECRET` is optional locally (a dev fallback is used); set it in prod. Frontend stores the token in `localStorage` under `io-vault-token`.
+- Tables include `users`, `workspaces`, AI usage metadata, and user-scoped Code Vault records. See `docs/architecture.md`.
+- Auth: `server/auth.js` — bcrypt hashing plus a JWT-backed `HttpOnly`, `SameSite=Lax` cookie (`Secure` in production). Unsafe cookie-authenticated requests require `X-IOVault-CSRF: 1`. The SPA never receives or stores the JWT; bearer auth remains available for non-browser API clients. `JWT_SECRET` is optional locally but required for a secure production deployment.
 - To reset all accounts/data locally, delete `server/data/` and restart the API.
 
 ### Running
@@ -25,8 +25,8 @@ Personal productivity dashboard: a Vite + React + TypeScript single-page app wit
 
 ### Lint / typecheck / build
 - There is no dedicated lint script. Type checking happens via `tsc -b` as part of `npm run build` (`tsc -b && vite build`). Use `npm run build` as the typecheck + build gate.
-- No automated test suite exists in this repo.
+- `npm test` runs the Vitest, React Testing Library, and Supertest suite.
 
 ### Gotchas
-- App state lives entirely in `localStorage` under the key `io-vault-workspace`. To reset to first-run defaults, clear that key in the browser.
-- First screen is an "Unlock" landing page; click **Unlock** to enter the workspace.
+- General workspace state is durable in SQLite and cached in `localStorage` under `io-vault-workspace`; Code Vault also uses IndexedDB and dedicated SQLite tables.
+- The app shows authentication before the "Unlock" landing screen.

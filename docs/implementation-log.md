@@ -2,6 +2,7 @@
 
 | Date | Delivery | Result | Verification |
 |---|---|---|---|
+| 2026-07-21 | DBG-1003 cookie sessions | Removed browser JWT storage/response; added HttpOnly SameSite cookie, CSRF checks, logout clearing, and cookie-based Code Vault requests | 20 tests + production build |
 | 2026-07-20 | DBG-1002 context minimization | General AI sends no vault by default; optional bounded current-page context; legacy full-vault field ignored | 17 tests + production build |
 | 2026-07-19 | DBG-1001 AI endpoint security | Auth, user/IP limits, request bounds, timeout, safe errors, content-free usage audit | 15 tests + production build |
 | 2026-07 | Code Vault mini IDE | Monaco editor, scratch/repository files, selected-file AI patches, review/apply/undo, GitHub draft PR flow | Feature tests + production build |

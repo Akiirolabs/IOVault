@@ -1,14 +1,13 @@
 import type { AssistantAction, CodeFile, PatchSet, RepositorySummary, RepositoryTreeEntry } from "./types";
 
-const tokenKey = "io-vault-token";
-
 async function codeApi<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem(tokenKey);
+  const method = (options.method || "GET").toUpperCase();
   const response = await fetch(path, {
     ...options,
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(!["GET", "HEAD", "OPTIONS"].includes(method) ? { "X-IOVault-CSRF": "1" } : {}),
       ...(options.headers || {}),
     },
   });
@@ -78,13 +77,13 @@ export async function requestCodeAssistance(input: {
   files: CodeFile[];
   scratchpad?: string;
 }): Promise<PatchSet> {
-  const token = localStorage.getItem(tokenKey);
   const response = await fetch("/api/code/assist/stream", {
     method: "POST",
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
       Accept: "text/event-stream",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      "X-IOVault-CSRF": "1",
     },
     body: JSON.stringify({
       ...input,
