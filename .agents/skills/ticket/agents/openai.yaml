@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ticket"
+  short_description: "Summarize verified runs and write commit sentences"
+  default_prompt: "Use $ticket to summarize this run and provide a concise commit sentence."

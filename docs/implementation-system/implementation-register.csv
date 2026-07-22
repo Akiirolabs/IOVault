@@ -1,0 +1,7 @@
+Code,Priority,Design Area,Status,Next Design Deliverable,Engineering Dependencies
+IMP-1002,P1,Code Vault,Implemented v1,Refine complete repository-change workflow,DBG-1014
+IMP-1003,P1,Notes / Write,Implemented v1,Add cross-area links and durable browser E2E,DBG-1006;DBG-1007;DBG-1010
+IMP-1004,P2,Projects,Partial,Deliver typed project-table experience,DBG-1006;DBG-1007;DBG-1010
+IMP-1005,P2,Learning,Partial,Approve sources plans progress and outcomes,DBG-1006;DBG-1007;DBG-1008
+IMP-1006,P2,Career,Partial,Approve evidence resume and application workflows,DBG-1006;DBG-1007;DBG-1008
+IMP-1007,P1,UI and navigation,Partial,Approve shared workspace and navigation patterns,DBG-1008

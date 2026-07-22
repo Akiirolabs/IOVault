@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { apiFetch, buildAgentContext, type VaultState } from "./App";
+import { createInitialWriteState } from "./notes/model";
 
 describe("authenticated API fetch", () => {
   afterEach(() => {
@@ -27,7 +28,7 @@ describe("authenticated API fetch", () => {
       learning: { docHtml: "<p>selected learning notes</p>", connections: [], calendarFocus: [] },
       career: { resume: "private resume", aiDraft: "private draft" },
       projects: { blocks: [] },
-      write: { docHtml: "<p>private writing</p>" },
+      write: createInitialWriteState("<p>private writing</p>"),
       github: { repo: "private/repo" },
       settings: { navIcons: { code: "code", write: "pencil", learning: "cap", career: "briefcase", projects: "folder" } },
     } as VaultState;

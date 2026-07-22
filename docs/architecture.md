@@ -4,6 +4,8 @@ IO Vault is a Vite/React SPA backed by an Express API and SQLite. Browser caches
 
 ## System map
 
+> **Legacy reference map — preserved unchanged.** This map remains the compact runtime snapshot that existed before the implementation system. The current planning and delivery architecture is added below it.
+
 ```mermaid
 flowchart TB
   User["Signed-in user"] --> SPA["React SPA :5173"]
@@ -16,11 +18,32 @@ flowchart TB
   API -->|"short-lived installation token"| GitHub["GitHub App / repositories"]
 ```
 
+## Current implementation architecture
+
+The runtime remains the product architecture; the implementation system adds a documentation control layer around planned changes without becoming part of the deployed application.
+
+```mermaid
+flowchart TB
+  Roadmap["Roadmap priorities"] --> Register["Implementation register"]
+  Debug["Debug system evidence"] --> Register
+  Register --> Areas["IMP area plans"]
+  Areas --> Runtime["React, Express, SQLite, IndexedDB"]
+  Areas --> Verify["Verification panel"]
+  Runtime --> Evidence["Tests, build, and workflow evidence"]
+  Verify --> Evidence
+  Evidence --> Runs["Append-only implementation runs"]
+  Runs --> Status["Delivery status"]
+  Status --> Roadmap
+```
+
+The [implementation system](implementation-system/README.md) is authoritative for feature delivery state and steps. The [debug system](debug-system/README.md) remains authoritative for individual defects and security findings.
+
 ## Ownership boundaries
 
 | Data | Durable source | Browser copy | Notes |
 |---|---|---|---|
 | General workspace | SQLite `workspaces.data` | localStorage cache | Full `VaultState`; last-write-wins remains a known limitation |
+| Notes pages and collections | `VaultState.write` via SQLite | React/localStorage | Versioned hierarchy; legacy `docHtml` migrates into the first note |
 | Code snippets and notes | `VaultState` via SQLite | React/localStorage | Reusable globally; optional repository provenance |
 | Scratch files | SQLite code tables | IndexedDB working cache | User-scoped |
 | GitHub files | GitHub repository | IndexedDB bounded cache | Not stored in `VaultState` |

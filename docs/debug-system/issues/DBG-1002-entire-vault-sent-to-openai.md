@@ -2,7 +2,7 @@
 
 | Field | Detail |
 |---|---|
-| Status | **Verified** · Critical · 2026-07-20 |
+| Status | **✅ Verified** · Critical · 2026-07-20 |
 | Evidence | Old client sent `vaultState`; server serialized it into every OpenAI request |
 | Impact | Privacy exposure, cost, latency, context overflow, prompt injection |
 | Fix | No context by default; visible active-page opt-in; bounded summaries; 64 KB server limit; ignore legacy `vaultData` |

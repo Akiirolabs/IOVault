@@ -20,6 +20,7 @@ Update documentation as part of the implementation run, not as a later cleanup t
 | Change | Required documents |
 |---|---|
 | Any meaningful implementation | `docs/implementation-log.md` and relevant feature document |
+| Any IMP workstream changed | Relevant `docs/implementation-system/areas/IMP-*.md`, `implementation-register.md`, `implementation-register.csv`, `delivery-status.md`, `implementation-runs.md`, and `verification-panel.md` |
 | Priority or completion changed | `docs/roadmap.md` |
 | Route, storage, ownership, or data flow changed | `docs/architecture.md` and `docs/diagrams.md` |
 | Code Vault behavior changed | `docs/code-vault-mini-ide.md` and `docs/code-vault-architecture.md` |
@@ -27,7 +28,11 @@ Update documentation as part of the implementation run, not as a later cleanup t
 | Issue/service dependencies changed | Relevant `debug-system/graphs/` Mermaid file and service-impact chart |
 | Documentation navigation changed | `docs/README.md` |
 
-For a completed DBG issue, every status surface must say `Verified` only after its required tests and production build pass. Keep fix attempts append-only; historical limitations may remain in their dated row.
+For a completed DBG issue, every human-readable status surface must say `✅ Verified` only after its required tests and production build pass. Keep the CSV `Status` value as plain `Verified` and add `✅` to its verification result. Keep fix attempts append-only; historical limitations may remain in their dated row.
+
+For an IMP workstream, keep the Markdown and CSV state aligned. Use `✅ Verified` only when the area acceptance checks have current evidence; otherwise use `Implemented`, `Partial`, or `Planned`. Keep `implementation-runs.md` append-only.
+
+IMP records own product/UX design and acceptance. DBG records own defects, hardening, technical debt, attempts, and remediation evidence. Link an IMP plan to `engineering-dependencies.md` and its authoritative DBG record; never duplicate the DBG scope, steps, status, or evidence inside the IMP plan. Quality gates belong in `verification-panel.md`, not a separate IMP workstream.
 
 ## Writing standard
 

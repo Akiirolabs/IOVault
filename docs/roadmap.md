@@ -1,46 +1,53 @@
 # IO Vault Roadmap
 
-The roadmap prioritizes security and data integrity before broad feature expansion. Completed work belongs in [implementation-log.md](implementation-log.md); detailed defects belong in [debug-system](debug-system/README.md).
+The roadmap prioritizes security and data integrity before broad feature expansion. Execution steps and page-level acceptance live in the [implementation system](implementation-system/README.md), completed work belongs in [implementation-log.md](implementation-log.md), and detailed defects belong in [debug-system](debug-system/README.md).
 
-## Status overview
+## Engineering risk track
 
-| Priority | Workstream | Status | Next outcome |
+The [debug system](debug-system/issue-register.md) owns status and evidence for this track.
+
+| Priority | Outcome | Authority |
+|---:|---|---|
+| P0 | Production secret and system-wide abuse controls | [DBG-1004/1005](implementation-system/engineering-dependencies.md) |
+| P1 | Conflict-safe storage, sanitization, and input validation | [DBG-1006/1007/1010/1011](implementation-system/engineering-dependencies.md) |
+| P1 | Characterize Code Vault memory behavior | [DBG-1014](debug-system/issues/DBG-1014-monaco-and-react-state.md) |
+| P2 | Reduce frontend and server monolith risk | [DBG-1008/1009](implementation-system/engineering-dependencies.md) |
+
+## Product design track
+
+The [implementation register](implementation-system/implementation-register.md) owns status and acceptance for this track.
+
+| Priority | Design area | State | Next outcome |
 |---:|---|---|---|
-| P0 | AI endpoint authentication and bounded context | **Complete** | Monitor quality and usage |
-| P0 | Cookie session migration | **Complete** | Monitor CSRF/session behavior |
-| P0 | Production JWT secret | Planned | Fail closed when configuration is absent |
-| P0 | System-wide abuse controls | Partial | Protect auth, GitHub, and code-assistant routes |
-| P1 | Conflict-safe workspace sync | Planned | Expected version + HTTP 409 workflow |
-| P1 | Rich-text sanitization and API schemas | Planned | Close stored-XSS and malformed-input paths |
-| P1 | Code Vault memory profiling | Planned | Baseline large-repository behavior |
-| P2 | Frontend/server modularization | Planned | Smaller tested feature boundaries |
-| P2 | Project table creator | Planned | Typed per-project rows and columns |
-| P3 | Flowchart and object mindmap | Planned | Manual then automatic graph screens |
+| P1 | Code Vault | Implemented v1 | Refine complete repository-change workflow |
+| P1 | Notes / Write | Implemented v1 | Add cross-area links and durable browser E2E |
+| P1 | UI and navigation | Partial | Approve shared workspace patterns |
+| P2 | Projects | Partial | Deliver typed project table before graph modes |
+| P2 | Learning | Partial | Approve sources, plans, progress, and outcomes |
+| P2 | Career | Partial | Approve evidence, resume, and application workflows |
 
 ## Delivery sequence
 
 ```mermaid
 flowchart LR
-  A["Security hardening"] --> B["Conflict-safe sync"]
-  B --> C["Component/API boundaries"]
+  A["Clear linked critical DBG blockers"] --> B["Shared UI patterns"]
+  B --> C["Notes structured design"]
   C --> D["Project table"]
   D --> E["Manual flowchart"]
   E --> F["Automatic object mindmap"]
+  C --> G["Learning and Career workflows"]
+  B --> H["Code Vault workflow refinement"]
 ```
 
 ## Near-term acceptance targets
 
-### Security and persistence
+### Engineering readiness
 
-Require `JWT_SECRET` in production, add route-specific quotas, sanitize rich text, and reject stale workspace saves. HttpOnly SameSite sessions and CSRF headers are complete.
-
-### Maintainability and performance
-
-Add characterization tests before splitting `src/App.tsx` and `server/index.js`. Profile Code Vault with realistic multi-file repositories before moving file bodies out of broad React state.
+Resolve only the DBG dependencies that block the next product slice. Do not duplicate their implementation steps or evidence in feature plans.
 
 ### Product expansion
 
-Build the data table first because it requires no graph engine. Reuse one project overlay contract for the later manual flowchart and automatically laid-out object mindmap.
+Approve shared workspace patterns and the Notes model, then build the project data table because it requires no graph engine. Reuse one project overlay contract for later manual flowchart and automatically laid-out object mindmap designs.
 
 ## Deferred
 

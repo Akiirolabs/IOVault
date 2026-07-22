@@ -40,6 +40,8 @@ import { SiCoursera, SiGithub, SiNotion } from "react-icons/si";
 import { AI_MODEL } from "./aiConfig";
 import CodeVaultWorkspace from "./codeVault/CodeVaultWorkspace";
 import type { CodeSnippet } from "./codeVault/types";
+import NotesWorkspace from "./notes/NotesWorkspace";
+import { activeNoteContext, createInitialWriteState, normalizeWriteState, type WriteState } from "./notes/model";
 
 // --- Types: shape of each workspace page and full saved state ---
 
@@ -166,9 +168,7 @@ export type VaultState = {
   projects: {
     blocks: ProjectBlock[];
   };
-  write: {
-    docHtml: string;
-  };
+  write: WriteState;
   github: {
     repo: string;
   };
@@ -215,7 +215,11 @@ export function buildAgentContext(page: PageKey, state: VaultState): AgentContex
       omittedProjects: Math.max(0, state.projects.blocks.length - 20),
     } };
   }
-  return { scope: page, data: { document: truncateAgentText(agentPlainText(state.write.docHtml), 30_000) } };
+  const noteContext = activeNoteContext(state.write);
+  return { scope: page, data: {
+    ...noteContext,
+    ...("document" in noteContext && typeof noteContext.document === "string" ? { document: truncateAgentText(agentPlainText(noteContext.document), 30_000) } : {}),
+  } };
 }
 
 type NavItem = {
@@ -258,9 +262,7 @@ const defaultVaultState: VaultState = {
       },
     ],
   },
-  write: {
-    docHtml: "",
-  },
+  write: createInitialWriteState(),
   github: {
     repo: "",
   },
@@ -337,10 +339,7 @@ function normalizeVaultState(raw: unknown): VaultState {
       ...defaultVaultState.career,
       ...(typeof parsed.career === "object" && parsed.career ? parsed.career : {}),
     },
-    write: {
-      ...defaultVaultState.write,
-      ...(typeof parsed.write === "object" && parsed.write ? parsed.write : {}),
-    },
+    write: normalizeWriteState(parsed.write),
     github: {
       ...defaultVaultState.github,
       ...(typeof parsed.github === "object" && parsed.github ? parsed.github : {}),
@@ -1249,23 +1248,14 @@ function App() {
             />
           )}
 
-          {/* Page: Write — blank rich-text canvas (no labels or starter copy) */}
+          {/* Page: Write — structured notes, collections, and explicit AI context */}
           {activePage === "write" && (
-            <div className="write-workspace">
-              <section className="editor-panel write-panel">
-                <div className="write-format-bar" role="toolbar" aria-label="Text formatting">
-                  <TextFormatMenu onCommand={applyWriteFormat} />
-                </div>
-                <RichTextEditor
-                  className="rich-editor write-canvas"
-                  html={vaultState.write.docHtml}
-                  onChange={(docHtml) => updateWrite({ docHtml })}
-                  role="textbox"
-                  ariaMultiline
-                  ariaLabel="Write"
-                />
-              </section>
-            </div>
+            <NotesWorkspace
+              write={vaultState.write}
+              onChange={(write) => updateWrite(write)}
+              includeAssistantContext={includeAgentContext}
+              onAssistantContextChange={setIncludeAgentContext}
+            />
           )}
 
           {/* Page: Learning — docs, course connections drawer, focus calendar */}

@@ -1,10 +1,12 @@
 # Issue Register
 
+`✅ Verified` means implementation, required tests, and the production build passed. Other statuses remain open.
+
 | Code | Priority · Status | Problem | Primary path | Next action |
 |---|---|---|---|---|
-| DBG-1001 | Critical · **Verified** | Anonymous AI endpoint | `server/index.js` | Minimize context |
-| DBG-1002 | Critical · **Verified** | Full vault sent to OpenAI | `src/App.tsx` | Monitor context quality |
-| DBG-1003 | Critical · **Verified** | JWT in localStorage | `src/App.tsx` | Monitor cookie sessions |
+| DBG-1001 | Critical · **✅ Verified** | Anonymous AI endpoint | `server/index.js` | Minimize context |
+| DBG-1002 | Critical · **✅ Verified** | Full vault sent to OpenAI | `src/App.tsx` | Monitor context quality |
+| DBG-1003 | Critical · **✅ Verified** | JWT in localStorage | `src/App.tsx` | Monitor cookie sessions |
 | DBG-1004 | Critical · Confirmed | Production JWT fallback | `server/auth.js` | Fail closed in production |
 | DBG-1005 | Critical · Planned | Incomplete rate limits | `server/index.js` | Protect auth routes |
 | DBG-1006 | High · Confirmed | Workspace JSON blob | `server/db.js` | Define record boundaries |
