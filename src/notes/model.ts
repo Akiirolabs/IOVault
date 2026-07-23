@@ -1,9 +1,10 @@
-export type NoteColumnType = "text" | "checkbox";
+export type NoteColumnType = "text" | "number" | "date" | "checkbox" | "select" | "url";
 
 export type NoteColumn = {
   id: string;
   name: string;
   type: NoteColumnType;
+  options?: string[];
 };
 
 export type NoteCollection = {
@@ -82,6 +83,46 @@ function isNotePage(value: unknown): value is NotePage {
     && typeof page.docHtml === "string";
 }
 
+const NOTE_COLUMN_TYPES = new Set<NoteColumnType>(["text", "number", "date", "checkbox", "select", "url"]);
+
+function normalizeCollection(raw: unknown): NoteCollection | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const value = raw as Partial<NoteCollection>;
+  if (!Array.isArray(value.columns) || !Array.isArray(value.rows)) return undefined;
+
+  const columns = value.columns.flatMap((column) => {
+    if (!column || typeof column !== "object") return [];
+    const candidate = column as Partial<NoteColumn>;
+    if (typeof candidate.id !== "string" || typeof candidate.name !== "string" || !NOTE_COLUMN_TYPES.has(candidate.type as NoteColumnType)) return [];
+    return [{
+      id: candidate.id,
+      name: candidate.name,
+      type: candidate.type as NoteColumnType,
+      ...(candidate.type === "select" ? { options: Array.isArray(candidate.options) ? candidate.options.filter((option): option is string => typeof option === "string") : [] } : {}),
+    }];
+  });
+
+  const columnIds = new Set(columns.map((column) => column.id));
+  const rows = value.rows.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const candidate = row as NoteCollection["rows"][number];
+    if (typeof candidate.id !== "string" || !candidate.cells || typeof candidate.cells !== "object") return [];
+    return [{
+      id: candidate.id,
+      cells: Object.fromEntries(Object.entries(candidate.cells).filter(([key, cell]) => columnIds.has(key) && (typeof cell === "string" || typeof cell === "boolean"))),
+    }];
+  });
+
+  const sortColumnId = typeof value.sortColumnId === "string" && columnIds.has(value.sortColumnId) ? value.sortColumnId : undefined;
+
+  return {
+    columns,
+    rows,
+    view: value.view === "open" || value.view === "done" ? value.view : "all",
+    ...(sortColumnId ? { sortColumnId, sortDirection: value.sortDirection === "desc" ? "desc" as const : "asc" as const } : {}),
+  };
+}
+
 export function normalizeWriteState(raw: unknown): WriteState {
   if (!raw || typeof raw !== "object") return createInitialWriteState();
   const value = raw as Partial<WriteState>;
@@ -92,6 +133,7 @@ export function normalizeWriteState(raw: unknown): WriteState {
     archived: page.archived === true,
     createdAt: typeof page.createdAt === "string" ? page.createdAt : INITIAL_TIMESTAMP,
     updatedAt: typeof page.updatedAt === "string" ? page.updatedAt : INITIAL_TIMESTAMP,
+    collection: page.kind === "collection" ? normalizeCollection(page.collection) ?? { columns: [], rows: [], view: "all" as const } : undefined,
   })) : [];
 
   if (pages.length === 0) return createInitialWriteState(legacyHtml);
@@ -122,4 +164,3 @@ export function activeNoteContext(write: WriteState) {
   }
   return { title: page.title, kind: page.kind, document: page.docHtml };
 }
-

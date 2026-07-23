@@ -21,7 +21,7 @@ Each series starts at `1001`. Preserve an existing code once assigned. Use `—`
 |---|---|---|---|
 | IMP-1001 | Implemented | Base shell needed responsive parity · 2026-07-03 | Preserved desktop workspace on narrow screens · 2026-07-03 |
 | [IMP-1002](implementation-system/areas/IMP-1002-code-vault.md) | Implemented v1 | Code Vault lacked an assisted repository workflow · 2026-07 | Added Monaco, scratch files, reviewed patches, and draft PRs · 2026-07 |
-| [IMP-1003](implementation-system/areas/IMP-1003-notes-write.md) | Implemented v1 | Write lacked structured notes and collections · 2026-07-21 | Added hierarchy, tables, archive, Testing Panel, and AI context · 2026-07-22 |
+| [IMP-1003](implementation-system/areas/IMP-1003-notes-write.md) | Implemented v1 · 1/3 corrections verified | Write lacked structured notes and collections · 2026-07-21 | Added hierarchy, tables, archive, Testing Panel, and AI context · 2026-07-22 |
 | [IMP-1004](implementation-system/areas/IMP-1004-projects.md) | Partial | Projects need structured work modes · 2026-07-21 | Full-page editor done; typed table and graphs pending · — |
 | [IMP-1005](implementation-system/areas/IMP-1005-learning.md) | Partial | Learning workflow needs structured records · 2026-07-21 | Design and implementation pending · — |
 | [IMP-1006](implementation-system/areas/IMP-1006-career.md) | Partial | Career workflow needs evidence and application tracking · 2026-07-21 | Design and implementation pending · — |
@@ -53,6 +53,9 @@ Each series starts at `1001`. Preserve an existing code once assigned. Use `—`
 | DBG-IMP-1001 | DBG-1001 | ✅ Verified | Anonymous AI access · 2026-07-19 | Secured and bounded `/api/agent` · 2026-07-19 |
 | DBG-IMP-1002 | DBG-1002 | ✅ Verified | Excessive AI context · 2026-07-20 | Limited context to explicit bounded page data · 2026-07-20 |
 | DBG-IMP-1003 | DBG-1003 | ✅ Verified | Browser-held bearer token · 2026-07-21 | Added cookie session, CSRF, and logout clearing · 2026-07-21 |
+| DBG-IMP-1004 | ADT-1001 · IMP-1003 · DBG-1011 | ✅ Verified | Column creation and type selection were incomplete · 2026-07-23 | Added inline text, number, date, checkbox, select/status, and URL controls · 2026-07-23 |
+| DBG-IMP-1005 | ADT-1001 · IMP-1003 · DBG-1006/1007 | Planned | Collection behavior and persistence lack complete coverage · 2026-07-23 | Normalize data; correct filters, sorting, restore, sync, and durable E2E · — |
+| DBG-IMP-1006 | ADT-1001 · IMP-1003 · DBG-1010 | Planned | Rich text and keyboard behavior remain unsafe or incomplete · 2026-07-23 | Sanitize HTML, replace fragile editing commands, and add accessibility tests · — |
 
 ## Documentation
 
@@ -65,6 +68,7 @@ Each series starts at `1001`. Preserve an existing code once assigned. Use `—`
 | DOC-1005 | Complete | Documentation had duplicate status and planning files · 2026-07-23 | Consolidated authoritative records and removed mirrors · 2026-07-23 |
 | DOC-1006 | Complete | Generated diagram copies duplicated Mermaid sources · 2026-07-23 | Retained editable Mermaid only · 2026-07-23 |
 | DOC-1007 | Complete | Work prefixes and cross-system history lacked one index · 2026-07-23 | Added this correlated code ledger · 2026-07-23 |
+| DOC-1008 | Complete | ADT-1001 lacked an ordered correction path · 2026-07-23 | Added DBG-IMP-1004 through 1006 and synchronized IMP-1003 planning · 2026-07-23 |
 
 ## Deployment
 
@@ -76,7 +80,7 @@ Each series starts at `1001`. Preserve an existing code once assigned. Use `—`
 
 | Code | Scope | Status | Problem · found | Fix · finished |
 |---|---|---|---|---|
-| ADT-1001 | IMP-1003 Notes / Write | Complete | Column creation fails in the in-app browser; typed controls and core tests are incomplete · 2026-07-23 | Pending a correlated DBG finding and DBG-IMP run · — |
+| ADT-1001 | IMP-1003 Notes / Write | Complete | Column creation failed in the in-app browser; typed controls and core tests were incomplete · 2026-07-23 | DBG-IMP-1004 verified; DBG-IMP-1005 and 1006 pending · — |
 
 ## Update rule
 

@@ -2,6 +2,8 @@
 
 | Date | Delivery | Result | Verification |
 |---|---|---|---|
+| 2026-07-23 | ✅ DBG-IMP-1004 typed Notes columns | Replaced prompt dialogs with inline column management and six editable, sortable, reload-safe types | 30 tests + production build + signed-in browser create/edit/save/reload |
+| 2026-07-23 | DOC-1008 IMP-1003 correction plan | Added DBG-IMP-1004 through 1006 for typed tables, collection integrity, and safe accessible editing | Link, table, sequence, and status consistency audit |
 | 2026-07-23 | DOC-1007 work-code ledger | Added correlated IMP, DBG, DOC, DPL, ADT, and DBG-IMP definitions and concise dated records | Link, table, date, and status consistency audit |
 | 2026-07-23 | Mermaid source-only documentation | Removed generated diagram replicas and rendering tooling while preserving editable Mermaid sources | Asset, link, Mermaid-fence, and source-preservation audits |
 | 2026-07-23 | Documentation consolidation | Merged project plans, templates, architecture, status, and history into authoritative files; removed redundant mirrors | Link, Mermaid-source, source-preservation, and structure audits |

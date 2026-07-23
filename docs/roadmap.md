@@ -20,7 +20,7 @@ The [implementation register](implementation-system/implementation-register.md) 
 | Priority | Design area | State | Next outcome |
 |---:|---|---|---|
 | P1 | Code Vault | Implemented v1 | Refine complete repository-change workflow |
-| P1 | Notes / Write | Implemented v1 | Add cross-area links and durable browser E2E |
+| P1 | Notes / Write | Implemented v1 · 1/3 corrections verified | Run DBG-IMP-1005 and 1006 from ADT-1001 |
 | P1 | UI and navigation | Partial | Approve shared workspace patterns |
 | P2 | Projects | Partial | Deliver typed project table before graph modes |
 | P2 | Learning | Partial | Approve sources, plans, progress, and outcomes |

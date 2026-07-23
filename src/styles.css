@@ -710,7 +710,10 @@ textarea {
 .notes-search,
 .notes-title-wrap input,
 .notes-page-actions select,
-.notes-table input {
+.notes-table input,
+.notes-table select,
+.notes-column-manager input,
+.notes-column-manager select {
   border: 1px solid rgba(125, 211, 252, 0.14);
   color: #dff8ff;
   background: rgba(5, 15, 31, 0.72);
@@ -877,6 +880,50 @@ textarea {
   background: rgba(56, 189, 248, 0.2);
 }
 
+.notes-column-manager {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(125, 211, 252, 0.12);
+  border-radius: 0.8rem;
+  background: rgba(5, 15, 31, 0.58);
+}
+
+.notes-column-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.notes-column-config,
+.notes-column-create {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) minmax(9rem, 0.7fr) minmax(12rem, 1fr) auto;
+  gap: 0.45rem;
+}
+
+.notes-column-config input,
+.notes-column-config select,
+.notes-column-create input,
+.notes-column-create select,
+.notes-column-config button,
+.notes-column-create button {
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  border-radius: 0.55rem;
+}
+
+.notes-column-config button,
+.notes-column-create button {
+  color: #a9d7ed;
+  background: rgba(56, 189, 248, 0.07);
+}
+
+.notes-column-create button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .notes-table-scroll {
   overflow: auto;
   border: 1px solid rgba(125, 211, 252, 0.1);
@@ -916,7 +963,8 @@ textarea {
   background: transparent;
 }
 
-.notes-table input:not([type="checkbox"]) {
+.notes-table input:not([type="checkbox"]),
+.notes-table select {
   width: 100%;
   padding: 0.48rem;
   border: 0;

@@ -31,5 +31,35 @@ describe("Notes model", () => {
     expect(JSON.stringify(activeNoteContext(write))).toContain("Visible");
     expect(JSON.stringify(activeNoteContext(write))).not.toContain("Hidden");
   });
-});
 
+  it("preserves supported collection types and select options through reload normalization", () => {
+    const write = createInitialWriteState();
+    write.pages = [{
+      ...write.pages[0],
+      id: "typed-table",
+      kind: "collection",
+      title: "Typed table",
+      collection: {
+        columns: [
+          { id: "text", name: "Text", type: "text" },
+          { id: "number", name: "Number", type: "number" },
+          { id: "date", name: "Date", type: "date" },
+          { id: "check", name: "Check", type: "checkbox" },
+          { id: "status", name: "Status", type: "select", options: ["Todo", "Done"] },
+          { id: "url", name: "URL", type: "url" },
+        ],
+        rows: [{ id: "row", cells: { text: "A", number: "2", date: "2026-07-23", check: true, status: "Done", url: "https://example.com" } }],
+        view: "done",
+        sortColumnId: "number",
+        sortDirection: "asc",
+      },
+    }];
+    write.activePageId = "typed-table";
+
+    const normalized = normalizeWriteState(JSON.parse(JSON.stringify(write)));
+    expect(normalized.pages[0].collection?.columns.map((column) => column.type)).toEqual(["text", "number", "date", "checkbox", "select", "url"]);
+    expect(normalized.pages[0].collection?.columns[4].options).toEqual(["Todo", "Done"]);
+    expect(normalized.pages[0].collection?.rows[0].cells.status).toBe("Done");
+    expect(normalized.pages[0].collection?.sortColumnId).toBe("number");
+  });
+});

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { NoteCollection, NotePage, WriteState } from "./model";
+import type { NoteCollection, NoteColumn, NoteColumnType, NotePage, WriteState } from "./model";
 import { createTestingCollection } from "./model";
 
 type Props = {
@@ -53,7 +53,37 @@ function RichNoteEditor({ page, onChange }: { page: NotePage; onChange: (html: s
   );
 }
 
+const COLUMN_TYPE_OPTIONS: Array<{ value: NoteColumnType; label: string }> = [
+  { value: "text", label: "Text" },
+  { value: "number", label: "Number" },
+  { value: "date", label: "Date" },
+  { value: "checkbox", label: "Checkbox" },
+  { value: "select", label: "Select / status" },
+  { value: "url", label: "URL" },
+];
+
+function normalizeCellForType(value: string | boolean | undefined, column: NoteColumn) {
+  if (column.type === "checkbox") return value === true;
+  const text = typeof value === "string" ? value : "";
+  if (column.type === "select" && column.options?.length && !column.options.includes(text)) return "";
+  return text;
+}
+
+function compareCells(a: string | boolean | undefined, b: string | boolean | undefined, column: NoteColumn) {
+  if (column.type === "number") {
+    const left = Number(a);
+    const right = Number(b);
+    if (!Number.isNaN(left) && !Number.isNaN(right)) return left - right;
+  }
+  if (column.type === "checkbox") return Number(a === true) - Number(b === true);
+  return String(a ?? "").localeCompare(String(b ?? ""), undefined, { numeric: column.type === "date" });
+}
+
 function CollectionEditor({ collection, onChange }: { collection: NoteCollection; onChange: (collection: NoteCollection) => void }) {
+  const [showColumns, setShowColumns] = useState(false);
+  const [newColumnName, setNewColumnName] = useState("");
+  const [newColumnType, setNewColumnType] = useState<NoteColumnType>("text");
+  const [newColumnOptions, setNewColumnOptions] = useState("");
   const completedColumn = collection.columns.find((column) => column.type === "checkbox");
   const visibleRows = useMemo(() => {
     let rows = collection.rows.filter((row) => {
@@ -62,8 +92,9 @@ function CollectionEditor({ collection, onChange }: { collection: NoteCollection
       return collection.view === "done" ? completed : !completed;
     });
     if (collection.sortColumnId) {
+      const column = collection.columns.find((item) => item.id === collection.sortColumnId);
       const direction = collection.sortDirection === "desc" ? -1 : 1;
-      rows = [...rows].sort((a, b) => String(a.cells[collection.sortColumnId!] ?? "").localeCompare(String(b.cells[collection.sortColumnId!] ?? "")) * direction);
+      if (column) rows = [...rows].sort((a, b) => compareCells(a.cells[column.id], b.cells[column.id], column) * direction);
     }
     return rows;
   }, [collection, completedColumn]);
@@ -72,11 +103,40 @@ function CollectionEditor({ collection, onChange }: { collection: NoteCollection
     onChange({ ...collection, rows: collection.rows.map((row) => row.id === rowId ? { ...row, cells: { ...row.cells, [columnId]: value } } : row) });
   }
 
-  function addColumn() {
-    const name = window.prompt("Column name")?.trim();
+  function addColumn(event: React.FormEvent) {
+    event.preventDefault();
+    const name = newColumnName.trim();
     if (!name) return;
-    const type = window.confirm("Use a checkbox column? Select Cancel for text.") ? "checkbox" : "text";
-    onChange({ ...collection, columns: [...collection.columns, { id: makeId("column"), name, type }] });
+    const column: NoteColumn = {
+      id: makeId("column"),
+      name,
+      type: newColumnType,
+      ...(newColumnType === "select" ? { options: parseOptions(newColumnOptions) } : {}),
+    };
+    onChange({ ...collection, columns: [...collection.columns, column] });
+    setNewColumnName("");
+    setNewColumnType("text");
+    setNewColumnOptions("");
+  }
+
+  function parseOptions(value: string) {
+    return [...new Set(value.split(",").map((option) => option.trim()).filter(Boolean))];
+  }
+
+  function updateColumn(columnId: string, updates: Partial<NoteColumn>) {
+    const previous = collection.columns.find((column) => column.id === columnId);
+    if (!previous) return;
+    const next = { ...previous, ...updates };
+    if (next.type !== "select") delete next.options;
+    const typeChanged = next.type !== previous.type || (next.type === "select" && updates.options !== undefined);
+    onChange({
+      ...collection,
+      columns: collection.columns.map((column) => column.id === columnId ? next : column),
+      rows: typeChanged ? collection.rows.map((row) => ({
+        ...row,
+        cells: { ...row.cells, [columnId]: normalizeCellForType(row.cells[columnId], next) },
+      })) : collection.rows,
+    });
   }
 
   function removeColumn(columnId: string) {
@@ -107,21 +167,42 @@ function CollectionEditor({ collection, onChange }: { collection: NoteCollection
         <div role="group" aria-label="Collection filter">
           {(["all", "open", "done"] as const).map((view) => <button type="button" className={collection.view === view ? "active" : ""} key={view} onClick={() => onChange({ ...collection, view })}>{view}</button>)}
         </div>
-        <button type="button" onClick={addColumn}>+ Column</button>
+        <button type="button" aria-expanded={showColumns} onClick={() => setShowColumns((value) => !value)}>{showColumns ? "Close columns" : "+ Column"}</button>
       </div>
+      {showColumns && <section className="notes-column-manager" aria-label="Column settings">
+        <div className="notes-column-list">
+          {collection.columns.map((column) => <div className="notes-column-config" key={column.id}>
+            <input aria-label={`Name for ${column.name} column`} value={column.name} onChange={(event) => updateColumn(column.id, { name: event.target.value })} />
+            <select aria-label={`Type for ${column.name} column`} value={column.type} onChange={(event) => updateColumn(column.id, { type: event.target.value as NoteColumnType })}>
+              {COLUMN_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            {column.type === "select" && <input aria-label={`Options for ${column.name} column`} value={column.options?.join(", ") ?? ""} placeholder="Options, comma separated" onChange={(event) => updateColumn(column.id, { options: parseOptions(event.target.value) })} />}
+            <button type="button" onClick={() => removeColumn(column.id)} aria-label={`Delete ${column.name} column`}>Delete</button>
+          </div>)}
+        </div>
+        <form className="notes-column-create" onSubmit={addColumn}>
+          <input aria-label="New column name" placeholder="Column name" value={newColumnName} onChange={(event) => setNewColumnName(event.target.value)} />
+          <select aria-label="New column type" value={newColumnType} onChange={(event) => setNewColumnType(event.target.value as NoteColumnType)}>
+            {COLUMN_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+          {newColumnType === "select" && <input aria-label="New column options" placeholder="Options, comma separated" value={newColumnOptions} onChange={(event) => setNewColumnOptions(event.target.value)} />}
+          <button type="submit" disabled={!newColumnName.trim()}>Add column</button>
+        </form>
+      </section>}
       <div className="notes-table-scroll">
         <table className="notes-table">
           <thead><tr>{collection.columns.map((column) => (
             <th key={column.id}>
               <button type="button" className="notes-column-sort" onClick={() => sortBy(column.id)}>{column.name}{collection.sortColumnId === column.id ? (collection.sortDirection === "desc" ? " ↓" : " ↑") : ""}</button>
-              <button type="button" className="notes-column-delete" onClick={() => removeColumn(column.id)} aria-label={`Delete ${column.name} column`}>×</button>
             </th>
           ))}<th aria-label="Row actions" /></tr></thead>
-          <tbody>{visibleRows.map((row) => <tr key={row.id}>{collection.columns.map((column) => <td key={column.id}>{column.type === "checkbox" ? (
-            <input type="checkbox" aria-label={`${column.name} for row`} checked={row.cells[column.id] === true} onChange={(event) => updateCell(row.id, column.id, event.target.checked)} />
+          <tbody>{visibleRows.map((row, rowIndex) => <tr key={row.id}>{collection.columns.map((column) => <td key={column.id}>{column.type === "checkbox" ? (
+            <input type="checkbox" aria-label={`${column.name} for row ${rowIndex + 1}`} checked={row.cells[column.id] === true} onChange={(event) => updateCell(row.id, column.id, event.target.checked)} />
+          ) : column.type === "select" ? (
+            <select aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)}><option value="">Select…</option>{column.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
           ) : (
-            <input aria-label={`${column.name} for row`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)} />
-          )}</td>)}<td><button type="button" className="notes-row-delete" onClick={() => onChange({ ...collection, rows: collection.rows.filter((item) => item.id !== row.id) })} aria-label="Delete row">×</button></td></tr>)}</tbody>
+            <input type={column.type} aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)} />
+          )}</td>)}<td><button type="button" className="notes-row-delete" onClick={() => onChange({ ...collection, rows: collection.rows.filter((item) => item.id !== row.id) })} aria-label={`Delete row ${rowIndex + 1}`}>×</button></td></tr>)}</tbody>
         </table>
       </div>
       <button type="button" className="notes-add-row" onClick={() => onChange({ ...collection, rows: [...collection.rows, { id: makeId("row"), cells: {} }] })}>+ Add row</button>
