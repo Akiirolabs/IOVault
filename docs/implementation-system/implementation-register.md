@@ -10,5 +10,3 @@ This is the authoritative status index. Detail lives in the linked area plan.
 | IMP-1005 | P2 | [Learning](areas/IMP-1005-learning.md) | Partial | Approve sources, plans, progress, and outcomes | [Shared dependencies](engineering-dependencies.md) |
 | IMP-1006 | P2 | [Career](areas/IMP-1006-career.md) | Partial | Approve evidence, resume, and application workflows | [Shared dependencies](engineering-dependencies.md) |
 | IMP-1007 | P1 | [UI and navigation](areas/IMP-1007-ui-navigation.md) | Partial | Approve shared workspace and navigation patterns | [DBG-1008](../debug-system/issues/DBG-1008-app-component-monolith.md) |
-
-See [implementation-register.csv](implementation-register.csv) for machine-readable tracking.

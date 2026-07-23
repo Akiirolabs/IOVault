@@ -16,5 +16,3 @@
 | DBG-1012 | Build/CI | All runtime services | `package.json` |
 | DBG-1013 | Build/package layout | Frontend, API | `package.json` |
 | DBG-1014 | Monaco, Frontend | IndexedDB, Performance | `src/codeVault/CodeVaultWorkspace.tsx` |
-
-See [issue-service graph](graphs/issue-service-graph.md) for the visual relationship map.

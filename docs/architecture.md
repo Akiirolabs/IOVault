@@ -31,9 +31,8 @@ flowchart TB
   Areas --> Verify["Verification panel"]
   Runtime --> Evidence["Tests, build, and workflow evidence"]
   Verify --> Evidence
-  Evidence --> Runs["Append-only implementation runs"]
-  Runs --> Status["Delivery status"]
-  Status --> Roadmap
+  Evidence --> Log["Implementation log"]
+  Log --> Register
 ```
 
 The [implementation system](implementation-system/README.md) is authoritative for feature delivery state and steps. The [debug system](debug-system/README.md) remains authoritative for individual defects and security findings.
@@ -75,6 +74,80 @@ sequenceDiagram
 ### AI context policy
 
 The general assistant sends no vault context by default. A visible checkbox can include only a bounded summary of the active page. The server ignores legacy `vaultData`, caps selected context at 64 KB, authenticates and rate-limits requests, and stores content-free usage metadata. Code Vault has a separate selected-file patch workflow documented in [code-vault-architecture.md](code-vault-architecture.md).
+
+## Approved target direction
+
+```mermaid
+flowchart TB
+  Shell["Accessible application shell"] --> Notes["Notes / Write"]
+  Shell --> Projects["Projects"]
+  Shell --> Code["Code Vault"]
+  Shell --> Learning["Learning"]
+  Shell --> Career["Career"]
+  Notes & Projects & Learning & Career --> Workspace["Versioned workspace services"]
+  Code --> CodeData["Bounded repository and scratch services"]
+  Workspace & CodeData --> API["Validated focused API modules"]
+  API --> SQL["User-scoped SQLite / future Postgres"]
+  API --> Integrations["Short-lived external integrations"]
+```
+
+The target keeps pages independently testable, shares structured content primitives deliberately, and resolves storage, synchronization, validation, and module-boundary risks through their authoritative DBG records.
+
+## Preserved legacy reference diagrams
+
+These original diagrams are retained unchanged for historical comparison. Current ownership and constraints are defined by the sections above.
+
+### Product navigation
+
+```mermaid
+flowchart TD
+  Start["Open IO Vault"] --> Auth["Sign in / sign up"]
+  Auth --> Unlock["Unlock workspace"]
+  Unlock --> Shell["Dashboard shell"]
+  Shell --> Agent["Global AI drawer"]
+  Shell --> Code["Code Vault mini IDE"]
+  Shell --> Write["Write"]
+  Shell --> Learn["Learning"]
+  Shell --> Career["Career"]
+  Shell --> Projects["Projects"]
+```
+
+### Persistence flow
+
+```mermaid
+flowchart LR
+  Edit["Workspace edit"] --> State["React VaultState"]
+  State -->|"immediate cache"| Local[("localStorage")]
+  State -->|"debounced authenticated save"| API["/api/vault"]
+  API --> SQL[("SQLite workspace JSON")]
+  CodeEdit["Code Vault edit"] --> Monaco["Monaco model"]
+  Monaco --> IDB[("IndexedDB cache")]
+  Monaco --> Scratch["SQLite scratch file"]
+  Repo["GitHub file"] --> IDB
+```
+
+### General AI request
+
+```mermaid
+sequenceDiagram
+  actor U as User
+  participant R as React
+  participant A as Authenticated /api/agent
+  participant O as OpenAI
+  U->>R: Ask question
+  opt User enables current-page context
+    R->>R: Build bounded active-page summary
+  end
+  R->>A: Message + optional selected context
+  A->>A: Auth, rate limit, 8k/64KB validation
+  A->>O: Minimal request
+  O-->>A: Answer
+  A-->>R: Answer + model
+```
+
+### Responsive policy
+
+Desktop structure is preserved on narrow screens. A minimum-width workspace scrolls horizontally instead of stacking panels or converting the sidebar into a top rail.
 
 ## Core endpoints
 

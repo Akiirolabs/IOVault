@@ -12,14 +12,12 @@ This folder turns product ideas into traceable design and delivery work. It owns
 | Start here | Purpose |
 |---|---|
 | [Implementation register](implementation-register.md) | Priority, state, dependencies, and next deliverable |
-| [Delivery status](delivery-status.md) | Current capability versus target outcome |
 | [Verification panel](verification-panel.md) | Available and missing quality gates |
-| [Implementation runs](implementation-runs.md) | Append-only delivery history |
-| [Service impact](service-impact-chart.md) | Systems touched by each workstream |
 | [Engineering dependencies](engineering-dependencies.md) | Compact links to authoritative DBG records and shared constraints |
 | [Area plans](areas/) | Current state, phases, acceptance, and limits per product area |
-| [Architecture](architecture/) · [Graphs](graphs/) | Boundaries, dependencies, and delivery order |
-| [Templates](templates/) | Reusable area, run, and verification records |
+| [Implementation map](graphs/implementation-map.md) | Product dependencies and DBG blockers |
+| [Templates](templates.md) | Area, verification, and run records |
+| [Implementation log](../implementation-log.md) | One append-only delivery history |
 
 ## Status rule
 
@@ -27,5 +25,4 @@ This folder turns product ideas into traceable design and delivery work. It owns
 
 ## Working rule
 
-Every feature run updates its area plan, the register, delivery status, verification evidence, and append-only run history. Defects discovered during design receive a DBG record and only a link here. Architecture and roadmap files change only when their boundaries or priorities change.
-
+Every feature run updates its area plan, the register, verification evidence, and the global implementation log. Defects discovered during design receive a DBG record and only a link here. Architecture and roadmap files change only when their boundaries or priorities change.

@@ -17,7 +17,7 @@ The screenshot-inspired panel is adapted to commands that actually exist in this
 | Migration status | Planned | Applied versioned migrations | No migration runner configured |
 | Performance budget | Planned | Large workspace and repository behavior | No benchmark gate configured |
 
-Do not check a row complete because its command exists. Add dated evidence to the relevant area plan and [implementation runs](implementation-runs.md).
+Do not check a row complete because its command exists. Add dated evidence to the relevant area plan and [implementation log](../implementation-log.md).
 
 ## Current feature evidence
 

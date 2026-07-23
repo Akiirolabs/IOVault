@@ -6,13 +6,13 @@ IO Vault is a signed-in productivity workspace with SQL-backed sync, offline bro
 
 | Area | Current source | Status |
 |---|---|---|
-| Platform architecture | [architecture.md](architecture.md) · [diagrams.md](diagrams.md) | Legacy maps preserved; current implementation maps appended |
+| Platform architecture and diagrams | [architecture.md](architecture.md) | Current boundaries, target direction, and preserved legacy maps |
 | Server, auth, and persistence | [server-and-auth.md](server-and-auth.md) | Implemented; production hardening remains |
 | Code Vault mini IDE | [code-vault-mini-ide.md](code-vault-mini-ide.md) · [code-vault-architecture.md](code-vault-architecture.md) | Implemented v1 |
-| Project full-page editor | [project-page-editor.md](project-page-editor.md) | Implemented |
 | Notes / Write workspace | [implementation-system area plan](implementation-system/areas/IMP-1003-notes-write.md) | Implemented v1 |
-| Project table, flowchart, mindmap | [data-table-creator.md](data-table-creator.md) · [flowchart-node-map.md](flowchart-node-map.md) · [object-mindmap.md](object-mindmap.md) | Planned |
+| Projects editor, table, flowchart, mindmap | [Projects area plan](implementation-system/areas/IMP-1004-projects.md) | Editor implemented; remaining modes planned |
 | Product implementation system | [implementation-system/](implementation-system/README.md) | Active plans and verification gates |
+| Work-code legend and ledger | [work-code-ledger.md](work-code-ledger.md) | IMP, DBG, DOC, DPL, ADT, and DBG-IMP history |
 | Delivery history | [implementation-log.md](implementation-log.md) | Append-only summary |
 | Priorities | [roadmap.md](roadmap.md) | Active |
 | Security/debug evidence | [debug-system/](debug-system/README.md) | DBG-1001 through DBG-1003 verified |
@@ -30,3 +30,7 @@ IO Vault is a signed-in productivity workspace with SQL-backed sync, offline bro
 ## Documentation rule
 
 After meaningful implementation work, update the relevant feature document, [implementation system](implementation-system/README.md), roadmap, implementation log, architecture/diagram if boundaries changed, and debug records when a DBG code is involved. Record only verified results.
+
+## Diagram rule
+
+Keep Mermaid diagrams as directly editable source blocks. Do not add generated image replicas or duplicate diagram formats.

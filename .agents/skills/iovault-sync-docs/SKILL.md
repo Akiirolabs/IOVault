@@ -12,25 +12,26 @@ Update documentation as part of the implementation run, not as a later cleanup t
 1. Inspect the final diff and actual verification output. Never infer completion from edited code.
 2. Identify every affected documentation surface using the matrix below.
 3. Update current-state statements, status, evidence, limitations, and next action consistently.
-4. Search all `docs/` files for the feature/debug code and remove stale contradictions.
-5. Run `git diff --check`; verify Markdown tables and Mermaid fences are structurally complete.
+4. Update `docs/work-code-ledger.md` for every completed repository run using the applicable IMP, DBG, DOC, DPL, ADT, or DBG-IMP series.
+5. Search all `docs/` files for the feature/debug code and remove stale contradictions.
+6. Run `git diff --check`; verify Markdown tables and Mermaid fences are structurally complete.
 
 ## Update matrix
 
 | Change | Required documents |
 |---|---|
 | Any meaningful implementation | `docs/implementation-log.md` and relevant feature document |
-| Any IMP workstream changed | Relevant `docs/implementation-system/areas/IMP-*.md`, `implementation-register.md`, `implementation-register.csv`, `delivery-status.md`, `implementation-runs.md`, and `verification-panel.md` |
+| Any IMP workstream changed | Relevant `docs/implementation-system/areas/IMP-*.md`, `implementation-register.md`, and `verification-panel.md` |
 | Priority or completion changed | `docs/roadmap.md` |
-| Route, storage, ownership, or data flow changed | `docs/architecture.md` and `docs/diagrams.md` |
+| Route, storage, ownership, or data flow changed | `docs/architecture.md` |
 | Code Vault behavior changed | `docs/code-vault-mini-ide.md` and `docs/code-vault-architecture.md` |
-| DBG issue worked | Individual issue, `issue-register.md`, `issue-register.csv`, `implementation-status.md`, `fix-attempts.md`, and `verification-matrix.md` |
-| Issue/service dependencies changed | Relevant `debug-system/graphs/` Mermaid file and service-impact chart |
+| DBG issue worked | Individual issue, `issue-register.md`, `fix-attempts.md`, and `verification-matrix.md` |
+| Issue/service dependencies changed | `debug-system/service-impact-chart.md` and a graph only when the relationship is materially clearer visually |
 | Documentation navigation changed | `docs/README.md` |
 
-For a completed DBG issue, every human-readable status surface must say `✅ Verified` only after its required tests and production build pass. Keep the CSV `Status` value as plain `Verified` and add `✅` to its verification result. Keep fix attempts append-only; historical limitations may remain in their dated row.
+For a completed DBG issue, every human-readable status surface must say `✅ Verified` only after its required tests and production build pass. Keep fix attempts append-only; historical limitations may remain in their dated row.
 
-For an IMP workstream, keep the Markdown and CSV state aligned. Use `✅ Verified` only when the area acceptance checks have current evidence; otherwise use `Implemented`, `Partial`, or `Planned`. Keep `implementation-runs.md` append-only.
+For an IMP workstream, keep the area plan and Markdown register aligned. Use `✅ Verified` only when the area acceptance checks have current evidence; otherwise use `Implemented`, `Partial`, or `Planned`. Keep `docs/implementation-log.md` append-only.
 
 IMP records own product/UX design and acceptance. DBG records own defects, hardening, technical debt, attempts, and remediation evidence. Link an IMP plan to `engineering-dependencies.md` and its authoritative DBG record; never duplicate the DBG scope, steps, status, or evidence inside the IMP plan. Quality gates belong in `verification-panel.md`, not a separate IMP workstream.
 
@@ -39,6 +40,7 @@ IMP records own product/UX design and acceptance. DBG records own defects, harde
 - Lead with current behavior and status.
 - Use compact tables for status, ownership, limits, verification, and comparisons.
 - Use Mermaid only for flows, dependencies, sequences, or architecture boundaries.
+- Keep Mermaid blocks directly editable. Do not maintain generated image replicas beside them.
 - Keep prose for intent, rationale, constraints, tradeoffs, and migration guidance.
 - Prefer one authoritative detail location and link to it instead of duplicating long explanations.
 - Preserve exact paths, limits, endpoint names, and verified test counts.
