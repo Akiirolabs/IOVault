@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manual Audit"
+  short_description: "Turn manual audits into coded work records"
+  default_prompt: "Use $manual-audit to create the next ADT parent while preserving my manual audit code as its sub-work code."

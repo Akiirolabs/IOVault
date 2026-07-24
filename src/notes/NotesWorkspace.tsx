@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { NoteCollection, NoteColumn, NoteColumnType, NotePage, WriteState } from "./model";
+import type { NoteCollection, NoteCollectionRow, NoteColumn, NoteColumnType, NotePage, WriteState } from "./model";
 import { createTestingCollection } from "./model";
 
 type Props = {
@@ -86,17 +86,43 @@ function CollectionEditor({ collection, onChange }: { collection: NoteCollection
   const [newColumnOptions, setNewColumnOptions] = useState("");
   const completedColumn = collection.columns.find((column) => column.type === "checkbox");
   const visibleRows = useMemo(() => {
-    let rows = collection.rows.filter((row) => {
+    const matches = new Set(collection.rows.filter((row) => {
       if (!completedColumn || collection.view === "all") return true;
       const completed = row.cells[completedColumn.id] === true;
       return collection.view === "done" ? completed : !completed;
-    });
-    if (collection.sortColumnId) {
-      const column = collection.columns.find((item) => item.id === collection.sortColumnId);
-      const direction = collection.sortDirection === "desc" ? -1 : 1;
-      if (column) rows = [...rows].sort((a, b) => compareCells(a.cells[column.id], b.cells[column.id], column) * direction);
+    }).map((row) => row.id));
+    const byId = new Map(collection.rows.map((row) => [row.id, row]));
+    if (collection.view !== "all") {
+      for (const rowId of [...matches]) {
+        let parentId = byId.get(rowId)?.parentRowId;
+        while (parentId && !matches.has(parentId)) {
+          matches.add(parentId);
+          parentId = byId.get(parentId)?.parentRowId;
+        }
+      }
     }
-    return rows;
+    const children = new Map<string | undefined, NoteCollectionRow[]>();
+    for (const row of collection.rows) {
+      if (!matches.has(row.id)) continue;
+      const parentId = row.parentRowId && matches.has(row.parentRowId) ? row.parentRowId : undefined;
+      children.set(parentId, [...(children.get(parentId) ?? []), row]);
+    }
+    const sortColumn = collection.columns.find((item) => item.id === collection.sortColumnId);
+    const direction = collection.sortDirection === "desc" ? -1 : 1;
+    const sortRows = (rows: NoteCollectionRow[]) => sortColumn
+      ? [...rows].sort((a, b) => compareCells(a.cells[sortColumn.id], b.cells[sortColumn.id], sortColumn) * direction)
+      : rows;
+    const flattened: Array<{ row: NoteCollectionRow; depth: number; hasChildren: boolean; collapsed: boolean }> = [];
+    const visit = (parentId: string | undefined, depth: number) => {
+      for (const row of sortRows(children.get(parentId) ?? [])) {
+        const childRows = children.get(row.id) ?? [];
+        const collapsed = collection.collapsedRowIds?.includes(row.id) === true;
+        flattened.push({ row, depth, hasChildren: childRows.length > 0, collapsed });
+        if (!collapsed) visit(row.id, depth + 1);
+      }
+    };
+    visit(undefined, 0);
+    return flattened;
   }, [collection, completedColumn]);
 
   function updateCell(rowId: string, columnId: string, value: string | boolean) {
@@ -161,6 +187,26 @@ function CollectionEditor({ collection, onChange }: { collection: NoteCollection
     });
   }
 
+  function addRow(parentRowId?: string) {
+    onChange({ ...collection, rows: [...collection.rows, { id: makeId("row"), cells: {}, ...(parentRowId ? { parentRowId } : {}) }] });
+  }
+
+  function toggleRow(rowId: string) {
+    const collapsed = new Set(collection.collapsedRowIds ?? []);
+    if (collapsed.has(rowId)) collapsed.delete(rowId);
+    else collapsed.add(rowId);
+    onChange({ ...collection, collapsedRowIds: [...collapsed] });
+  }
+
+  function removeRow(rowId: string) {
+    const parentRowId = collection.rows.find((row) => row.id === rowId)?.parentRowId;
+    onChange({
+      ...collection,
+      rows: collection.rows.filter((row) => row.id !== rowId).map((row) => row.parentRowId === rowId ? { ...row, parentRowId } : row),
+      collapsedRowIds: collection.collapsedRowIds?.filter((id) => id !== rowId),
+    });
+  }
+
   return (
     <div className="notes-collection">
       <div className="notes-collection-tools">
@@ -196,16 +242,18 @@ function CollectionEditor({ collection, onChange }: { collection: NoteCollection
               <button type="button" className="notes-column-sort" onClick={() => sortBy(column.id)}>{column.name}{collection.sortColumnId === column.id ? (collection.sortDirection === "desc" ? " ↓" : " ↑") : ""}</button>
             </th>
           ))}<th aria-label="Row actions" /></tr></thead>
-          <tbody>{visibleRows.map((row, rowIndex) => <tr key={row.id}>{collection.columns.map((column) => <td key={column.id}>{column.type === "checkbox" ? (
+          <tbody>{visibleRows.map(({ row, depth, hasChildren, collapsed }, rowIndex) => <tr key={row.id} data-row-depth={depth}>{collection.columns.map((column, columnIndex) => <td key={column.id}><div className={columnIndex === 0 ? "notes-tree-cell" : undefined} style={columnIndex === 0 ? { paddingLeft: `${depth * 1.1}rem` } : undefined}>{columnIndex === 0 && (hasChildren ? (
+            <button type="button" className="notes-row-toggle" aria-label={`${collapsed ? "Expand" : "Collapse"} row ${rowIndex + 1}`} aria-expanded={!collapsed} onClick={() => toggleRow(row.id)}>{collapsed ? "▸" : "▾"}</button>
+          ) : <span className="notes-row-toggle-spacer" />)}{column.type === "checkbox" ? (
             <input type="checkbox" aria-label={`${column.name} for row ${rowIndex + 1}`} checked={row.cells[column.id] === true} onChange={(event) => updateCell(row.id, column.id, event.target.checked)} />
           ) : column.type === "select" ? (
             <select aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)}><option value="">Select…</option>{column.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
           ) : (
             <input type={column.type} aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)} />
-          )}</td>)}<td><button type="button" className="notes-row-delete" onClick={() => onChange({ ...collection, rows: collection.rows.filter((item) => item.id !== row.id) })} aria-label={`Delete row ${rowIndex + 1}`}>×</button></td></tr>)}</tbody>
+          )}</div></td>)}<td><div className="notes-row-actions"><button type="button" onClick={() => addRow(row.id)} aria-label={`Add subrow to row ${rowIndex + 1}`}>+↳</button><button type="button" className="notes-row-delete" onClick={() => removeRow(row.id)} aria-label={`Delete row ${rowIndex + 1}`}>×</button></div></td></tr>)}</tbody>
         </table>
       </div>
-      <button type="button" className="notes-add-row" onClick={() => onChange({ ...collection, rows: [...collection.rows, { id: makeId("row"), cells: {} }] })}>+ Add row</button>
+      <button type="button" className="notes-add-row" onClick={() => addRow()}>+ Add row</button>
     </div>
   );
 }

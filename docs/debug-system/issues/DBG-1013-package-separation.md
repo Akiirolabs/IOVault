@@ -2,7 +2,7 @@
 
 | Field | Detail |
 |---|---|
-| Status | **Confirmed architecture limitation** · Low · 2026-07-19 |
+| Status | **Planned** · Low · 2026-07-19 |
 | Evidence | One root `package.json` owns browser, API, database, test, and build dependencies |
 | Impact | Coupled installs, upgrades, ownership, and deployment boundaries |
 | Fix | Split workspaces only after runtime modules and shared types have stable boundaries |

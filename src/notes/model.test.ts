@@ -62,4 +62,35 @@ describe("Notes model", () => {
     expect(normalized.pages[0].collection?.rows[0].cells.status).toBe("Done");
     expect(normalized.pages[0].collection?.sortColumnId).toBe("number");
   });
+
+  it("preserves valid nested rows and repairs invalid row hierarchies", () => {
+    const write = createInitialWriteState();
+    write.pages = [{
+      ...write.pages[0],
+      id: "nested-table",
+      kind: "collection",
+      collection: {
+        columns: [{ id: "name", name: "Name", type: "text" }],
+        rows: [
+          { id: "parent", cells: { name: "Parent" } },
+          { id: "child", parentRowId: "parent", cells: { name: "Child" } },
+          { id: "orphan", parentRowId: "missing", cells: { name: "Orphan" } },
+          { id: "cycle-a", parentRowId: "cycle-b", cells: { name: "A" } },
+          { id: "cycle-b", parentRowId: "cycle-a", cells: { name: "B" } },
+        ],
+        collapsedRowIds: ["parent", "missing"],
+        view: "all",
+      },
+    }];
+    write.activePageId = "nested-table";
+
+    const normalizedWrite = normalizeWriteState(JSON.parse(JSON.stringify(write)));
+    const collection = normalizedWrite.pages[0].collection;
+    expect(collection?.rows.find((row) => row.id === "child")?.parentRowId).toBe("parent");
+    expect(collection?.rows.find((row) => row.id === "orphan")?.parentRowId).toBeUndefined();
+    expect(collection?.rows.find((row) => row.id === "cycle-a")?.parentRowId).toBeUndefined();
+    expect(collection?.rows.find((row) => row.id === "cycle-b")?.parentRowId).toBeUndefined();
+    expect(collection?.collapsedRowIds).toEqual(["parent"]);
+    expect(JSON.stringify(activeNoteContext(normalizedWrite))).toContain('"parentRowId":"parent"');
+  });
 });

@@ -2,7 +2,7 @@
 
 | Field | Detail |
 |---|---|
-| Status | **Confirmed** · High · 2026-07-19 |
+| Status | **Planned** · High · 2026-07-19 |
 | Evidence | `server/index.js` uses varied manual checks; only DBG-1001 has a focused shared validator |
 | Impact | Malformed data, inconsistent errors, and resource-exhaustion risk |
 | Fix | Shared boundary schemas with normalized typed output and consistent errors |

@@ -2,6 +2,9 @@
 
 | Date | Delivery | Result | Verification |
 |---|---|---|---|
+| 2026-07-24 | ✅ DBG-IMP-1007 nested Notes rows | Added persisted subrows, hierarchy-safe normalization, parent collapse controls, sibling sorting, and structured AI context | 32 tests + production build + signed-in create/edit/collapse/reload/expand browser acceptance |
+| 2026-07-24 | DOC-1010 manual audit workflow | Recorded ADT-1002 with TEST-IV-1001 as sub-work and findings beneath the ADT main code | Skill, link, table, numbering, and structure validation |
+| 2026-07-24 | DOC-1009 DBG status simplification | Standardized every unfinished DBG record as Planned while retaining ✅ Verified completions | Cross-document status, table, and link audit |
 | 2026-07-23 | ✅ DBG-IMP-1004 typed Notes columns | Replaced prompt dialogs with inline column management and six editable, sortable, reload-safe types | 30 tests + production build + signed-in browser create/edit/save/reload |
 | 2026-07-23 | DOC-1008 IMP-1003 correction plan | Added DBG-IMP-1004 through 1006 for typed tables, collection integrity, and safe accessible editing | Link, table, sequence, and status consistency audit |
 | 2026-07-23 | DOC-1007 work-code ledger | Added correlated IMP, DBG, DOC, DPL, ADT, and DBG-IMP definitions and concise dated records | Link, table, date, and status consistency audit |

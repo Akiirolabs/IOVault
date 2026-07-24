@@ -101,4 +101,19 @@ describe("Notes workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Estimate" }));
     expect(screen.getAllByRole("spinbutton").map((input) => (input as HTMLInputElement).value)).toEqual(["2", "10"]);
   });
+
+  it("adds nested rows and expands or collapses their children", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Add row" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Name for row 1" }), { target: { value: "Parent" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add subrow to row 1" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Name for row 2" }), { target: { value: "Child" } });
+
+    expect(screen.getByRole("textbox", { name: "Name for row 2" })).toHaveValue("Child");
+    fireEvent.click(screen.getByRole("button", { name: "Collapse row 1" }));
+    expect(screen.queryByDisplayValue("Child")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Expand row 1" }));
+    expect(screen.getByDisplayValue("Child")).toBeInTheDocument();
+  });
 });

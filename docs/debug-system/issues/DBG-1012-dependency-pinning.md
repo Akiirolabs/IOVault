@@ -2,7 +2,7 @@
 
 | Field | Detail |
 |---|---|
-| Status | **Confirmed** · Medium · 2026-07-19 |
+| Status | **Planned** · Medium · 2026-07-19 |
 | Evidence | `package.json` uses `latest` and caret ranges for core runtime/build packages |
 | Impact | Manifest drift, compatibility failures, and supply-chain uncertainty |
 | Fix | Pin reviewed versions; automate update PRs with lockfile, test, build, and audit gates |

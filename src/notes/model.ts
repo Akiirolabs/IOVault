@@ -7,9 +7,16 @@ export type NoteColumn = {
   options?: string[];
 };
 
+export type NoteCollectionRow = {
+  id: string;
+  cells: Record<string, string | boolean>;
+  parentRowId?: string;
+};
+
 export type NoteCollection = {
   columns: NoteColumn[];
-  rows: Array<{ id: string; cells: Record<string, string | boolean> }>;
+  rows: NoteCollectionRow[];
+  collapsedRowIds?: string[];
   view: "all" | "open" | "done";
   sortColumnId?: string;
   sortDirection?: "asc" | "desc";
@@ -103,21 +110,46 @@ function normalizeCollection(raw: unknown): NoteCollection | undefined {
   });
 
   const columnIds = new Set(columns.map((column) => column.id));
-  const rows = value.rows.flatMap((row) => {
+  const rawRows = value.rows.flatMap((row) => {
     if (!row || typeof row !== "object") return [];
     const candidate = row as NoteCollection["rows"][number];
     if (typeof candidate.id !== "string" || !candidate.cells || typeof candidate.cells !== "object") return [];
     return [{
       id: candidate.id,
       cells: Object.fromEntries(Object.entries(candidate.cells).filter(([key, cell]) => columnIds.has(key) && (typeof cell === "string" || typeof cell === "boolean"))),
+      ...(typeof candidate.parentRowId === "string" ? { parentRowId: candidate.parentRowId } : {}),
     }];
   });
+
+  const rowIds = new Set(rawRows.map((row) => row.id));
+  const parentByRow = new Map(rawRows.map((row) => [row.id, row.parentRowId]));
+  const hasParentCycle = (rowId: string, parentRowId: string) => {
+    const visited = new Set([rowId]);
+    let current: string | undefined = parentRowId;
+    while (current) {
+      if (visited.has(current)) return true;
+      visited.add(current);
+      current = parentByRow.get(current);
+    }
+    return false;
+  };
+  const rows = rawRows.map((row) => {
+    if (!row.parentRowId || !rowIds.has(row.parentRowId) || row.parentRowId === row.id || hasParentCycle(row.id, row.parentRowId)) {
+      const { parentRowId: _invalidParent, ...rootRow } = row;
+      return rootRow;
+    }
+    return row;
+  });
+  const collapsedRowIds = Array.isArray(value.collapsedRowIds)
+    ? [...new Set(value.collapsedRowIds.filter((id): id is string => typeof id === "string" && rowIds.has(id)))]
+    : [];
 
   const sortColumnId = typeof value.sortColumnId === "string" && columnIds.has(value.sortColumnId) ? value.sortColumnId : undefined;
 
   return {
     columns,
     rows,
+    ...(collapsedRowIds.length ? { collapsedRowIds } : {}),
     view: value.view === "open" || value.view === "done" ? value.view : "all",
     ...(sortColumnId ? { sortColumnId, sortDirection: value.sortDirection === "desc" ? "desc" as const : "asc" as const } : {}),
   };
@@ -159,7 +191,7 @@ export function activeNoteContext(write: WriteState) {
       title: page.title,
       kind: page.kind,
       columns: page.collection?.columns.map((column) => column.name) ?? [],
-      rows: page.collection?.rows.slice(0, 50).map((row) => row.cells) ?? [],
+      rows: page.collection?.rows.slice(0, 50).map((row) => ({ id: row.id, parentRowId: row.parentRowId ?? null, cells: row.cells })) ?? [],
     };
   }
   return { title: page.title, kind: page.kind, document: page.docHtml };

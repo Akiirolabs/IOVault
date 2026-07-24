@@ -2,7 +2,7 @@
 
 | Field | Detail |
 |---|---|
-| Status | **Confirmed architecture concern** · Medium · 2026-07-19 |
+| Status | **Planned** · Medium · 2026-07-19 |
 | Evidence | `CodeVaultWorkspace.tsx` keeps file contents in React state while Monaco and undo/cache layers also hold them |
 | Impact | Memory duplication and render latency for larger repositories |
 | Fix | Keep metadata in React; move bodies/undo to Monaco models and bounded IndexedDB services |

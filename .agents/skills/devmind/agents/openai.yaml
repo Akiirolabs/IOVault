@@ -1,0 +1,4 @@
+interface:
+  display_name: "Devmind"
+  short_description: "Give candid evidence-based engineering judgment"
+  default_prompt: "Use $devmind to recommend what strong developers would do here."

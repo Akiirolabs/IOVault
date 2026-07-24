@@ -963,6 +963,32 @@ textarea {
   background: transparent;
 }
 
+.notes-tree-cell,
+.notes-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.notes-tree-cell > input:not([type="checkbox"]),
+.notes-tree-cell > select {
+  min-width: 6rem;
+  flex: 1;
+}
+
+.notes-row-toggle,
+.notes-row-actions button {
+  flex: 0 0 auto;
+  min-width: 1.6rem;
+  padding: 0.25rem;
+  color: #86b8cf;
+  background: transparent;
+}
+
+.notes-row-toggle-spacer {
+  flex: 0 0 1.6rem;
+}
+
 .notes-table input:not([type="checkbox"]),
 .notes-table select {
   width: 100%;

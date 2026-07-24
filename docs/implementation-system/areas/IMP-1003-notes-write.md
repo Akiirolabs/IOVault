@@ -8,7 +8,7 @@ The screenshot establishes the product direction: a focused knowledge workspace 
 |---|---|
 | Explorer | Nested pages and collections with create, rename, parent selection, archive/restore, and search |
 | Page | Title, rich content, metadata, links, and explicit assistant context |
-| Collection | Inline text, number, date, checkbox, select/status, and URL columns; rows, completion filters, typed sorting, and saved views |
+| Collection | Inline text, number, date, checkbox, select/status, and URL columns; nested rows with persisted collapse state; completion filters, sibling sorting, and saved views |
 | Templates | Repository-valid Testing Panel plus blank note and table creation |
 | Connections | Active-page-only assistant context; cross-area record links remain planned |
 
@@ -37,6 +37,8 @@ ADT-1001 found that the v1 table and editor do not yet satisfy complete browser,
 | DBG-IMP-1006 | Sanitize stored HTML, replace fragile rich-text commands, and finish keyboard/accessibility behavior | Sanitization, formatting, focus, and keyboard tests pass with the production build |
 
 DBG-IMP-1004 is verified. DBG-IMP-1005 and 1006 remain planned with blank finish dates in the [work-code ledger](../../work-code-ledger.md). Rapid reload before the current 800 ms server-sync window remains part of DBG-IMP-1005.
+
+The [ADT-1002 manual audit](../../audits/ADT-1002-write-page-manual-audit.md), sourced from manual sub-work `TEST-IV-1001`, identified eight findings under `ADT-1002.1` through `.7`, including `.4.1`. `DBG-IMP-1007` verified nested rows with persisted collapse state, safe reload normalization, hierarchy-aware context, and sibling sorting on 2026-07-24. Recoverable deletion, collapsible page hierarchy, toolbar depth, Page-type table columns, drag organization, section renaming, and archive recovery remain planned.
 
 ## Engineering dependencies
 
