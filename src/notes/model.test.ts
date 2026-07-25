@@ -93,4 +93,21 @@ describe("Notes model", () => {
     expect(collection?.collapsedRowIds).toEqual(["parent"]);
     expect(JSON.stringify(activeNoteContext(normalizedWrite))).toContain('"parentRowId":"parent"');
   });
+
+  it("preserves saved note and collection templates", () => {
+    const write = createInitialWriteState();
+    write.templates = [
+      { id: "note-template", title: "Lesson", kind: "note", docHtml: "<p>Learn</p>", createdAt: "2026-07-24T00:00:00.000Z" },
+      { id: "table-template", title: "Tracker", kind: "collection", docHtml: "", createdAt: "2026-07-24T00:00:00.000Z", collection: { columns: [{ id: "name", name: "Name", type: "text" }], rows: [], view: "all" } },
+    ];
+    const normalized = normalizeWriteState(JSON.parse(JSON.stringify(write)));
+    expect(normalized.templates?.map((template) => template.title)).toEqual(["Lesson", "Tracker"]);
+    expect(normalized.templates?.[1].collection?.columns[0].name).toBe("Name");
+  });
+
+  it("preserves custom page icons", () => {
+    const write = createInitialWriteState();
+    write.pages[0].icon = "📌";
+    expect(normalizeWriteState(JSON.parse(JSON.stringify(write))).pages[0].icon).toBe("📌");
+  });
 });

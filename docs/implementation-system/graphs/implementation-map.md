@@ -9,8 +9,8 @@ flowchart LR
   UI --> Notes
   UI --> Projects
   UI --> Code
-  Notes --> Learning["IMP-1005 Learning"]
-  Notes --> Career["IMP-1006 Career"]
+  Notes --> Learning["IMP-1005 Mentor Agent"]
+  Notes --> Career["IMP-1006 Career Agent"]
   Projects --> Learning
   Projects --> Career
 ```

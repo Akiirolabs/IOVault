@@ -11,6 +11,8 @@ IO Vault is a signed-in productivity workspace with SQL-backed sync, offline bro
 | Code Vault mini IDE | [code-vault-mini-ide.md](code-vault-mini-ide.md) · [code-vault-architecture.md](code-vault-architecture.md) | Implemented v1 |
 | Notes / Write workspace | [implementation-system area plan](implementation-system/areas/IMP-1003-notes-write.md) | Implemented v1 |
 | Projects editor, table, flowchart, mindmap | [Projects area plan](implementation-system/areas/IMP-1004-projects.md) | Editor implemented; remaining modes planned |
+| Mentor Agent | [Learning area plan](implementation-system/areas/IMP-1005-learning.md) | Conversational teaching and autonomous learning workflow planned |
+| Career Agent | [Career area plan](implementation-system/areas/IMP-1006-career.md) | Resume-based job discovery, reviewed applications, and bounded autopilot planned |
 | Product implementation system | [implementation-system/](implementation-system/README.md) | Active plans and verification gates |
 | Work-code legend and ledger | [work-code-ledger.md](work-code-ledger.md) | IMP, DBG, DOC, DPL, ADT, and DBG-IMP history |
 | Delivery history | [implementation-log.md](implementation-log.md) | Append-only summary |

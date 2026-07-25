@@ -21,10 +21,10 @@ Each series starts at `1001`. Preserve an existing code once assigned. Use `—`
 |---|---|---|---|
 | IMP-1001 | Implemented | Base shell needed responsive parity · 2026-07-03 | Preserved desktop workspace on narrow screens · 2026-07-03 |
 | [IMP-1002](implementation-system/areas/IMP-1002-code-vault.md) | Implemented v1 | Code Vault lacked an assisted repository workflow · 2026-07 | Added Monaco, scratch files, reviewed patches, and draft PRs · 2026-07 |
-| [IMP-1003](implementation-system/areas/IMP-1003-notes-write.md) | Implemented v1 · ADT-1001 1/3 · ADT-1002 1/8 verified | Write lacked structured notes and collections · 2026-07-21 | Added hierarchy, typed and nested tables, archive, Testing Panel, and AI context · 2026-07-24 |
+| [IMP-1003](implementation-system/areas/IMP-1003-notes-write.md) | Implemented v1 · ADT-1001 1/3 · ADT-1002 2/8 · ADT-1003 6/6 verified | Write lacked structured notes and collections · 2026-07-21 | Added hierarchy, typed tables, foreground page actions, templates, recovery, and AI context · 2026-07-24 |
 | [IMP-1004](implementation-system/areas/IMP-1004-projects.md) | Partial | Projects need structured work modes · 2026-07-21 | Full-page editor done; typed table and graphs pending · — |
-| [IMP-1005](implementation-system/areas/IMP-1005-learning.md) | Partial | Learning workflow needs structured records · 2026-07-21 | Design and implementation pending · — |
-| [IMP-1006](implementation-system/areas/IMP-1006-career.md) | Partial | Career workflow needs evidence and application tracking · 2026-07-21 | Design and implementation pending · — |
+| [IMP-1005](implementation-system/areas/IMP-1005-learning.md) | Partial · agent redesign planned | Learning lacks an adaptive autonomous mentor · 2026-07-24 | Defined Mentor Agent teaching, assessment, scheduling, evidence, and control model · — |
+| [IMP-1006](implementation-system/areas/IMP-1006-career.md) | Partial · agent redesign planned | Career lacks resume-driven opportunity and application automation · 2026-07-24 | Defined Career Agent discovery, Review mode, bounded autopilot, connectors, and audit model · — |
 | [IMP-1007](implementation-system/areas/IMP-1007-ui-navigation.md) | Partial | Shared workspace patterns are inconsistent · 2026-07-21 | Standard patterns and acceptance pending · — |
 
 ## Debug
@@ -57,6 +57,8 @@ Each series starts at `1001`. Preserve an existing code once assigned. Use `—`
 | DBG-IMP-1005 | ADT-1001 · IMP-1003 · DBG-1006/1007 | Planned | Collection behavior and persistence lack complete coverage · 2026-07-23 | Normalize data; correct filters, sorting, restore, sync, and durable E2E · — |
 | DBG-IMP-1006 | ADT-1001 · IMP-1003 · DBG-1010 | Planned | Rich text and keyboard behavior remain unsafe or incomplete · 2026-07-23 | Sanitize HTML, replace fragile editing commands, and add accessibility tests · — |
 | DBG-IMP-1007 | ADT-1002.1 · IMP-1003 | ✅ Verified | Collection rows could not contain subrows · 2026-07-24 | Added persisted nested rows with safe hierarchy normalization and collapse controls · 2026-07-24 |
+| DBG-IMP-1008 | ADT-1002.2 · IMP-1003 | ✅ Verified | Notes and tables lacked clear recoverable deletion · 2026-07-24 | Added confirmed subtree archiving, selection, restore, and current page-menu access · 2026-07-24 |
+| DBG-IMP-1009 | ADT-1003.1–.6 · FTR-1002 · IMP-1003 | ✅ Verified | Page actions had six interaction gaps · 2026-07-24 | Corrected menu behavior, icons, imports, and template choice · 2026-07-24 |
 
 ## Documentation
 
@@ -72,6 +74,7 @@ Each series starts at `1001`. Preserve an existing code once assigned. Use `—`
 | DOC-1008 | Complete | ADT-1001 lacked an ordered correction path · 2026-07-23 | Added DBG-IMP-1004 through 1006 and synchronized IMP-1003 planning · 2026-07-23 |
 | DOC-1009 | Complete | Open DBG records used overlapping status labels · 2026-07-24 | Standardized every unfinished DBG as Planned · 2026-07-24 |
 | DOC-1010 | Complete | Manual audits lacked reusable parent/child coding · 2026-07-24 | Added ADT main codes, manual sub-work codes, and ADT finding codes · 2026-07-24 |
+| DOC-1011 | Complete | Learning and Career plans were passive record workflows · 2026-07-24 | Redesigned them as controlled Mentor and Career agents with integration boundaries · 2026-07-24 |
 
 ## Deployment
 
@@ -84,7 +87,8 @@ Each series starts at `1001`. Preserve an existing code once assigned. Use `—`
 | Code | Scope | Status | Problem · found | Fix · finished |
 |---|---|---|---|---|
 | ADT-1001 | IMP-1003 Notes / Write | Complete | Column creation failed in the in-app browser; typed controls and core tests were incomplete · 2026-07-23 | DBG-IMP-1004 verified; DBG-IMP-1005 and 1006 pending · — |
-| [ADT-1002](audits/ADT-1002-write-page-manual-audit.md) | IMP-1003 · sub-work `TEST-IV-1001` | Complete · 1/8 verified | Manual audit found eight hierarchy, deletion, editing, page-column, organization, and recovery gaps · 2024-10-24 | `ADT-1002.1` verified; seven findings remain planned · — |
+| [ADT-1002](audits/ADT-1002-write-page-manual-audit.md) | IMP-1003 · sub-work `TEST-IV-1001` | Complete · 2/8 verified | Manual audit found eight hierarchy, deletion, editing, page-column, organization, and recovery gaps · 2026-07-24 | `ADT-1002.1` and `.2` verified; six findings remain planned · — |
+| [ADT-1003](audits/ADT-1003-write-page-actions.md) | IMP-1003 · sub-work `FTR-1002` | Complete · 6/6 verified | Manual audit found six page-action interaction gaps · 2026-07-24 | `DBG-IMP-1009` verified all six corrections · 2026-07-24 |
 
 ## Update rule
 

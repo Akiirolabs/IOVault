@@ -82,9 +82,14 @@ flowchart TB
   Shell["Accessible application shell"] --> Notes["Notes / Write"]
   Shell --> Projects["Projects"]
   Shell --> Code["Code Vault"]
-  Shell --> Learning["Learning"]
-  Shell --> Career["Career"]
-  Notes & Projects & Learning & Career --> Workspace["Versioned workspace services"]
+  Shell --> Learning["Mentor Agent workspace"]
+  Shell --> Career["Career Agent workspace"]
+  Notes & Projects --> Workspace["Versioned workspace services"]
+  Learning & Career --> Agents["User-scoped agent orchestrator"]
+  Agents --> Workspace
+  Agents --> Policy["Policy, approval, schedule, and audit engine"]
+  Policy --> Integrations["Server-side connector gateway"]
+  Integrations --> Providers["Approved learning, email, calendar, job, ATS, and freelance services"]
   Code --> CodeData["Bounded repository and scratch services"]
   Workspace & CodeData --> API["Validated focused API modules"]
   API --> SQL["User-scoped SQLite / future Postgres"]
@@ -92,6 +97,17 @@ flowchart TB
 ```
 
 The target keeps pages independently testable, shares structured content primitives deliberately, and resolves storage, synchronization, validation, and module-boundary risks through their authoritative DBG records.
+
+### Planned agent boundaries
+
+| Boundary | Requirement |
+|---|---|
+| Agent identity | Separate Mentor and Career agents share user-approved evidence, not unrestricted workspace access |
+| Durable state | Profiles, plans, opportunities, applications, sessions, policies, approvals, and run results use user-scoped records |
+| Credentials | OAuth tokens and connector secrets stay encrypted server-side and never enter `VaultState`, localStorage, prompts, or logs |
+| Autonomy | Schedules and policies define allowed triggers, actions, limits, and pause conditions |
+| External effects | Every enrollment, message, proposal, or application is idempotent and recorded; unsupported or sensitive steps pause for approval |
+| Observability | Run history records trigger, selected context, action, outcome, cost metadata, and errors without storing hidden reasoning |
 
 ## Preserved legacy reference diagrams
 

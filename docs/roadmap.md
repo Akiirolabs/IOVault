@@ -20,11 +20,11 @@ The [implementation register](implementation-system/implementation-register.md) 
 | Priority | Design area | State | Next outcome |
 |---:|---|---|---|
 | P1 | Code Vault | Implemented v1 | Refine complete repository-change workflow |
-| P1 | Notes / Write | Implemented v1 · ADT-1001 1/3 · ADT-1002 1/8 verified | Run DBG-IMP-1005/1006, then triage seven remaining ADT-1002 findings |
+| P1 | Notes / Write | Implemented v1 · ADT-1001 1/3 · ADT-1002 2/8 verified | Run DBG-IMP-1005/1006, then triage six remaining ADT-1002 findings |
 | P1 | UI and navigation | Partial | Approve shared workspace patterns |
 | P2 | Projects | Partial | Deliver typed project table before graph modes |
-| P2 | Learning | Partial | Approve sources, plans, progress, and outcomes |
-| P2 | Career | Partial | Approve evidence, resume, and application workflows |
+| P2 | Mentor Agent | Partial · agent redesign planned | Deliver conversational onboarding, adaptive teaching, assignments, and run history |
+| P2 | Career Agent | Partial · agent redesign planned | Deliver resume intake, ranked opportunities, Review mode, and one supported connector |
 
 ## Delivery sequence
 
@@ -35,7 +35,7 @@ flowchart LR
   C --> D["Project table"]
   D --> E["Manual flowchart"]
   E --> F["Automatic object mindmap"]
-  C --> G["Learning and Career workflows"]
+  C --> G["Mentor and Career Agent foundations"]
   B --> H["Code Vault workflow refinement"]
 ```
 

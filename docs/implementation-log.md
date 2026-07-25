@@ -2,6 +2,10 @@
 
 | Date | Delivery | Result | Verification |
 |---|---|---|---|
+| 2026-07-24 | ✅ DBG-IMP-1009 Write page actions | Corrected menu layering/position/selection, added page icons and multi-format import, and added template add-or-replace choice | 38 tests + production build + signed-in browser acceptance |
+| 2026-07-24 | IMP-1003 page action menu | Replaced page delete buttons with parent-scoped actions for child pages/tables, import, rename, templates, and recoverable deletion; toolbar creation stays top-level | 35 tests + production build + signed-in browser check |
+| 2026-07-24 | DOC-1011 Mentor and Career Agent redesign | Replaced passive Learning/Career targets with adaptive mentoring, resume-driven opportunity work, reviewed submissions, bounded autopilot, and connector controls | Official platform feasibility research plus link, table, fence, and status validation |
+| 2026-07-24 | ✅ DBG-IMP-1008 recoverable Notes deletion | Added clear `×` deletion for notes/tables, confirmation, subtree archiving, archived selection, and restore; moved subrow `+` into the parent cell | 32 tests + production build + signed-in visual acceptance |
 | 2026-07-24 | ✅ DBG-IMP-1007 nested Notes rows | Added persisted subrows, hierarchy-safe normalization, parent collapse controls, sibling sorting, and structured AI context | 32 tests + production build + signed-in create/edit/collapse/reload/expand browser acceptance |
 | 2026-07-24 | DOC-1010 manual audit workflow | Recorded ADT-1002 with TEST-IV-1001 as sub-work and findings beneath the ADT main code | Skill, link, table, numbering, and structure validation |
 | 2026-07-24 | DOC-1009 DBG status simplification | Standardized every unfinished DBG record as Planned while retaining ✅ Verified completions | Cross-document status, table, and link audit |

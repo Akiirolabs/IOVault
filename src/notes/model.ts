@@ -26,6 +26,7 @@ export type NotePage = {
   id: string;
   parentId: string | null;
   title: string;
+  icon?: string;
   kind: "note" | "collection";
   docHtml: string;
   archived: boolean;
@@ -34,12 +35,22 @@ export type NotePage = {
   collection?: NoteCollection;
 };
 
+export type NoteTemplate = {
+  id: string;
+  title: string;
+  kind: "note" | "collection";
+  docHtml: string;
+  collection?: NoteCollection;
+  createdAt: string;
+};
+
 export type WriteState = {
   version: 1;
   /** Compatibility mirror for clients that only understand the legacy Write document. */
   docHtml: string;
   pages: NotePage[];
   activePageId: string;
+  templates?: NoteTemplate[];
 };
 
 const INITIAL_PAGE_ID = "note-inbox";
@@ -162,11 +173,25 @@ export function normalizeWriteState(raw: unknown): WriteState {
   const pages = Array.isArray(value.pages) ? value.pages.filter(isNotePage).map((page) => ({
     ...page,
     parentId: typeof page.parentId === "string" ? page.parentId : null,
+    icon: typeof page.icon === "string" ? page.icon.slice(0, 8) : undefined,
     archived: page.archived === true,
     createdAt: typeof page.createdAt === "string" ? page.createdAt : INITIAL_TIMESTAMP,
     updatedAt: typeof page.updatedAt === "string" ? page.updatedAt : INITIAL_TIMESTAMP,
     collection: page.kind === "collection" ? normalizeCollection(page.collection) ?? { columns: [], rows: [], view: "all" as const } : undefined,
   })) : [];
+  const templates = Array.isArray(value.templates) ? value.templates.flatMap((template) => {
+    if (!template || typeof template !== "object") return [];
+    const candidate = template as Partial<NoteTemplate>;
+    if (typeof candidate.id !== "string" || typeof candidate.title !== "string" || (candidate.kind !== "note" && candidate.kind !== "collection")) return [];
+    return [{
+      id: candidate.id,
+      title: candidate.title,
+      kind: candidate.kind,
+      docHtml: typeof candidate.docHtml === "string" ? candidate.docHtml : "",
+      collection: candidate.kind === "collection" ? normalizeCollection(candidate.collection) ?? { columns: [], rows: [], view: "all" as const } : undefined,
+      createdAt: typeof candidate.createdAt === "string" ? candidate.createdAt : INITIAL_TIMESTAMP,
+    }];
+  }) : [];
 
   if (pages.length === 0) return createInitialWriteState(legacyHtml);
 
@@ -180,6 +205,7 @@ export function normalizeWriteState(raw: unknown): WriteState {
     pages,
     activePageId: active.id,
     docHtml: active.kind === "note" ? active.docHtml : legacyHtml,
+    ...(templates.length ? { templates } : {}),
   };
 }
 

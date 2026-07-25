@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import NotesWorkspace from "./NotesWorkspace";
@@ -29,20 +29,117 @@ describe("Notes workspace", () => {
   it("renames pages and makes assistant context an explicit choice", () => {
     render(<Harness />);
     fireEvent.change(screen.getByRole("textbox", { name: "Page title" }), { target: { value: "Design brief" } });
-    expect(screen.getByRole("button", { name: /Design brief/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Design brief" })).toBeInTheDocument();
     const context = screen.getByRole("checkbox", { name: "Use this page with AI" });
     expect(context).not.toBeChecked();
     fireEvent.click(context);
     expect(context).toBeChecked();
   });
 
-  it("archives and restores a page without deleting it", () => {
+  it("deletes notes and tables into the recoverable archive", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<Harness />);
-    fireEvent.click(screen.getByRole("button", { name: "Archive" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Untitled collection" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    expect(screen.getByRole("button", { name: "Archived (1)" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Archived (1)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Untitled collection" }));
     expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Restore" }));
-    expect(screen.getByRole("button", { name: "Archive" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Page actions for Untitled collection" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Untitled note" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    expect(screen.getByRole("button", { name: "Archived (1)" })).toBeInTheDocument();
+  });
+
+  it("creates top-level pages from the toolbar and children from the page menu", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
+    expect(screen.getByRole("combobox", { name: "Parent page" })).toHaveValue("");
+
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Untitled note" }));
+    expect(screen.getByRole("menuitem", { name: "Add page" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Add table" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Import" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Rename" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Change icon" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Save as template" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Delete" })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menuitem", { name: "Delete" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Untitled note" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Rename" }));
+    const rename = screen.getByRole("textbox", { name: "Rename Untitled note" });
+    fireEvent.change(rename, { target: { value: "Parent page" } });
+    fireEvent.keyDown(rename, { key: "Enter" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Parent page" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Add page" }));
+    expect((screen.getByRole("combobox", { name: "Parent page" }) as HTMLSelectElement).value).not.toBe("");
+    expect(screen.getByRole("combobox", { name: "Parent page" })).toHaveTextContent("Parent page");
+
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    expect(screen.getByRole("combobox", { name: "Parent page" })).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Untitled collection" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Save as template" }));
+    const templates = screen.getByRole("combobox", { name: "Create from template" });
+    expect(templates).toHaveTextContent("Untitled collection");
+    const templateValue = (templates.querySelector("option:not([value=''])") as HTMLOptionElement).value;
+    fireEvent.change(templates, { target: { value: templateValue } });
+    expect(screen.getByRole("dialog", { name: "Use “Untitled collection” template?" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add new page" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Replace current page" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  });
+
+  it("opens page actions without leaving the active page and changes the page icon", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
+    expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Untitled note");
+
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Imported writing" }));
+    expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Untitled note");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Change icon" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use 📌 icon" }));
+    expect(screen.getByRole("button", { name: "Imported writing" })).toHaveTextContent("📌");
+    expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Untitled note");
+  });
+
+  it("lets template users add a page or replace the current page", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Imported writing" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Save as template" }));
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
+
+    const templates = screen.getByRole("combobox", { name: "Create from template" });
+    const templateValue = (templates.querySelector("option:not([value=''])") as HTMLOptionElement).value;
+    fireEvent.change(templates, { target: { value: templateValue } });
+    fireEvent.click(screen.getByRole("button", { name: "Replace current page" }));
+    expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Imported writing");
+
+    fireEvent.change(templates, { target: { value: templateValue } });
+    fireEvent.click(screen.getByRole("button", { name: "Add new page" }));
+    expect(screen.getAllByRole("button", { name: "Imported writing" })).toHaveLength(3);
+  });
+
+  it("imports text as a child page from the parent menu", async () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Imported writing" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Import" }));
+    const file = new File(["Imported content"], "lesson.md", { type: "text/markdown" });
+    Object.defineProperty(file, "text", { value: async () => "Imported content" });
+    const input = document.querySelector(".notes-import-input") as HTMLInputElement;
+    expect(input.accept).toContain(".md");
+    expect(input.accept).toContain(".csv");
+    expect(input.accept).toContain(".json");
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("lesson"));
+    expect((screen.getByRole("combobox", { name: "Parent page" }) as HTMLSelectElement).value).not.toBe("");
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "lesson content" })).toHaveTextContent("Imported content"));
   });
 
   it("creates and edits every supported column type without browser dialogs", () => {
@@ -107,7 +204,11 @@ describe("Notes workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Table" }));
     fireEvent.click(screen.getByRole("button", { name: "+ Add row" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Name for row 1" }), { target: { value: "Parent" } });
-    fireEvent.click(screen.getByRole("button", { name: "Add subrow to row 1" }));
+    const addSubrow = screen.getByRole("button", { name: "Add subrow to row 1" });
+    expect(addSubrow).toHaveTextContent("+");
+    expect(addSubrow.closest("td")).toContainElement(screen.getByRole("textbox", { name: "Name for row 1" }));
+    expect(screen.getByRole("button", { name: "Delete row 1" })).toHaveTextContent("×");
+    fireEvent.click(addSubrow);
     fireEvent.change(screen.getByRole("textbox", { name: "Name for row 2" }), { target: { value: "Child" } });
 
     expect(screen.getByRole("textbox", { name: "Name for row 2" })).toHaveValue("Child");

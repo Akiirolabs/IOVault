@@ -750,6 +750,14 @@ textarea {
   overflow: auto;
 }
 
+.notes-tree-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2rem;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .notes-tree-item {
   display: flex;
   align-items: center;
@@ -772,6 +780,173 @@ textarea {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.notes-row-delete {
+  color: #ffb4b4 !important;
+  border: 1px solid rgba(248, 113, 113, 0.24) !important;
+  background: rgba(248, 113, 113, 0.1) !important;
+}
+
+.notes-page-menu-trigger {
+  width: 1.8rem;
+  height: 1.8rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  color: #9cb8c8;
+  background: rgba(148, 163, 184, 0.08);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: -0.08em;
+}
+
+.notes-page-menu-trigger:hover,
+.notes-page-menu-trigger[aria-expanded="true"] {
+  color: #fff;
+  border-color: rgba(125, 211, 252, 0.28);
+  background: rgba(125, 211, 252, 0.14);
+}
+
+.notes-row-delete:hover {
+  color: #fff !important;
+  border-color: rgba(248, 113, 113, 0.55) !important;
+  background: rgba(248, 113, 113, 0.22) !important;
+}
+
+.notes-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  cursor: default;
+  background: transparent;
+}
+
+.notes-page-menu {
+  position: fixed;
+  z-index: 1001;
+  display: grid;
+  width: 14rem;
+  padding: 0.45rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 0.7rem;
+  background: #20252c;
+  box-shadow: 0 1rem 2.8rem rgba(0, 0, 0, 0.48);
+}
+
+.notes-icon-picker {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.25rem;
+  padding: 0.25rem 0.35rem 0.45rem;
+}
+
+.notes-icon-picker button {
+  display: block;
+  padding: 0.35rem;
+  text-align: center;
+}
+
+.notes-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(2, 8, 18, 0.72);
+}
+
+.notes-template-dialog {
+  width: min(30rem, 100%);
+  padding: 1.2rem;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 0.85rem;
+  color: #e7f7ff;
+  background: #17212b;
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.55);
+}
+
+.notes-template-dialog p {
+  color: #9cb8c8;
+}
+
+.notes-template-dialog div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.notes-template-dialog button {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 0.55rem;
+  color: #dff8ff;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.notes-page-menu button {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.58rem 0.65rem;
+  border-radius: 0.5rem;
+  color: #e3e8ed;
+  background: transparent;
+  text-align: left;
+}
+
+.notes-page-menu button:hover {
+  background: rgba(148, 163, 184, 0.16);
+}
+
+.notes-page-menu button.danger {
+  color: #ffb4b4;
+}
+
+.notes-page-menu button.danger:hover {
+  background: rgba(248, 113, 113, 0.15);
+}
+
+.notes-menu-divider {
+  height: 1px;
+  margin: 0.35rem 0;
+  background: rgba(148, 163, 184, 0.16);
+}
+
+.notes-tree-rename {
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  border-radius: 0.5rem;
+  color: #e6f8ff;
+  background: rgba(5, 15, 31, 0.92);
+}
+
+.notes-template-create {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+  color: #8cb8cc;
+  font-size: 0.72rem;
+}
+
+.notes-template-create select {
+  min-width: 0;
+  padding: 0.45rem;
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  border-radius: 0.55rem;
+  color: #dff8ff;
+  background: rgba(5, 15, 31, 0.72);
+}
+
+.notes-import-input {
+  display: none;
 }
 
 .notes-main {
@@ -983,6 +1158,24 @@ textarea {
   padding: 0.25rem;
   color: #86b8cf;
   background: transparent;
+}
+
+.notes-subrow-add {
+  flex: 0 0 1.8rem;
+  width: 1.8rem;
+  height: 1.8rem;
+  padding: 0;
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  border-radius: 0.5rem;
+  color: #dff8ff;
+  background: rgba(56, 189, 248, 0.18);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.notes-subrow-add:hover {
+  border-color: rgba(56, 189, 248, 0.7);
+  background: rgba(56, 189, 248, 0.32);
 }
 
 .notes-row-toggle-spacer {

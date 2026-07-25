@@ -23,8 +23,12 @@ Do not check a row complete because its command exists. Add dated evidence to th
 
 | Date | Code | Result | Evidence |
 |---|---|---|---|
+| 2026-07-24 | DBG-IMP-1009 · ADT-1003 · FTR-1002 · IMP-1003 | ✅ Verified | 38 tests; production build; signed-in browser confirmed foreground six-pixel menu anchoring, unchanged active page, and template choices |
+| 2026-07-24 | IMP-1003 page actions | ✅ Verified | 35 tests; production build; signed-in browser check of all six parent-scoped menu actions |
+| 2026-07-24 | DOC-1011 · IMP-1005/1006 | Design updated | Agent roles, data, autonomy policies, platform feasibility, delivery phases, limits, and acceptance synchronized |
+| 2026-07-24 | DBG-IMP-1008 · ADT-1002.2 · IMP-1003 | ✅ Verified | 32 tests; production build; signed-in visual acceptance of `+` placement and clear `×` controls; temporary row removed |
 | 2026-07-24 | DBG-IMP-1007 · ADT-1002.1 · IMP-1003 | ✅ Verified | 32 tests; production build; signed-in create/edit/collapse/reload/expand acceptance; temporary test row removed |
-| 2026-07-24 | ADT-1002 · TEST-IV-1001 · IMP-1003 | Audit recorded | Eight manual findings transcribed as `ADT-1002.1` through `.7`, including `.4.1`; one verified and seven remain planned |
+| 2026-07-24 | ADT-1002 · TEST-IV-1001 · IMP-1003 | Audit recorded | Eight manual findings transcribed as `ADT-1002.1` through `.7`, including `.4.1`; two verified and six remain planned |
 | 2026-07-23 | DBG-IMP-1004 · IMP-1003 | ✅ Verified | 30 tests; production build; signed-in typed-column create/edit/save/reload; zero prompt errors |
 | 2026-07-23 | ADT-1001 · IMP-1003 | Corrections required | Live `+ Column` failure; source/type/persistence/security/test audit; 7 Notes tests and build passed |
 | 2026-07-22 | IMP-1003 | Implemented v1 | 27 tests; production build; signed-in browser smoke check with zero console errors |
