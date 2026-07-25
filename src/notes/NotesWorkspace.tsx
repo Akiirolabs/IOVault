@@ -79,10 +79,20 @@ function RichNoteEditor({ page, onChange }: { page: NotePage; onChange: (html: s
   return (
     <>
       <div className="notes-format-bar" role="toolbar" aria-label="Note formatting">
-        <button type="button" onClick={() => format("formatBlock", "h2")}>Heading</button>
-        <button type="button" onClick={() => format("bold")}><strong>Bold</strong></button>
-        <button type="button" onClick={() => format("italic")}><em>Italic</em></button>
-        <button type="button" onClick={() => format("insertUnorderedList")}>List</button>
+        <button type="button" onClick={() => format("formatBlock", "p")}>Text</button>
+        <button type="button" onClick={() => format("formatBlock", "h1")}>H1</button>
+        <button type="button" onClick={() => format("formatBlock", "h2")}>H2</button>
+        <button type="button" onClick={() => format("bold")} aria-label="Bold"><strong>B</strong></button>
+        <button type="button" onClick={() => format("italic")} aria-label="Italic"><em>I</em></button>
+        <button type="button" onClick={() => format("underline")} aria-label="Underline"><u>U</u></button>
+        <button type="button" onClick={() => format("strikeThrough")} aria-label="Strikethrough"><s>S</s></button>
+        <button type="button" onClick={() => format("insertUnorderedList")}>Bullets</button>
+        <button type="button" onClick={() => format("insertOrderedList")}>Numbered</button>
+        <button type="button" onClick={() => format("formatBlock", "blockquote")}>Quote</button>
+        <button type="button" onClick={() => format("formatBlock", "pre")}>Code</button>
+        <button type="button" onClick={() => format("undo")}>Undo</button>
+        <button type="button" onClick={() => format("redo")}>Redo</button>
+        <button type="button" onClick={() => format("removeFormat")}>Clear</button>
       </div>
       <div
         ref={ref}
@@ -106,10 +116,12 @@ const COLUMN_TYPE_OPTIONS: Array<{ value: NoteColumnType; label: string }> = [
   { value: "checkbox", label: "Checkbox" },
   { value: "select", label: "Select / status" },
   { value: "url", label: "URL" },
+  { value: "page", label: "Page" },
 ];
 
 function normalizeCellForType(value: string | boolean | undefined, column: NoteColumn) {
   if (column.type === "checkbox") return value === true;
+  if (column.type === "page") return "";
   const text = typeof value === "string" ? value : "";
   if (column.type === "select" && column.options?.length && !column.options.includes(text)) return "";
   return text;
@@ -125,7 +137,7 @@ function compareCells(a: string | boolean | undefined, b: string | boolean | und
   return String(a ?? "").localeCompare(String(b ?? ""), undefined, { numeric: column.type === "date" });
 }
 
-function CollectionEditor({ collection, onChange }: { collection: NoteCollection; onChange: (collection: NoteCollection) => void }) {
+function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpenPage }: { collection: NoteCollection; pages: NotePage[]; onChange: (collection: NoteCollection) => void; onCreatePageCell: (rowId: string, columnId: string) => void; onOpenPage: (pageId: string) => void }) {
   const [showColumns, setShowColumns] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [newColumnType, setNewColumnType] = useState<NoteColumnType>("text");
@@ -290,7 +302,11 @@ function CollectionEditor({ collection, onChange }: { collection: NoteCollection
           ))}<th aria-label="Row actions" /></tr></thead>
           <tbody>{visibleRows.map(({ row, depth, hasChildren, collapsed }, rowIndex) => <tr key={row.id} data-row-depth={depth}>{collection.columns.map((column, columnIndex) => <td key={column.id}><div className={columnIndex === 0 ? "notes-tree-cell" : undefined} style={columnIndex === 0 ? { paddingLeft: `${depth * 1.1}rem` } : undefined}>{columnIndex === 0 && (hasChildren ? (
             <button type="button" className="notes-row-toggle" aria-label={`${collapsed ? "Expand" : "Collapse"} row ${rowIndex + 1}`} aria-expanded={!collapsed} onClick={() => toggleRow(row.id)}>{collapsed ? "▸" : "▾"}</button>
-          ) : <span className="notes-row-toggle-spacer" />)}{columnIndex === 0 && <button type="button" className="notes-subrow-add" onClick={() => addRow(row.id)} aria-label={`Add subrow to row ${rowIndex + 1}`} title="Add a subrow">+</button>}{column.type === "checkbox" ? (
+          ) : <span className="notes-row-toggle-spacer" />)}{columnIndex === 0 && <button type="button" className="notes-subrow-add" onClick={() => addRow(row.id)} aria-label={`Add subrow to row ${rowIndex + 1}`} title="Add a subrow">+</button>}{column.type === "page" ? (
+            typeof row.cells[column.id] === "string" && pages.some((page) => page.id === row.cells[column.id] && !page.archived)
+              ? <button type="button" className="notes-page-cell" onClick={() => onOpenPage(String(row.cells[column.id]))} aria-label={`Open ${column.name} page for row ${rowIndex + 1}`}>Open {pages.find((page) => page.id === row.cells[column.id])?.title}</button>
+              : <button type="button" className="notes-page-cell" onClick={() => onCreatePageCell(row.id, column.id)} aria-label={`Create ${column.name} page for row ${rowIndex + 1}`}>+ Page</button>
+          ) : column.type === "checkbox" ? (
             <input type="checkbox" aria-label={`${column.name} for row ${rowIndex + 1}`} checked={row.cells[column.id] === true} onChange={(event) => updateCell(row.id, column.id, event.target.checked)} />
           ) : column.type === "select" ? (
             <select aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)}><option value="">Select…</option>{column.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
@@ -314,6 +330,7 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
   const [renamingPageId, setRenamingPageId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
   const [importParentId, setImportParentId] = useState<string | null>(null);
+  const [draggedPageId, setDraggedPageId] = useState<string | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const active = write.pages.find((page) => page.id === write.activePageId) ?? write.pages[0];
   const visiblePages = write.pages.filter((page) => page.archived === showArchived && page.title.toLowerCase().includes(query.toLowerCase()));
@@ -477,10 +494,69 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
     return descendants;
   }
 
+  function togglePage(pageId: string) {
+    const collapsed = new Set(write.collapsedPageIds ?? []);
+    if (collapsed.has(pageId)) collapsed.delete(pageId);
+    else collapsed.add(pageId);
+    onChange({ ...write, collapsedPageIds: [...collapsed] });
+  }
+
+  function movePage(pageId: string, parentId: string | null) {
+    if (pageId === parentId || (parentId && descendantsOf(pageId).has(parentId))) return;
+    commit(write.pages.map((page) => page.id === pageId ? { ...page, parentId, updatedAt: now() } : page), write.activePageId);
+    setDraggedPageId(null);
+    setMenuPageId(null);
+  }
+
+  function movePageSibling(pageId: string, direction: -1 | 1) {
+    const page = write.pages.find((item) => item.id === pageId);
+    if (!page) return;
+    const siblings = write.pages.filter((item) => item.parentId === page.parentId && item.archived === page.archived);
+    const index = siblings.findIndex((item) => item.id === pageId);
+    const target = siblings[index + direction];
+    if (!target) return;
+    const reordered = [...write.pages];
+    const from = reordered.findIndex((item) => item.id === pageId);
+    const to = reordered.findIndex((item) => item.id === target.id);
+    [reordered[from], reordered[to]] = [reordered[to], reordered[from]];
+    commit(reordered, write.activePageId, showArchived);
+    setMenuPageId(null);
+  }
+
+  function restorePage(pageId: string) {
+    const restoreIds = new Set([pageId, ...descendantsOf(pageId)]);
+    let parentId = write.pages.find((page) => page.id === pageId)?.parentId;
+    while (parentId) {
+      restoreIds.add(parentId);
+      parentId = write.pages.find((page) => page.id === parentId)?.parentId;
+    }
+    const pages = write.pages.map((page) => restoreIds.has(page.id) ? { ...page, archived: false, updatedAt: now() } : page);
+    setShowArchived(false);
+    commit(pages, pageId);
+  }
+
+  function restoreAllPages() {
+    const pages = write.pages.map((page) => page.archived ? { ...page, archived: false, updatedAt: now() } : page);
+    setShowArchived(false);
+    commit(pages);
+  }
+
+  function createPageCell(rowId: string, columnId: string) {
+    if (active.kind !== "collection" || !active.collection) return;
+    const row = active.collection.rows.find((item) => item.id === rowId);
+    const column = active.collection.columns.find((item) => item.id === columnId);
+    if (!row || !column) return;
+    const firstValue = active.collection.columns.map((item) => row.cells[item.id]).find((value) => typeof value === "string" && value.trim());
+    const timestamp = now();
+    const page: NotePage = { id: makeId("note"), parentId: active.id, title: typeof firstValue === "string" ? firstValue : `${column.name} page`, kind: "note", docHtml: "", archived: false, createdAt: timestamp, updatedAt: timestamp };
+    const collection = { ...active.collection, rows: active.collection.rows.map((item) => item.id === rowId ? { ...item, cells: { ...item.cells, [columnId]: page.id } } : item) };
+    commit([...write.pages.map((item) => item.id === active.id ? { ...item, collection, updatedAt: timestamp } : item), page], page.id);
+  }
+
   function openPageMenu(event: React.MouseEvent<HTMLButtonElement>, pageId: string) {
     const rect = event.currentTarget.getBoundingClientRect();
     const menuWidth = 224;
-    const menuHeight = 360;
+    const menuHeight = 480;
     const gap = 6;
     const opensRight = rect.right + gap + menuWidth <= window.innerWidth - 8;
     setMenuPosition({
@@ -504,24 +580,33 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
         {iconPickerPageId === page.id && <div className="notes-icon-picker" role="group" aria-label={`Choose icon for ${page.title || "Untitled"}`}>{PAGE_ICONS.map((icon) => <button type="button" key={icon} aria-label={`Use ${icon} icon`} onClick={() => changePageIcon(page.id, icon)}>{icon}</button>)}</div>}
         <button type="button" role="menuitem" onClick={() => saveAsTemplate(page)}><span aria-hidden="true">☆</span>Save as template</button>
         <div className="notes-menu-divider" />
+        <button type="button" role="menuitem" onClick={() => movePageSibling(page.id, -1)}><span aria-hidden="true">↑</span>Move up</button>
+        <button type="button" role="menuitem" onClick={() => movePageSibling(page.id, 1)}><span aria-hidden="true">↓</span>Move down</button>
+        {page.parentId && <button type="button" role="menuitem" onClick={() => movePage(page.id, null)}><span aria-hidden="true">↖</span>Move to top level</button>}
+        <div className="notes-menu-divider" />
         <button type="button" role="menuitem" className="danger" onClick={() => { setMenuPageId(null); deletePage(page.id); }}><span aria-hidden="true">×</span>Delete</button>
       </div>
     </>, document.body);
   }
 
   function renderTree(parentId: string | null, depth = 0, visited = new Set<string>()): React.ReactNode {
-    return visiblePages.filter((page) => page.parentId === parentId || (depth === 0 && page.parentId && !visiblePages.some((candidate) => candidate.id === page.parentId))).map((page) => (
+    return visiblePages.filter((page) => page.parentId === parentId || (depth === 0 && page.parentId && !visiblePages.some((candidate) => candidate.id === page.parentId))).map((page) => {
+      const hasChildren = visiblePages.some((candidate) => candidate.parentId === page.id);
+      const collapsed = write.collapsedPageIds?.includes(page.id) === true;
+      return (
       <div key={page.id}>
-        <div className="notes-tree-row" style={{ paddingLeft: `${depth * 0.85}rem` }}>
+        <div className={`notes-tree-row ${draggedPageId === page.id ? "dragging" : ""}`} draggable={!showArchived} onDragStart={() => setDraggedPageId(page.id)} onDragEnd={() => setDraggedPageId(null)} onDragOver={(event) => { if (draggedPageId && draggedPageId !== page.id) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); if (draggedPageId) movePage(draggedPageId, page.id); }} style={{ paddingLeft: `${depth * 0.85}rem` }}>
+          {hasChildren ? <button type="button" className="notes-page-toggle" aria-label={`${collapsed ? "Expand" : "Collapse"} page ${page.title || "Untitled"}`} aria-expanded={!collapsed} onClick={() => togglePage(page.id)}>{collapsed ? "▸" : "▾"}</button> : <span className="notes-page-toggle-spacer" />}
           {renamingPageId === page.id ? <input autoFocus className="notes-tree-rename" aria-label={`Rename ${page.title || "Untitled"}`} value={renameDraft} onChange={(event) => setRenameDraft(event.target.value)} onBlur={() => finishRename(page.id)} onKeyDown={(event) => { if (event.key === "Enter") finishRename(page.id); if (event.key === "Escape") setRenamingPageId(null); }} /> : <button type="button" className={`notes-tree-item ${page.id === active?.id ? "active" : ""}`} onClick={() => commit(write.pages, page.id, showArchived)}>
             <span aria-hidden="true">{pageIcon(page)}</span><span>{page.title || "Untitled"}</span>
           </button>}
           {!showArchived && <button type="button" className="notes-page-menu-trigger" aria-label={`Page actions for ${page.title || "Untitled"}`} aria-haspopup="menu" aria-expanded={menuPageId === page.id} onClick={(event) => openPageMenu(event, page.id)}>•••</button>}
           {menuPageId === page.id && pageMenu(page)}
         </div>
-        {!visited.has(page.id) && renderTree(page.id, depth + 1, new Set([...visited, page.id]))}
+        {!collapsed && !visited.has(page.id) && renderTree(page.id, depth + 1, new Set([...visited, page.id]))}
       </div>
-    ));
+      );
+    });
   }
 
   if (!active) return <div className="notes-empty">No notes available.</div>;
@@ -539,7 +624,7 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
         {(write.templates?.length ?? 0) > 0 && <label className="notes-template-create">Templates<select aria-label="Create from template" value="" onChange={(event) => { const template = write.templates?.find((item) => item.id === event.target.value); if (template) setPendingTemplate(template); }}><option value="">Choose…</option>{write.templates?.map((template) => <option key={template.id} value={template.id}>{template.title}</option>)}</select></label>}
         <input ref={importRef} className="notes-import-input" type="file" accept=".txt,.md,.markdown,.csv,.json,text/plain,text/markdown,text/csv,application/json" onChange={(event) => void importFile(event.target.files?.[0])} />
         <nav className="notes-tree" aria-label={showArchived ? "Archived notes" : "Note pages"}>{renderTree(null)}</nav>
-        <button type="button" className="notes-archive-toggle" onClick={() => setShowArchived((value) => !value)}>{showArchived ? "← Active pages" : `Archived (${write.pages.filter((page) => page.archived).length})`}</button>
+        <div className="notes-archive-actions"><button type="button" className="notes-archive-toggle" onClick={() => setShowArchived((value) => !value)}>{showArchived ? "← Active pages" : `Archived (${write.pages.filter((page) => page.archived).length})`}</button>{showArchived && write.pages.some((page) => page.archived) && <button type="button" onClick={restoreAllPages}>Restore all</button>}</div>
       </aside>
 
       <section className="notes-main editor-panel">
@@ -548,10 +633,10 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
           <div className="notes-page-actions">
             {!active.archived && <label>Parent<select value={active.parentId ?? ""} onChange={(event) => updateActive({ parentId: event.target.value || null })} aria-label="Parent page"><option value="">Top level</option>{write.pages.filter((page) => !page.archived && page.id !== active.id && !descendantsOf(active.id).has(page.id)).map((page) => <option key={page.id} value={page.id}>{page.title}</option>)}</select></label>}
             <label className="notes-context-toggle"><input type="checkbox" checked={includeAssistantContext} onChange={(event) => onAssistantContextChange(event.target.checked)} />Use this page with AI</label>
-            {active.archived && <button type="button" onClick={() => { setShowArchived(false); updateActive({ archived: false }); }}>Restore</button>}
+            {active.archived && <button type="button" onClick={() => restorePage(active.id)}>Restore subtree</button>}
           </div>
         </header>
-        {active.kind === "note" ? <RichNoteEditor key={active.id} page={active} onChange={(docHtml) => updateActive({ docHtml })} /> : <CollectionEditor collection={active.collection ?? { columns: [], rows: [], view: "all" }} onChange={(collection) => updateActive({ collection })} />}
+        {active.kind === "note" ? <RichNoteEditor key={active.id} page={active} onChange={(docHtml) => updateActive({ docHtml })} /> : <CollectionEditor collection={active.collection ?? { columns: [], rows: [], view: "all" }} pages={write.pages} onChange={(collection) => updateActive({ collection })} onCreatePageCell={createPageCell} onOpenPage={(pageId) => commit(write.pages, pageId)} />}
       </section>
       {pendingTemplate && createPortal(<div className="notes-dialog-backdrop" role="presentation"><section className="notes-template-dialog" role="dialog" aria-modal="true" aria-labelledby="template-choice-title"><h3 id="template-choice-title">Use “{pendingTemplate.title}” template?</h3><p>Add it as a new top-level page or replace the current page's content.</p><div><button type="button" onClick={() => createFromTemplate(pendingTemplate)}>Add new page</button><button type="button" onClick={() => replaceFromTemplate(pendingTemplate)}>Replace current page</button><button type="button" onClick={() => setPendingTemplate(null)}>Cancel</button></div></section></div>, document.body)}
     </div>

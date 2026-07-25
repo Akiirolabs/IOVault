@@ -46,8 +46,8 @@ describe("Notes workspace", () => {
     expect(screen.getByRole("button", { name: "Archived (1)" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Archived (1)" }));
     fireEvent.click(screen.getByRole("button", { name: "Untitled collection" }));
-    expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Restore" }));
+    expect(screen.getByRole("button", { name: "Restore subtree" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Restore subtree" }));
     expect(screen.getByRole("button", { name: "Page actions for Untitled collection" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Note" }));
@@ -160,12 +160,14 @@ describe("Notes workspace", () => {
     addColumn("Complete", "checkbox");
     addColumn("Status", "select", "Todo, Doing, Done");
     addColumn("Reference", "url");
+    addColumn("Details", "page");
 
     expect(screen.getByRole("spinbutton", { name: "Estimate for row 1" })).toBeInTheDocument();
     expect(screen.getByLabelText("Due for row 1")).toHaveAttribute("type", "date");
     expect(screen.getByRole("checkbox", { name: "Complete for row 1" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Status for row 1" })).toHaveTextContent("Doing");
     expect(screen.getByRole("textbox", { name: "Reference for row 1" })).toHaveAttribute("type", "url");
+    expect(screen.getByRole("button", { name: "Create Details page for row 1" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole("textbox", { name: "Name for row 1" }), { target: { value: "Typed row" } });
     fireEvent.change(screen.getByRole("spinbutton", { name: "Estimate for row 1" }), { target: { value: "12.5" } });
@@ -182,6 +184,82 @@ describe("Notes workspace", () => {
 
     fireEvent.change(screen.getByRole("combobox", { name: "Type for Name column" }), { target: { value: "number" } });
     expect(screen.getByRole("spinbutton", { name: "Name for row 1" })).toBeInTheDocument();
+  });
+
+  it("collapses page sections and keeps inline section renaming", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Untitled note" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Rename" }));
+    const rename = screen.getByRole("textbox", { name: "Rename Untitled note" });
+    fireEvent.change(rename, { target: { value: "Parent section" } });
+    fireEvent.keyDown(rename, { key: "Enter" });
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Parent section" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Add page" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse page Parent section" }));
+    expect(screen.queryByRole("button", { name: "Untitled note" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Expand page Parent section" }));
+    expect(screen.getByRole("button", { name: "Untitled note" })).toBeInTheDocument();
+  });
+
+  it("provides the expanded note formatting toolbar", () => {
+    const execCommand = vi.fn().mockReturnValue(true);
+    Object.defineProperty(document, "execCommand", { configurable: true, value: execCommand });
+    render(<Harness />);
+    for (const name of ["Text", "H1", "H2", "Bold", "Italic", "Underline", "Strikethrough", "Bullets", "Numbered", "Quote", "Code", "Undo", "Redo", "Clear"]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Bold" }));
+    expect(execCommand).toHaveBeenCalledWith("bold", false, undefined);
+  });
+
+  it("creates and opens a full page from a Page column cell", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Add row" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Name for row 1" }), { target: { value: "Task details" } });
+    fireEvent.click(screen.getByRole("button", { name: "+ Column" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "New column name" }), { target: { value: "Page" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "New column type" }), { target: { value: "page" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add column" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create Page page for row 1" }));
+    expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Task details");
+    fireEvent.click(screen.getByRole("button", { name: "Untitled collection" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Page page for row 1" }));
+    expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Task details");
+  });
+
+  it("drags a page into another section and offers keyboard move actions", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Note" }));
+    const dragged = screen.getByRole("button", { name: "Untitled note" }).closest(".notes-tree-row") as HTMLElement;
+    const target = screen.getByRole("button", { name: "Imported writing" }).closest(".notes-tree-row") as HTMLElement;
+    expect(dragged).toHaveAttribute("draggable", "true");
+    fireEvent.dragStart(dragged);
+    fireEvent.dragOver(target);
+    fireEvent.drop(target);
+    expect(screen.getByRole("combobox", { name: "Parent page" })).not.toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Untitled note" }));
+    expect(screen.getByRole("menuitem", { name: "Move up" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Move down" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Move to top level" }));
+    expect(screen.getByRole("combobox", { name: "Parent page" })).toHaveValue("");
+  });
+
+  it("restores an archived parent with all descendants", () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Imported writing" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Add page" }));
+    fireEvent.click(screen.getByRole("button", { name: "Page actions for Imported writing" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete" }));
+    expect(screen.getByRole("button", { name: "Archived (2)" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Archived (2)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Imported writing" }));
+    fireEvent.click(screen.getByRole("button", { name: "Restore subtree" }));
+    expect(screen.getByRole("button", { name: "Archived (0)" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Untitled note" })).toBeInTheDocument();
   });
 
   it("sorts number columns numerically", () => {

@@ -1,4 +1,4 @@
-export type NoteColumnType = "text" | "number" | "date" | "checkbox" | "select" | "url";
+export type NoteColumnType = "text" | "number" | "date" | "checkbox" | "select" | "url" | "page";
 
 export type NoteColumn = {
   id: string;
@@ -51,6 +51,7 @@ export type WriteState = {
   pages: NotePage[];
   activePageId: string;
   templates?: NoteTemplate[];
+  collapsedPageIds?: string[];
 };
 
 const INITIAL_PAGE_ID = "note-inbox";
@@ -101,7 +102,7 @@ function isNotePage(value: unknown): value is NotePage {
     && typeof page.docHtml === "string";
 }
 
-const NOTE_COLUMN_TYPES = new Set<NoteColumnType>(["text", "number", "date", "checkbox", "select", "url"]);
+const NOTE_COLUMN_TYPES = new Set<NoteColumnType>(["text", "number", "date", "checkbox", "select", "url", "page"]);
 
 function normalizeCollection(raw: unknown): NoteCollection | undefined {
   if (!raw || typeof raw !== "object") return undefined;
@@ -206,6 +207,7 @@ export function normalizeWriteState(raw: unknown): WriteState {
     activePageId: active.id,
     docHtml: active.kind === "note" ? active.docHtml : legacyHtml,
     ...(templates.length ? { templates } : {}),
+    ...(Array.isArray(value.collapsedPageIds) ? { collapsedPageIds: [...new Set(value.collapsedPageIds.filter((id): id is string => typeof id === "string" && pages.some((page) => page.id === id)))] } : {}),
   };
 }
 

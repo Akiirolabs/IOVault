@@ -2,6 +2,7 @@
 
 | Date | Delivery | Result | Verification |
 |---|---|---|---|
+| 2026-07-25 | ✅ DBG-IMP-1010 ADT-1002 completion | Added page collapse, full toolbar, Page cells, drag/keyboard organization, rename coverage, and complete subtree recovery | 44 tests + production build + signed-in browser acceptance |
 | 2026-07-24 | ✅ DBG-IMP-1009 Write page actions | Corrected menu layering/position/selection, added page icons and multi-format import, and added template add-or-replace choice | 38 tests + production build + signed-in browser acceptance |
 | 2026-07-24 | IMP-1003 page action menu | Replaced page delete buttons with parent-scoped actions for child pages/tables, import, rename, templates, and recoverable deletion; toolbar creation stays top-level | 35 tests + production build + signed-in browser check |
 | 2026-07-24 | DOC-1011 Mentor and Career Agent redesign | Replaced passive Learning/Career targets with adaptive mentoring, resume-driven opportunity work, reviewed submissions, bounded autopilot, and connector controls | Official platform feasibility research plus link, table, fence, and status validation |

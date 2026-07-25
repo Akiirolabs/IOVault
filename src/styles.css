@@ -753,9 +753,39 @@ textarea {
 .notes-tree-row {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 2rem;
+  grid-template-columns: 1.5rem minmax(0, 1fr) 2rem;
   align-items: center;
   gap: 0.25rem;
+}
+
+.notes-tree-row[draggable="true"] {
+  cursor: grab;
+}
+
+.notes-tree-row.dragging {
+  opacity: 0.5;
+}
+
+.notes-page-toggle,
+.notes-page-toggle-spacer {
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  color: #83afc4;
+  background: transparent;
+}
+
+.notes-archive-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.notes-archive-actions button {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  border-radius: 0.6rem;
+  color: #a9d7ed;
+  background: rgba(56, 189, 248, 0.07);
 }
 
 .notes-tree-item {
@@ -1009,9 +1039,16 @@ textarea {
 
 .notes-format-bar {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
   padding: 0.55rem 1rem;
   border-bottom: 1px solid rgba(125, 211, 252, 0.08);
+}
+
+.notes-page-cell {
+  white-space: nowrap;
+  color: #bde8fa;
+  background: rgba(56, 189, 248, 0.1);
 }
 
 .notes-format-bar button {

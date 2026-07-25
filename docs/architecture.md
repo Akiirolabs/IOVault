@@ -42,7 +42,7 @@ The [implementation system](implementation-system/README.md) is authoritative fo
 | Data | Durable source | Browser copy | Notes |
 |---|---|---|---|
 | General workspace | SQLite `workspaces.data` | localStorage cache | Full `VaultState`; last-write-wins remains a known limitation |
-| Notes pages and collections | `VaultState.write` via SQLite | React/localStorage | Versioned hierarchy; legacy `docHtml` migrates into the first note |
+| Notes pages and collections | `VaultState.write` via SQLite | React/localStorage | Versioned collapsible hierarchy; Page cells store linked page IDs; legacy `docHtml` migrates into the first note |
 | Code snippets and notes | `VaultState` via SQLite | React/localStorage | Reusable globally; optional repository provenance |
 | Scratch files | SQLite code tables | IndexedDB working cache | User-scoped |
 | GitHub files | GitHub repository | IndexedDB bounded cache | Not stored in `VaultState` |

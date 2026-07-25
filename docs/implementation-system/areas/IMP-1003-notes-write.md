@@ -6,9 +6,9 @@
 
 | Surface | Implemented v1 |
 |---|---|
-| Explorer | Top-level toolbar creation; nested pages/tables from a foreground `•••` menu; custom icons, inline rename, multi-format import, templates, recoverable delete, archive/restore, and search |
-| Page | Title, rich content, metadata, links, and explicit assistant context |
-| Collection | Inline text, number, date, checkbox, select/status, and URL columns; nested rows with persisted collapse state; completion filters, sibling sorting, and saved views |
+| Explorer | Collapsible and draggable hierarchy; keyboard moves; foreground `•••` actions; custom icons, rename, import, templates, subtree recovery, and search |
+| Page | Title, 14 formatting controls, metadata, links, and explicit assistant context |
+| Collection | Text, number, date, checkbox, select/status, URL, and linked Page columns; nested rows, filters, sibling sorting, and saved views |
 | Templates | Repository-valid Testing Panel, blank top-level creation, reusable templates, and explicit add-new/replace-current choice |
 | Connections | Active-page-only assistant context; cross-area record links remain planned |
 
@@ -26,6 +26,8 @@
 
 **FTR-1002 correction:** [ADT-1003](../../audits/ADT-1003-write-page-actions.md) is 6/6 verified through `DBG-IMP-1009`. The foreground menu stays beside its trigger without selecting another page; icons persist, imports accept TXT/Markdown/CSV/JSON, and templates ask whether to add or replace.
 
+**TEST-IV-1001 completion:** [ADT-1002](../../audits/ADT-1002-write-page-manual-audit.md) is 8/8 verified through `DBG-IMP-1010`. The final run added page-section collapse, the expanded toolbar, linked Page cells, drag/keyboard organization, persistent rename coverage, and complete archive recovery. Verification: 44 tests, production build, and signed-in browser acceptance on 2026-07-25.
+
 **Acceptance:** migration, hierarchy, collections, recoverable archive, and explicit assistant context are covered by model/component tests. Full status remains below `✅ Verified` until reload/account-sync and keyboard workflows have a durable browser E2E gate.
 
 **Limits:** cross-area record links, additional templates, real-time collaboration, arbitrary third-party blocks, and full Notion parity are outside this v1.
@@ -42,7 +44,7 @@ ADT-1001 found that the v1 table and editor do not yet satisfy complete browser,
 
 DBG-IMP-1004 is verified. DBG-IMP-1005 and 1006 remain planned with blank finish dates in the [work-code ledger](../../work-code-ledger.md). Rapid reload before the current 800 ms server-sync window remains part of DBG-IMP-1005.
 
-The [ADT-1002 manual audit](../../audits/ADT-1002-write-page-manual-audit.md), sourced from manual sub-work `TEST-IV-1001`, identified eight findings under `ADT-1002.1` through `.7`, including `.4.1. `DBG-IMP-1007` verified nested table rows with a parent/name-cell `+`. `DBG-IMP-1008` verified recoverable page and table deletion; the current control lives in each page's `•••` menu. Collapsible page hierarchy, toolbar depth, Page-type table columns, drag organization, section renaming, and complete archive recovery remain planned.
+The [ADT-1002 manual audit](../../audits/ADT-1002-write-page-manual-audit.md), sourced from manual sub-work `TEST-IV-1001`, is complete: `DBG-IMP-1007` fixed nested rows, `DBG-IMP-1008` fixed recoverable deletion, and `DBG-IMP-1010` verified the remaining six findings.
 
 ## Engineering dependencies
 

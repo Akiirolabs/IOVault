@@ -110,4 +110,13 @@ describe("Notes model", () => {
     write.pages[0].icon = "📌";
     expect(normalizeWriteState(JSON.parse(JSON.stringify(write))).pages[0].icon).toBe("📌");
   });
+
+  it("preserves Page columns and collapsed page sections", () => {
+    const write = createInitialWriteState();
+    write.pages[0] = { ...write.pages[0], kind: "collection", collection: { columns: [{ id: "page", name: "Page", type: "page" }], rows: [{ id: "row", cells: { page: "linked-page" } }], view: "all" } };
+    write.collapsedPageIds = [write.pages[0].id, "missing"];
+    const normalized = normalizeWriteState(JSON.parse(JSON.stringify(write)));
+    expect(normalized.pages[0].collection?.columns[0].type).toBe("page");
+    expect(normalized.collapsedPageIds).toEqual([write.pages[0].id]);
+  });
 });

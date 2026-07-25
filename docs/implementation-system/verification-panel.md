@@ -23,6 +23,7 @@ Do not check a row complete because its command exists. Add dated evidence to th
 
 | Date | Code | Result | Evidence |
 |---|---|---|---|
+| 2026-07-25 | DBG-IMP-1010 · ADT-1002.3/.4/.4.1/.5/.6/.7 · IMP-1003 | ✅ Verified | 44 tests; production build; signed-in browser confirmed 14 formatting controls, hierarchy collapse/expand, and keyboard moves |
 | 2026-07-24 | DBG-IMP-1009 · ADT-1003 · FTR-1002 · IMP-1003 | ✅ Verified | 38 tests; production build; signed-in browser confirmed foreground six-pixel menu anchoring, unchanged active page, and template choices |
 | 2026-07-24 | IMP-1003 page actions | ✅ Verified | 35 tests; production build; signed-in browser check of all six parent-scoped menu actions |
 | 2026-07-24 | DOC-1011 · IMP-1005/1006 | Design updated | Agent roles, data, autonomy policies, platform feasibility, delivery phases, limits, and acceptance synchronized |
