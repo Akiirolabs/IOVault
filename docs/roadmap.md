@@ -11,6 +11,7 @@ The [debug system](debug-system/issue-register.md) owns status and evidence for 
 | P0 | Production secret and system-wide abuse controls | [DBG-1004/1005](implementation-system/engineering-dependencies.md) |
 | P1 | Conflict-safe storage, sanitization, and input validation | [DBG-1006/1007/1010/1011](implementation-system/engineering-dependencies.md) |
 | P1 | Characterize Code Vault memory behavior | [DBG-1014](debug-system/issues/DBG-1014-monaco-and-react-state.md) |
+| P1 | Standardize shared UI and navigation | [DBG-1016](debug-system/issues/DBG-1016-shared-ui-navigation.md) |
 | P2 | Reduce frontend and server monolith risk | [DBG-1008/1009](implementation-system/engineering-dependencies.md) |
 
 ## Product design track
@@ -19,9 +20,8 @@ The [implementation register](implementation-system/implementation-register.md) 
 
 | Priority | Design area | State | Next outcome |
 |---:|---|---|---|
+| P1 | Notes / Write | Implemented v1 · ADT-1001 1/3 · FTR-1001 8/8 verified | Run DBG-IMP-1005/1006 for persistence and rich-text hardening |
 | P1 | Code Vault | Implemented v1 | Refine complete repository-change workflow |
-| P1 | Notes / Write | Implemented v1 · ADT-1001 1/3 · ADT-1002 8/8 verified | Run DBG-IMP-1005/1006 for persistence and rich-text hardening |
-| P1 | UI and navigation | Partial | Approve shared workspace patterns |
 | P2 | Projects | Partial | Deliver typed project table before graph modes |
 | P2 | Mentor Agent | Partial · agent redesign planned | Deliver conversational onboarding, adaptive teaching, assignments, and run history |
 | P2 | Career Agent | Partial · agent redesign planned | Deliver resume intake, ranked opportunities, Review mode, and one supported connector |

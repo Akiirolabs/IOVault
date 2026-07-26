@@ -2,6 +2,8 @@
 
 This folder turns product ideas into traceable design and delivery work. It owns user experience, feature behavior, design decisions, phased scope, and acceptance—not defects or platform hardening.
 
+The permanent page parents are `IMP-1001` Write, `IMP-1002` Code Vault, `IMP-1003` Projects, `IMP-1004` Learning, and `IMP-1005` Career. See the [work-system authority](../work-system/README.md) for routing and immutability rules.
+
 | System | Authoritative responsibility |
 |---|---|
 | Implementation system | Product and UX design, feature phases, and user-facing acceptance |

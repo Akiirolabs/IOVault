@@ -1,6 +1,15 @@
-# IMP-1004 — Projects
+# IMP-1003 — Projects
 
 **State:** Partial · **Priority:** P2
+
+## Rollouts
+
+| Child | Rollout | Status |
+|---|---|---|
+| `IMP-1003.1` | Full-page editor | Implemented |
+| `IMP-1003.2` | Typed table | Planned |
+| `IMP-1003.3` | Flowchart | Planned |
+| `IMP-1003.4` | Object mindmap | Planned |
 
 | Capability | State |
 |---|---|

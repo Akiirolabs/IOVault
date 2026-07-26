@@ -1,51 +1,40 @@
 ---
 name: iovault-sync-docs
-description: Keep IO Vault repository documentation synchronized with verified implementation work. Use after any code, bug-fix, API, data-model, architecture, UI-flow, Code Vault, security, test, or roadmap run that changes current behavior, completion status, limitations, or verification evidence.
+description: Keep IO Vault repository documentation synchronized with verified implementation work. Use after any code, bug-fix, API, data-model, architecture, UI-flow, Code Vault, security, audit, feature-review, deployment, test, or roadmap run that changes behavior, status, limitations, or evidence.
 ---
 
 # IO Vault Documentation Sync
 
-Update documentation as part of the implementation run, not as a later cleanup task.
+Update documentation from the final diff and actual verification output; never infer completion.
 
 ## Workflow
 
-1. Inspect the final diff and actual verification output. Never infer completion from edited code.
-2. Identify every affected documentation surface using the matrix below.
-3. Update current-state statements, status, evidence, limitations, and next action consistently.
-4. Update `docs/work-code-ledger.md` for every completed repository run using the applicable IMP, DBG, DOC, DPL, ADT, or DBG-IMP series.
-5. Search all `docs/` files for the feature/debug code and remove stale contradictions.
-6. Run `git diff --check`; verify Markdown tables and Mermaid fences are structurally complete.
+1. Read `docs/work-system/README.md` and route the run to its authoritative system.
+2. Update that detailed record plus `docs/work-system/ledger.md`.
+3. Update current behavior, status, evidence, limitations, and next action consistently.
+4. Search all docs for the work code, former code, old status, and superseded terminology.
+5. Keep `docs/implementation-log.md` chronological; append only when delivery history changed.
+6. Validate links, tables, headings, Mermaid fences, and `git diff --check`.
 
-## Update matrix
+## Routing matrix
 
-| Change | Required documents |
+| Work | Authority |
 |---|---|
-| Any meaningful implementation | `docs/implementation-log.md` and relevant feature document |
-| Any IMP workstream changed | Relevant `docs/implementation-system/areas/IMP-*.md`, `implementation-register.md`, and `verification-panel.md` |
-| Priority or completion changed | `docs/roadmap.md` |
-| Route, storage, ownership, or data flow changed | `docs/architecture.md` |
-| Code Vault behavior changed | `docs/code-vault-mini-ide.md` and `docs/code-vault-architecture.md` |
-| DBG issue worked | Individual issue, `issue-register.md`, `fix-attempts.md`, and `verification-matrix.md` |
-| Issue/service dependencies changed | `debug-system/service-impact-chart.md` and a graph only when the relationship is materially clearer visually |
-| Documentation navigation changed | `docs/README.md` |
+| `IMP` | `docs/implementation-system/` area, register, and verification panel |
+| `DBG`, `DBG-IMP` | `docs/debug-system/` issue, register, attempts, and verification evidence |
+| `ADT` | `docs/audit-system/` record |
+| `FTR`, `FTR-IMP` | `docs/feature-review-system/` review and correction links |
+| `DOC` | Affected documentation plus ledger |
+| `DPL` | `docs/deployment-system/` release record |
+| Priority change | `docs/roadmap.md` |
+| Runtime boundary or data flow | `docs/architecture.md` |
+| Documentation navigation | `docs/README.md` |
 
-For a completed DBG issue, every human-readable status surface must say `✅ Verified` only after its required tests and production build pass. Keep fix attempts append-only; historical limitations may remain in their dated row.
-
-For an IMP workstream, keep the area plan and Markdown register aligned. Use `✅ Verified` only when the area acceptance checks have current evidence; otherwise use `Implemented`, `Partial`, or `Planned`. Keep `docs/implementation-log.md` append-only.
-
-IMP records own product/UX design and acceptance. DBG records own defects, hardening, technical debt, attempts, and remediation evidence. Link an IMP plan to `engineering-dependencies.md` and its authoritative DBG record; never duplicate the DBG scope, steps, status, or evidence inside the IMP plan. Quality gates belong in `verification-panel.md`, not a separate IMP workstream.
+Only IMP owns speculative roadmap work. Link across systems rather than duplicating scope or evidence. Preserve former identifiers only in migration aliases or explicit `Former code` metadata.
 
 ## Writing standard
 
-- Lead with current behavior and status.
-- Use compact tables for status, ownership, limits, verification, and comparisons.
-- Use Mermaid only for flows, dependencies, sequences, or architecture boundaries.
-- Keep Mermaid blocks directly editable. Do not maintain generated image replicas beside them.
-- Keep prose for intent, rationale, constraints, tradeoffs, and migration guidance.
-- Prefer one authoritative detail location and link to it instead of duplicating long explanations.
-- Preserve exact paths, limits, endpoint names, and verified test counts.
-- Never record secrets, tokens, prompts, private vault content, invented evidence, or unrun results.
-
-## Final audit
-
-Search for the changed feature name, endpoint, debug code, previous status, old limits, and superseded terminology across `docs/`. Report which documents changed, verification evidence, and any deliberately retained historical statement.
+- Lead with current behavior and status; use concise tables for structured facts.
+- Use editable Mermaid only when relationships need a diagram.
+- Preserve exact paths, limits, endpoints, and verified test counts.
+- Never record secrets, private content, invented evidence, or unrun results.

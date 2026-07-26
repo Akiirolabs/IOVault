@@ -1,6 +1,13 @@
-# IMP-1006 — Career Agent
+# IMP-1005 — Career Agent
 
 **State:** Partial · **Priority:** P2
+
+## Rollouts
+
+| Child | Rollout | Status |
+|---|---|---|
+| `IMP-1005.1` | Current career workspace | Partial |
+| `IMP-1005.2` | Career Agent | Planned |
 
 The current Career page edits a resume and produces an AI draft. The target is a Career Agent that builds a verified skill profile, finds suitable employment and freelance opportunities, prepares applications, submits eligible applications within the user’s policy, and maintains the complete pipeline.
 

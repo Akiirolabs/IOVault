@@ -9,12 +9,15 @@ IO Vault is a signed-in productivity workspace with SQL-backed sync, offline bro
 | Platform architecture and diagrams | [architecture.md](architecture.md) | Current boundaries, target direction, and preserved legacy maps |
 | Server, auth, and persistence | [server-and-auth.md](server-and-auth.md) | Implemented; production hardening remains |
 | Code Vault mini IDE | [code-vault-mini-ide.md](code-vault-mini-ide.md) · [code-vault-architecture.md](code-vault-architecture.md) | Implemented v1 |
-| Notes / Write workspace | [implementation-system area plan](implementation-system/areas/IMP-1003-notes-write.md) | Implemented v1 |
-| Projects editor, table, flowchart, mindmap | [Projects area plan](implementation-system/areas/IMP-1004-projects.md) | Editor implemented; remaining modes planned |
-| Mentor Agent | [Learning area plan](implementation-system/areas/IMP-1005-learning.md) | Conversational teaching and autonomous learning workflow planned |
-| Career Agent | [Career area plan](implementation-system/areas/IMP-1006-career.md) | Resume-based job discovery, reviewed applications, and bounded autopilot planned |
+| Notes / Write workspace | [implementation-system area plan](implementation-system/areas/IMP-1001-notes-write.md) | Implemented v1 |
+| Projects editor, table, flowchart, mindmap | [Projects area plan](implementation-system/areas/IMP-1003-projects.md) | Editor implemented; remaining modes planned |
+| Mentor Agent | [Learning area plan](implementation-system/areas/IMP-1004-learning.md) | Conversational teaching and autonomous learning workflow planned |
+| Career Agent | [Career area plan](implementation-system/areas/IMP-1005-career.md) | Resume-based job discovery, reviewed applications, and bounded autopilot planned |
 | Product implementation system | [implementation-system/](implementation-system/README.md) | Active plans and verification gates |
-| Work-code legend and ledger | [work-code-ledger.md](work-code-ledger.md) | IMP, DBG, DOC, DPL, ADT, and DBG-IMP history |
+| Work-system authority | [work-system/](work-system/README.md) · [ledger](work-system/ledger.md) | Eight-category taxonomy, aliases, templates, and index |
+| Code and architecture audits | [audit-system/](audit-system/README.md) | ADT evidence and correction links |
+| Manual feature reviews | [feature-review-system/](feature-review-system/README.md) | FTR findings and FTR-IMP corrections |
+| Production releases | [deployment-system/](deployment-system/README.md) | DPL gates, evidence, monitoring, and rollback |
 | Delivery history | [implementation-log.md](implementation-log.md) | Append-only summary |
 | Priorities | [roadmap.md](roadmap.md) | Active |
 | Security/debug evidence | [debug-system/](debug-system/README.md) | DBG-1001 through DBG-1003 verified |
@@ -31,7 +34,7 @@ IO Vault is a signed-in productivity workspace with SQL-backed sync, offline bro
 
 ## Documentation rule
 
-After meaningful implementation work, update the relevant feature document, [implementation system](implementation-system/README.md), roadmap, implementation log, architecture/diagram if boundaries changed, and debug records when a DBG code is involved. Record only verified results.
+After each run, use the [work-system routing rules](work-system/README.md), update the authoritative specialized record and ledger, and record only verified results. Update architecture, roadmap, or the chronological implementation log only when their owned facts change.
 
 ## Diagram rule
 

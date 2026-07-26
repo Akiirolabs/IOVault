@@ -1,6 +1,13 @@
-# IMP-1005 — Mentor Agent
+# IMP-1004 — Mentor Agent
 
 **State:** Partial · **Priority:** P2
+
+## Rollouts
+
+| Child | Rollout | Status |
+|---|---|---|
+| `IMP-1004.1` | Current learning workspace | Partial |
+| `IMP-1004.2` | Mentor Agent | Planned |
 
 The current Learning page stores notes, connections, and weekly focus. The target is a conversational Mentor Agent that learns the user’s goals and skill level, teaches actively, assigns work, evaluates progress, and adapts the learning plan over time.
 

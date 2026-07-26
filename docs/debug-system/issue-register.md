@@ -18,3 +18,5 @@
 | DBG-1012 | Medium · Planned | Dependency drift | `package.json` | Define pin/update policy |
 | DBG-1014 | Medium · Planned | Editor state pressure | `src/codeVault/CodeVaultWorkspace.tsx` | Profile realistic repository |
 | DBG-1013 | Low · Planned | Single package boundary | `package.json` | Defer until justified |
+| DBG-1015 | Medium · **✅ Verified** | Responsive shell gap | `src/App.tsx` | Monitor narrow-screen parity |
+| DBG-1016 | Medium · Planned | Shared UI/navigation inconsistency | Shared workspace UI | Define and verify common patterns |

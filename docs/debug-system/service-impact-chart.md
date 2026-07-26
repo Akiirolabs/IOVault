@@ -16,3 +16,5 @@
 | DBG-1012 | Build/CI | All runtime services | `package.json` |
 | DBG-1013 | Build/package layout | Frontend, API | `package.json` |
 | DBG-1014 | Monaco, Frontend | IndexedDB, Performance | `src/codeVault/CodeVaultWorkspace.tsx` |
+| DBG-1015 | App shell, Frontend | Mobile usability | `src/App.tsx` |
+| DBG-1016 | Shared navigation, Frontend | Every page workspace | Shared workspace UI |

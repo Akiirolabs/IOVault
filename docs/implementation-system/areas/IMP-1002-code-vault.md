@@ -2,6 +2,13 @@
 
 **State:** Implemented v1 · **Priority:** P1
 
+## Rollouts
+
+| Child | Rollout | Status |
+|---|---|---|
+| `IMP-1002.1` | Mini IDE v1 | Implemented |
+| `IMP-1002.2` | Refined repository workflow | Planned |
+
 | Current | Next |
 |---|---|
 | Three-pane Monaco workspace, editable/deletable scratch files, named snippets, selected-context AI, patch review/undo, GitHub draft PRs | A polished end-to-end repository-change workflow with clear context, review, recovery, and publishing states |

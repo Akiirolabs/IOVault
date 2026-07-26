@@ -11,3 +11,5 @@
 | [Templates](templates.md) | Issue, attempt, and verification records |
 
 **Rule:** verify against current code, record real evidence, never store secrets or vault content, and use `Verified` only after tests and build pass.
+
+`DBG` owns discovered technical problems; `DBG-IMP` owns corrections from DBG or code-level ADT findings. Manual feature findings and their fixes belong to the [feature-review system](../feature-review-system/README.md).

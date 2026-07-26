@@ -3,7 +3,7 @@
 ## Area plan
 
 ```md
-# IMP-XXXX — Area
+## IMP-XXXX — Area
 
 **State:** Planned · **Priority:** P?
 

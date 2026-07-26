@@ -2,15 +2,15 @@
 
 ```mermaid
 flowchart LR
-  Engineering["Engineering dependencies: DBG system"] -. unblocks .-> UI["IMP-1007 UI + navigation"]
-  Engineering -. unblocks .-> Notes["IMP-1003 Notes / Write"]
-  Engineering -. unblocks .-> Projects["IMP-1004 Projects"]
+  Engineering["Engineering dependencies: DBG system"] -. unblocks .-> UI["DBG-1016 UI + navigation"]
+  Engineering -. unblocks .-> Notes["IMP-1001 Notes / Write"]
+  Engineering -. unblocks .-> Projects["IMP-1003 Projects"]
   Engineering -. unblocks .-> Code["IMP-1002 Code Vault"]
   UI --> Notes
   UI --> Projects
   UI --> Code
-  Notes --> Learning["IMP-1005 Mentor Agent"]
-  Notes --> Career["IMP-1006 Career Agent"]
+  Notes --> Learning["IMP-1004 Mentor Agent"]
+  Notes --> Career["IMP-1005 Career Agent"]
   Projects --> Learning
   Projects --> Career
 ```

@@ -1,6 +1,14 @@
-# IMP-1003 — Notes / Write Workspace
+# IMP-1001 — Notes / Write Workspace
 
 **State:** Implemented v1 · **Priority:** P1
+
+## Rollouts
+
+| Child | Rollout | Status |
+|---|---|---|
+| `IMP-1001.1` | Workspace v1 | Implemented |
+| `IMP-1001.2` | Hierarchy and page actions | Implemented |
+| `IMP-1001.3` | Cross-area record links | Planned |
 
  Product direction: a focused knowledge workspace with a navigable hierarchy, page content, and structured table views. IO Vault should reuse that interaction pattern without copying the source product’s branding.
 
@@ -24,9 +32,9 @@
 
 **Latest refinement:** 35 tests and the production build passed on 2026-07-24. A signed-in browser check confirmed the parent `•••` menu exposes Add page, Add table, Import, Rename, Save as template, and Delete without changing workspace data.
 
-**FTR-1002 correction:** [ADT-1003](../../audits/ADT-1003-write-page-actions.md) is 6/6 verified through `DBG-IMP-1009`. The foreground menu stays beside its trigger without selecting another page; icons persist, imports accept TXT/Markdown/CSV/JSON, and templates ask whether to add or replace.
+**FTR-1002 correction:** [FTR-1002](../../feature-review-system/reviews/FTR-1002-write-page-actions.md) is 6/6 verified through `FTR-IMP-1003`. The foreground menu stays beside its trigger without selecting another page; icons persist, imports accept TXT/Markdown/CSV/JSON, and templates ask whether to add or replace.
 
-**TEST-IV-1001 completion:** [ADT-1002](../../audits/ADT-1002-write-page-manual-audit.md) is 8/8 verified through `DBG-IMP-1010`. The final run added page-section collapse, the expanded toolbar, linked Page cells, drag/keyboard organization, persistent rename coverage, and complete archive recovery. Verification: 44 tests, production build, and signed-in browser acceptance on 2026-07-25.
+**TEST-IV-1001 completion:** [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-page-manual-review.md) is 8/8 verified through `FTR-IMP-1004`. The final run added page-section collapse, the expanded toolbar, linked Page cells, drag/keyboard organization, persistent rename coverage, and complete archive recovery. Verification: 44 tests, production build, and signed-in browser acceptance on 2026-07-25.
 
 **Acceptance:** migration, hierarchy, collections, recoverable archive, and explicit assistant context are covered by model/component tests. Full status remains below `✅ Verified` until reload/account-sync and keyboard workflows have a durable browser E2E gate.
 
@@ -42,9 +50,9 @@ ADT-1001 found that the v1 table and editor do not yet satisfy complete browser,
 | DBG-IMP-1005 | Normalize collection data and correct sorting, completion filters, subtree restore, sync, and recovery | Component and signed-in browser E2E cover the complete collection lifecycle |
 | DBG-IMP-1006 | Sanitize stored HTML, replace fragile rich-text commands, and finish keyboard/accessibility behavior | Sanitization, formatting, focus, and keyboard tests pass with the production build |
 
-DBG-IMP-1004 is verified. DBG-IMP-1005 and 1006 remain planned with blank finish dates in the [work-code ledger](../../work-code-ledger.md). Rapid reload before the current 800 ms server-sync window remains part of DBG-IMP-1005.
+DBG-IMP-1004 is verified. DBG-IMP-1005 and 1006 remain planned with blank finish dates in the [work-code ledger](../../work-system/ledger.md). Rapid reload before the current 800 ms server-sync window remains part of DBG-IMP-1005.
 
-The [ADT-1002 manual audit](../../audits/ADT-1002-write-page-manual-audit.md), sourced from manual sub-work `TEST-IV-1001`, is complete: `DBG-IMP-1007` fixed nested rows, `DBG-IMP-1008` fixed recoverable deletion, and `DBG-IMP-1010` verified the remaining six findings.
+The [FTR-1001 manual review](../../feature-review-system/reviews/FTR-1001-write-page-manual-review.md), sourced from manual sub-work `TEST-IV-1001`, is complete: `FTR-IMP-1001` fixed nested rows, `FTR-IMP-1002` fixed recoverable deletion, and `FTR-IMP-1004` verified the remaining six findings.
 
 ## Engineering dependencies
 
