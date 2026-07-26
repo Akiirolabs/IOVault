@@ -1,0 +1,72 @@
+# IMP-1001 — Notes / Write Workspace
+
+**State:** Implemented v1 · **Priority:** P1
+
+## Rollouts
+
+| Child | Rollout | Status |
+|---|---|---|
+| `IMP-1001.1` | Workspace v1 | Implemented |
+| `IMP-1001.2` | Hierarchy and page actions | Implemented |
+| `IMP-1001.3` | Cross-area record links | Planned |
+
+| Sub-code | Outcome | Status |
+|---|---|---|
+| `IMP-1001.1.1` | Migrate legacy Write HTML into a versioned first note | Implemented |
+| `IMP-1001.1.2` | Rich-text page with title, metadata, formatting, and explicit assistant context | Implemented |
+| `IMP-1001.1.3` | Typed collections, nested rows, filters, sorting, views, and linked Page cells | Implemented |
+| `IMP-1001.1.4` | Repository-valid Testing Panel and reusable templates | Implemented |
+| `IMP-1001.2.1` | Collapsible, draggable, keyboard-accessible page hierarchy | Implemented |
+| `IMP-1001.2.2` | Parent `•••` actions for page/table creation, import, rename, template, and delete | Implemented |
+| `IMP-1001.2.3` | Recoverable subtree archive and complete restoration | Implemented |
+| `IMP-1001.2.4` | Persisted page icons and menu behavior verified by FTR-1001/FTR-1002 | Implemented |
+| `IMP-1001.3.1` | Link Write records to Projects, Learning, Career, and Code Vault evidence | Planned |
+| `IMP-1001.3.2` | Preserve links through account sync, archive, and recovery | Planned |
+
+The Write workspace provides a focused knowledge environment built around navigable pages, structured content, typed collections, reusable templates, and controlled assistant context.
+
+| Surface | Implemented v1 |
+|---|---|
+| Explorer | Collapsible and draggable hierarchy; keyboard moves; foreground `•••` actions; custom icons, rename, import, templates, subtree recovery, and search |
+| Page | Title, 14 formatting controls, metadata, links, and explicit assistant context |
+| Collection | Text, number, date, checkbox, select/status, URL, and linked Page columns; nested rows, filters, sibling sorting, and saved views |
+| Templates | Repository-valid Testing Panel, blank top-level creation, reusable templates, and explicit add-new/replace-current choice |
+| Connections | Active-page-only assistant context; cross-area record links remain planned |
+
+## `IMP-1001.1–1001.3` delivery record
+
+1. ✅ Added versioned page and collection contracts with text/checkbox properties and persisted view state.
+2. ✅ Migrated existing `write.docHtml` into the first note without changing its HTML.
+3. ✅ Added nested page lifecycle, search, rename, parent movement, subtree archive, and restore.
+4. ✅ Added configurable tables with inline typed columns, rows, completion filtering, typed sorting, and the repository-valid Testing Panel.
+5. Partial: explicit active-page assistant context and responsive table behavior are implemented; cross-area links and automated browser E2E remain.
+
+**Evidence:** 27 tests passed, production build passed, and a signed-in browser smoke check confirmed Notes navigation, Testing Panel creation, four table rows, contained overflow, and zero console errors on 2026-07-22.
+
+**Latest refinement:** 35 tests and the production build passed on 2026-07-24. A signed-in browser check confirmed the parent `•••` menu exposes Add page, Add table, Import, Rename, Save as template, and Delete without changing workspace data.
+
+**FTR-1002 correction:** [FTR-1002](../../feature-review-system/README.md#ftr-1002--write-actions-review) is 6/6 verified. The foreground menu stays beside its trigger without selecting another page; icons persist, imports accept TXT/Markdown/CSV/JSON, and templates ask whether to add or replace.
+
+**TEST-IV-1001 completion:** [FTR-1001](../../feature-review-system/README.md#ftr-1001--write-manual-review) is 8/8 verified. Its corrections added page-section collapse, the expanded toolbar, linked Page cells, drag/keyboard organization, persistent rename coverage, and complete archive recovery. Verification: 44 tests, production build, and signed-in browser acceptance on 2026-07-25.
+
+**Acceptance:** migration, hierarchy, collections, recoverable archive, and explicit assistant context are covered by model/component tests. Full status remains below `✅ Verified` until reload/account-sync and keyboard workflows have a durable browser E2E gate.
+
+**Limits:** cross-area record links, additional templates, real-time collaboration, arbitrary third-party blocks, and full Notion parity are outside this v1.
+
+## Corrective dependencies
+
+SEC-1.0 and SYS-1.0 own evidence and corrections outside this product implementation.
+
+| Record | Correction | Completion gate |
+|---|---|---|
+| ✅ [DBG-1017](../../audit-system/SYS-1.0-system-baseline.md#dbg-1017--typed-table-column-behavior) | Replaced browser prompts with inline creation, rename/type editing, select options, and six typed cell controls | Passed 2026-07-23 |
+| [DBG-1007/1008](../../audit-system/SYS-1.0-system-baseline.md) | Normalize collection data and make persistence/conflict handling durable | Component and signed-in browser E2E cover the complete collection lifecycle |
+| [DBG-1011](../../audit-system/SEC-1.0-security-baseline.md#dbg-1011--rich-text-sanitization) | Sanitize stored HTML and finish safe editor behavior | Sanitization, formatting, focus, and keyboard tests pass with the production build |
+
+DBG-1017 is verified. Persistence/sync and rich-text findings remain Open in their owning audit lanes. Rapid reload before the current 800 ms server-sync window remains part of SYS-1.0.
+
+The [FTR-1001 manual review](../../feature-review-system/README.md#ftr-1001--write-manual-review), sourced from `TEST-IV-1001`, owns all eight verified findings and corrections.
+
+## Engineering dependencies
+
+Workspace growth, conflict-safe sync, frontend boundaries, and rich-text safety are linked through the consolidated [implementation index](../README.md).

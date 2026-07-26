@@ -10,7 +10,7 @@ Personal productivity dashboard: a Vite + React + TypeScript SPA with a required
 
 ### Auth + database
 - SQL store: SQLite via `better-sqlite3`, file at `server/data/iovault.db` (git-ignored, auto-created on first run; `server/db.js` runs `CREATE TABLE IF NOT EXISTS`). No manual DB setup needed. Override path with `DATABASE_FILE`.
-- Tables include `users`, `workspaces`, AI usage metadata, and user-scoped Code Vault records. See `docs/architecture.md`.
+- Tables include `users`, `workspaces`, AI usage metadata, and user-scoped Code Vault records. See `docs/deployment-ledger/DPL-1002-current-testing-state.md`.
 - Auth: `server/auth.js` — bcrypt hashing plus a JWT-backed `HttpOnly`, `SameSite=Lax` cookie (`Secure` in production). Unsafe cookie-authenticated requests require `X-IOVault-CSRF: 1`. The SPA never receives or stores the JWT; bearer auth remains available for non-browser API clients. `JWT_SECRET` is optional locally but required for a secure production deployment.
 - To reset all accounts/data locally, delete `server/data/` and restart the API.
 

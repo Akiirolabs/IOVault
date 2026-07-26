@@ -11,6 +11,18 @@
 | `IMP-1003.3` | Flowchart | Planned |
 | `IMP-1003.4` | Object mindmap | Planned |
 
+| Sub-code | Outcome | Status |
+|---|---|---|
+| `IMP-1003.1.1` | Shared full-screen project overlay | Implemented |
+| `IMP-1003.1.2` | Independent rich-text and Markdown documents with preview | Implemented |
+| `IMP-1003.1.3` | Persist title, status, `docHtml`, and `docMarkdown` | Implemented |
+| `IMP-1003.2.1` | Versioned text, number, date, checkbox, and select columns | Planned |
+| `IMP-1003.2.2` | Inline row/column editing, select options, deletion cleanup, and sync | Planned |
+| `IMP-1003.3.1` | Manual nodes, directed edges, labels, colors, zoom, and fit | Planned |
+| `IMP-1003.3.2` | Persist drag positions and remove orphaned edges | Planned |
+| `IMP-1003.4.1` | Object, parent, relation, and key/value model | Planned |
+| `IMP-1003.4.2` | Derived edges, cycle validation, deterministic automatic layout, and fit | Planned |
+
 | Capability | State |
 |---|---|
 | Project cards and status | Available |
@@ -28,7 +40,7 @@
 
 **Acceptance:** all project modes persist through account sync; existing projects load unchanged; keyboard and narrow-screen workflows work; graph deletion cannot leave orphaned references.
 
-## Full-page editor — implemented
+## `IMP-1003.1` — Full-page editor
 
 The first project-card action opens a shared full-screen overlay with independent Rich Text and Markdown documents.
 
@@ -40,7 +52,7 @@ The first project-card action opens a shared full-screen overlay with independen
 | Markdown | Full-width source editor with edit/preview toggle |
 | Persistence | `docHtml` and `docMarkdown` update `ProjectBlock` and normal workspace sync |
 
-Rich Text and Markdown stay separate to avoid lossy conversion. The uncontrolled rich editor preserves the caret; sanitization remains owned by DBG-1010.
+Rich Text and Markdown stay separate to avoid lossy conversion. The uncontrolled rich editor preserves the caret; sanitization remains owned by DBG-1011.
 
 ```mermaid
 flowchart LR
@@ -52,7 +64,7 @@ flowchart LR
   MD --> Save
 ```
 
-## Typed data table — planned next
+## `IMP-1003.2` — Typed data table
 
 | Decision | v1 default |
 |---|---|
@@ -71,7 +83,7 @@ type TableDoc = {
 
 Store `table?: TableDoc` on `ProjectBlock`, normalize missing data, and remove deleted column keys from every row. Existing projects must load unchanged; typed edits and row/column deletion must survive reload and account sync.
 
-## Manual flowchart — planned
+## `IMP-1003.3` — Manual flowchart
 
 Users position nodes and explicitly draw connectors.
 
@@ -91,7 +103,7 @@ flowchart LR
 
 Use `@xyflow/react` unless dependency review rejects it. Deleting a node must remove its edges; keyboard deletion, focus, zoom, and narrow-screen behavior require acceptance coverage.
 
-## Object mindmap — planned
+## `IMP-1003.4` — Object mindmap
 
 Users edit objects and relationships; the renderer derives edges and positions automatically.
 
@@ -121,4 +133,4 @@ Relationship changes cannot leave orphaned references. Layout should remain dete
 
 ## Engineering dependencies
 
-Workspace growth, sync conflicts, rich-text safety, and new dependency review are owned by [DBG-1006, DBG-1007, DBG-1010, and DBG-1012](../engineering-dependencies.md).
+Workspace growth, sync conflicts, rich-text safety, and dependency review are owned by the SEC/SYS records linked in the consolidated [implementation index](../README.md).

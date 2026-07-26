@@ -2,7 +2,7 @@
  * Auth helpers for IO Vault: password hashing (bcrypt) and JWT sessions.
  *
  * JWT_SECRET should be provided via env in production. A stable dev fallback is
- * used locally so sign-in works out of the box; see docs/server-and-auth.md.
+ * used locally so sign-in works out of the box; see docs/deployment-ledger/DPL-1002-current-testing-state.md.
  */
 
 import crypto from "node:crypto";

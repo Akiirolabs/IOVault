@@ -3,7 +3,7 @@
  *
  * SQLite is used as a free, zero-config SQL database that runs entirely in this
  * environment. The schema and access patterns are intentionally simple so the
- * store can later be swapped for Postgres (Supabase/Neon) — see docs/server-and-auth.md.
+ * store can later be swapped for Postgres (Supabase/Neon) — see docs/deployment-ledger/DPL-1002-current-testing-state.md.
  */
 
 import fs from "node:fs";

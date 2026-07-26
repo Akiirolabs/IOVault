@@ -9,9 +9,21 @@
 | `IMP-1005.1` | Current career workspace | Partial |
 | `IMP-1005.2` | Career Agent | Planned |
 
+| Sub-code | Outcome | Status |
+|---|---|---|
+| `IMP-1005.1.1` | Preserve the current resume editor and AI draft | Partial |
+| `IMP-1005.1.2` | Upload and parse resumes into user-confirmed claims and skills | Planned |
+| `IMP-1005.2.1` | Conversational career profile and evidence linking | Planned |
+| `IMP-1005.2.2` | Connected opportunity discovery, deduplication, scoring, and visible reasons | Planned |
+| `IMP-1005.2.3` | Truthful application materials and unanswered-question handling | Planned |
+| `IMP-1005.2.4` | Review mode with user approval for every submission | Planned |
+| `IMP-1005.2.5` | Opportunity pipeline, contacts, interviews, follow-ups, and run history | Planned |
+| `IMP-1005.2.6` | One supported official connector with OAuth, idempotency, retries, and audit history | Planned |
+| `IMP-1005.2.7` | Connector-specific bounded autopilot after security and acceptance gates | Planned |
+
 The current Career page edits a resume and produces an AI draft. The target is a Career Agent that builds a verified skill profile, finds suitable employment and freelance opportunities, prepares applications, submits eligible applications within the user’s policy, and maintains the complete pipeline.
 
-## Experience
+## `IMP-1005.1–1005.2` target experience
 
 | Capability | Target behavior |
 |---|---|
@@ -68,4 +80,4 @@ Store user-scoped career profiles, source evidence, resume versions, opportunity
 
 ## Engineering dependencies
 
-Storage, conflict-safe sync, agent quotas, credential encryption, connector isolation, validation, idempotency, audit history, file scanning, and frontend/server boundaries must be resolved through [engineering dependencies](../engineering-dependencies.md) before application submission is enabled.
+Storage, conflict-safe sync, agent quotas, credential encryption, connector isolation, validation, idempotency, audit history, file scanning, and frontend/server boundaries must pass the SEC/SYS dependencies in the consolidated [implementation index](../README.md) before application submission is enabled.

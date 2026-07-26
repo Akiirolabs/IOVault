@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Owner Voice"
+  short_description: "Write IO Vault documentation in professional owner voice"
+  default_prompt: "Use $project-owner-voice to rewrite this IO Vault description in professional project-owner voice."

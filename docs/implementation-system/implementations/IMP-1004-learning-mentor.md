@@ -9,9 +9,20 @@
 | `IMP-1004.1` | Current learning workspace | Partial |
 | `IMP-1004.2` | Mentor Agent | Planned |
 
+| Sub-code | Outcome | Status |
+|---|---|---|
+| `IMP-1004.1.1` | Preserve current notes, connections, and weekly focus | Partial |
+| `IMP-1004.1.2` | Extract Learning from the frontend monolith without data loss | Planned |
+| `IMP-1004.2.1` | Conversational learning-profile onboarding | Planned |
+| `IMP-1004.2.2` | User-approved curriculum, milestones, sessions, and schedule | Planned |
+| `IMP-1004.2.3` | Lessons, exercises, quizzes, projects, and Code Vault practice | Planned |
+| `IMP-1004.2.4` | Evidence-based assessment and adaptive skill confidence | Planned |
+| `IMP-1004.2.5` | Scheduled runs, notifications, pause controls, and auditable history | Planned |
+| `IMP-1004.2.6` | Approved calendar, course, and content connectors | Planned |
+
 The current Learning page stores notes, connections, and weekly focus. The target is a conversational Mentor Agent that learns the user’s goals and skill level, teaches actively, assigns work, evaluates progress, and adapts the learning plan over time.
 
-## Experience
+## `IMP-1004.2.1–1004.2.6` target experience
 
 | Capability | Target behavior |
 |---|---|
@@ -48,4 +59,4 @@ Store user-scoped learning profiles, goals, plans, mentor sessions, lessons, ass
 
 ## Engineering dependencies
 
-Storage, conflict-safe sync, agent rate limits, explicit context, credential isolation, validation, audit history, notifications, and frontend/server boundaries must be resolved through [engineering dependencies](../engineering-dependencies.md) before unattended runs are enabled.
+Storage, conflict-safe sync, agent rate limits, explicit context, credential isolation, validation, audit history, notifications, and frontend/server boundaries must pass the SEC/SYS dependencies in the consolidated [implementation index](../README.md) before unattended runs are enabled.

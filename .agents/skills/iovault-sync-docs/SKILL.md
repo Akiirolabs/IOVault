@@ -1,40 +1,31 @@
 ---
 name: iovault-sync-docs
-description: Keep IO Vault repository documentation synchronized with verified implementation work. Use after any code, bug-fix, API, data-model, architecture, UI-flow, Code Vault, security, audit, feature-review, deployment, test, or roadmap run that changes behavior, status, limitations, or evidence.
+description: Synchronize IO Vault's consolidated Deployment Ledger, page implementations, feature reviews, SEC/SYS audit lanes, architecture, and verification after repository work changes behavior, outcomes, findings, corrections, or complete testing states.
 ---
 
 # IO Vault Documentation Sync
 
-Update documentation from the final diff and actual verification output; never infer completion.
+Use the final diff and actual verification output; never infer completion.
 
-## Workflow
+## Authoritative files
 
-1. Read `docs/work-system/README.md` and route the run to its authoritative system.
-2. Update that detailed record plus `docs/work-system/ledger.md`.
-3. Update current behavior, status, evidence, limitations, and next action consistently.
-4. Search all docs for the work code, former code, old status, and superseded terminology.
-5. Keep `docs/implementation-log.md` chronological; append only when delivery history changed.
-6. Validate links, tables, headings, Mermaid fences, and `git diff --check`.
+- chronology, Versions, aliases, or complete-state routing → `docs/deployment-ledger/README.md`;
+- historical/current/planned complete state → matching `docs/deployment-ledger/DPL-*.md`;
+- page outcome → matching `docs/implementation-system/implementations/IMP-*.md`;
+- implementation register/dependencies/gates → `docs/implementation-system/README.md`;
+- manual findings/corrections → `docs/feature-review-system/README.md`;
+- security/privacy DBG → `docs/audit-system/SEC-1.0-security-baseline.md`;
+- system/architecture DBG → `docs/audit-system/SYS-1.0-system-baseline.md`;
+- audit index/evidence summary → `docs/audit-system/README.md`.
 
-## Routing matrix
+## Required checks
 
-| Work | Authority |
-|---|---|
-| `IMP` | `docs/implementation-system/` area, register, and verification panel |
-| `DBG`, `DBG-IMP` | `docs/debug-system/` issue, register, attempts, and verification evidence |
-| `ADT` | `docs/audit-system/` record |
-| `FTR`, `FTR-IMP` | `docs/feature-review-system/` review and correction links |
-| `DOC` | Affected documentation plus ledger |
-| `DPL` | `docs/deployment-system/` release record |
-| Priority change | `docs/roadmap.md` |
-| Runtime boundary or data flow | `docs/architecture.md` |
-| Documentation navigation | `docs/README.md` |
+1. Use `project-owner-voice` for every human-facing description or narrative change.
+2. Keep one detailed owner, but require concise linked summaries in DPL, README, register, and other aggregate records.
+3. A DPL release manifest links every included IMP, FTR, SEC, and SYS record and states its included scope and exact status.
+4. Never replace traceability with a generic lane label or an unlinked list.
+5. Update DPL-1002 architecture only when runtime boundaries change; never alter protected Mermaid blocks.
+6. Search for superseded paths, retired terminology, prompt/process language, screenshot framing, assistant voice, and unlinked aggregated work.
+7. Validate links, headings, tables, Mermaid fences, skill metadata, and `git diff --check`.
 
-Only IMP owns speculative roadmap work. Link across systems rather than duplicating scope or evidence. Preserve former identifiers only in migration aliases or explicit `Former code` metadata.
-
-## Writing standard
-
-- Lead with current behavior and status; use concise tables for structured facts.
-- Use editable Mermaid only when relationships need a diagram.
-- Preserve exact paths, limits, endpoints, and verified test counts.
-- Never record secrets, private content, invented evidence, or unrun results.
+Only DPL and IMP contain future outcomes. Every DBG belongs to one lane. Documentation-only maintenance receives no work code. Never record secrets, private content, invented evidence, or unrun results.

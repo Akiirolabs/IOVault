@@ -1,4 +1,4 @@
 interface:
   display_name: "Work Review"
-  short_description: "Route evidence into IO Vault work codes"
-  default_prompt: "Classify this IO Vault review or audit, preserve its source code, create the correct work record, and synchronize the ledger."
+  short_description: "Route work through the DPL lifecycle"
+  default_prompt: "Classify this IO Vault work within the DPL, IMP, FTR, SEC, SYS, and DBG lifecycle, then synchronize its authoritative records."

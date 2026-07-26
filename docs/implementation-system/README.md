@@ -1,30 +1,62 @@
 # IO Vault Implementation System
 
-This folder turns product ideas into traceable design and delivery work. It owns user experience, feature behavior, design decisions, phased scope, and acceptance—not defects or platform hardening.
+IMP owns page-level product outcomes moving the current testing state toward [DPL-1003](../deployment-ledger/DPL-1003-next-testing-state.md). Defects and corrections remain in FTR, SEC, or SYS.
 
-The permanent page parents are `IMP-1001` Write, `IMP-1002` Code Vault, `IMP-1003` Projects, `IMP-1004` Learning, and `IMP-1005` Career. See the [work-system authority](../work-system/README.md) for routing and immutability rules.
+## Register
 
-| System | Authoritative responsibility |
+| Parent | Page | Current state | Next numbered outcome |
+|---|---|---|---|
+| [IMP-1001](implementations/IMP-1001-write.md) | Write | Workspace and hierarchy implemented; FTR-1001/1002 verified | `IMP-1001.3` cross-area links |
+| [IMP-1002](implementations/IMP-1002-code-vault.md) | Code Vault | `IMP-1002.1` mini IDE implemented | `IMP-1002.2` repository workflow refinement |
+| [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1` full-page editor implemented | `IMP-1003.2` typed table |
+| [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | `IMP-1004.1` current workspace partial | `IMP-1004.2` controlled Mentor Agent |
+| [IMP-1005](implementations/IMP-1005-career.md) | Career | `IMP-1005.1` current workspace partial | `IMP-1005.2` Career Agent Review mode |
+
+Each page owns its hierarchy: `IMP-1001.*` never describes Code Vault, and `IMP-1002.*` never describes another page. A rollout uses `.1`; a distinct capability inside that rollout uses `.1.1`.
+
+## Lifecycle
+
+```mermaid
+flowchart LR
+  Current["DPL-1002 · Version 1.0"] --> IMP["IMP-1001–1005"]
+  IMP --> Review["FTR, SEC-1.0, and SYS-1.0 evidence"]
+  Review --> Verify["Corrections and verification in owning records"]
+  Verify --> Next["DPL-1003 · planned testing state"]
+  Next -. "next cycle" .-> IMP
+```
+
+## Corrective dependencies
+
+| Implementation | Authoritative dependencies |
 |---|---|
-| Implementation system | Product and UX design, feature phases, and user-facing acceptance |
-| [Debug system](../debug-system/README.md) | Bugs, security, hardening, technical debt, remediation, and verification evidence |
-| [Architecture](../architecture.md) | Current runtime boundaries and approved target direction |
-| [Roadmap](../roadmap.md) | Priority across product delivery and engineering risk |
+| IMP-1001 Write | SYS DBG-1007/1008 persistence and sync; SEC DBG-1011 rich-text safety |
+| IMP-1002 Code Vault | SYS DBG-1015 editor-state pressure |
+| IMP-1003 Projects | SYS persistence/sync; SEC rich-text and dependency safety |
+| IMP-1004 Mentor | SEC validation/limits; SYS persistence and modular boundaries |
+| IMP-1005 Career | SEC credentials/validation; SYS persistence and modular boundaries |
 
-| Start here | Purpose |
-|---|---|
-| [Implementation register](implementation-register.md) | Priority, state, dependencies, and next deliverable |
-| [Verification panel](verification-panel.md) | Available and missing quality gates |
-| [Engineering dependencies](engineering-dependencies.md) | Compact links to authoritative DBG records and shared constraints |
-| [Area plans](areas/) | Current state, phases, acceptance, and limits per product area |
-| [Implementation map](graphs/implementation-map.md) | Product dependencies and DBG blockers |
-| [Templates](templates.md) | Area, verification, and run records |
-| [Implementation log](../implementation-log.md) | One append-only delivery history |
+See [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) and [SYS-1.0](../audit-system/SYS-1.0-system-baseline.md). IMP files link to findings but never duplicate their status.
 
-## Status rule
+## Verification
 
-`✅ Verified` requires current evidence from the area’s acceptance checks. `Implemented` means the capability exists but is not fully accepted; `Partial` means only part of the target exists; `Planned` means no target implementation is claimed.
+| Gate | Command or evidence | Current availability |
+|---|---|---|
+| TypeScript + production bundle | `npm run build` | Available |
+| Unit, React, and API behavior | `npm test` | Available |
+| Full local product | `npm run dev` | Manual |
+| Dependency review | `npm audit` | On demand |
+| Browser E2E, lint, health, migrations, performance budget | No durable repository command | Planned |
 
-## Working rule
+| Date | Work | Evidence |
+|---|---|---|
+| 2026-07-25 | FTR-1001 · IMP-1001 | 44 tests, production build, signed-in formatting/hierarchy/keyboard acceptance |
+| 2026-07-24 | FTR-1002 · IMP-1001 | 38 tests, production build, signed-in menu/template acceptance |
+| 2026-07-24 | IMP-1004/1005 | Agent roles, policies, feasibility, phases, limits, and acceptance documented |
+| 2026-07-23 | DBG-1017 · IMP-1001 | 30 tests, build, signed-in typed-column save/reload acceptance |
+| 2026-07-22 | IMP-1001 | 27 tests, build, signed-in smoke check with zero console errors |
 
-Every feature run updates its area plan, the register, verification evidence, and the global implementation log. Defects discovered during design receive a DBG record and only a link here. Architecture and roadmap files change only when their boundaries or priorities change.
+The deployment ledger owns complete-state evidence. Never mark a gate complete merely because its command exists.
+
+## Record format
+
+Every new implementation entry records its code, state, current evidence, target behavior, numbered child outcomes, measurable acceptance, explicit limits, SEC/SYS dependencies, and dated verification. Completed repository runs end with an evidence-based handoff and past-tense commit sentence.

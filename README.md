@@ -30,12 +30,12 @@ Create `.env.local` with `OPENAI_API_KEY=...` before using live AI features. Git
 ## Documentation
 
 - [Docs index](docs/README.md)
-- [Architecture and implementation map](docs/architecture.md)
-- [Diagrams](docs/diagrams.md)
-- [Implementation log](docs/implementation-log.md)
-- [Roadmap](docs/roadmap.md)
-- [Code Vault mini IDE](docs/code-vault-mini-ide.md)
-- [Debug system](docs/debug-system/README.md)
+- [Current architecture and deployment state](docs/deployment-ledger/DPL-1002-current-testing-state.md)
+- [Deployment Ledger](docs/deployment-ledger/README.md)
+- [Implementation system](docs/implementation-system/README.md)
+- [Feature reviews](docs/feature-review-system/README.md)
+- [Code Vault mini IDE](docs/implementation-system/implementations/IMP-1002-code-vault.md)
+- [Security and system audits](docs/audit-system/README.md)
 
 ## Verification
 
