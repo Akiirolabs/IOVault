@@ -14,7 +14,7 @@ IO Vault is a personal productivity platform that combines secure workspace mana
 | [IMP-1003 Projects](implementation-system/implementations/IMP-1003-projects.md) | Numbered editor, table, flowchart, and mindmap rollouts |
 | [IMP-1004 Mentor](implementation-system/implementations/IMP-1004-learning-mentor.md) | Numbered Learning and Mentor Agent rollouts |
 | [IMP-1005 Career](implementation-system/implementations/IMP-1005-career.md) | Numbered Career Agent rollouts |
-| [Feature reviews](feature-review-system/README.md) | FTR-1001/FTR-1002 findings, corrections, and evidence |
+| [Feature reviews](feature-review-system/README.md) | Manual feature findings, corrections, status, and verification evidence |
 | [SEC-1.0](audit-system/SEC-1.0-security-baseline.md) | Security/privacy DBG records |
 | [SYS-1.0](audit-system/SYS-1.0-system-baseline.md) | Architecture/reliability DBG records |
 

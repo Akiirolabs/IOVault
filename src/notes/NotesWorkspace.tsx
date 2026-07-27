@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { NoteCollection, NoteCollectionRow, NoteColumn, NoteColumnType, NotePage, NoteTemplate, WriteState } from "./model";
+import type { NoteCollection, NoteCollectionRow, NoteColumn, NoteColumnType, NotePage, NoteRowHighlight, NoteTemplate, WriteState } from "./model";
 import { createTestingCollection } from "./model";
 
 type Props = {
@@ -119,6 +119,14 @@ const COLUMN_TYPE_OPTIONS: Array<{ value: NoteColumnType; label: string }> = [
   { value: "page", label: "Page" },
 ];
 
+const ROW_HIGHLIGHT_OPTIONS: Array<{ value: NoteRowHighlight; label: string }> = [
+  { value: "cyan", label: "Cyan" },
+  { value: "green", label: "Green" },
+  { value: "yellow", label: "Yellow" },
+  { value: "red", label: "Red" },
+  { value: "purple", label: "Purple" },
+];
+
 function normalizeCellForType(value: string | boolean | undefined, column: NoteColumn) {
   if (column.type === "checkbox") return value === true;
   if (column.type === "page") return "";
@@ -142,6 +150,29 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
   const [newColumnName, setNewColumnName] = useState("");
   const [newColumnType, setNewColumnType] = useState<NoteColumnType>("text");
   const [newColumnOptions, setNewColumnOptions] = useState("");
+  const [columnMenuId, setColumnMenuId] = useState<string | null>(null);
+  const [renamingColumnId, setRenamingColumnId] = useState<string | null>(null);
+  const [rowMenuId, setRowMenuId] = useState<string | null>(null);
+  const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
+  useEffect(() => {
+    const closeMenus = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest(".notes-column-header, .notes-row-actions")) return;
+      setColumnMenuId(null);
+      setRowMenuId(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setColumnMenuId(null);
+      setRowMenuId(null);
+    };
+    document.addEventListener("pointerdown", closeMenus);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeMenus);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
   const completedColumn = collection.columns.find((column) => column.type === "checkbox");
   const visibleRows = useMemo(() => {
     const matches = new Set(collection.rows.filter((row) => {
@@ -257,12 +288,30 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
   }
 
   function removeRow(rowId: string) {
+    if (!window.confirm("Delete this row? Its subrows will move up one level.")) return;
     const parentRowId = collection.rows.find((row) => row.id === rowId)?.parentRowId;
     onChange({
       ...collection,
       rows: collection.rows.filter((row) => row.id !== rowId).map((row) => row.parentRowId === rowId ? { ...row, parentRowId } : row),
       collapsedRowIds: collection.collapsedRowIds?.filter((id) => id !== rowId),
     });
+  }
+
+  function updateRowHighlight(rowId: string, highlightColor?: NoteRowHighlight) {
+    onChange({
+      ...collection,
+      rows: collection.rows.map((row) => row.id === rowId
+        ? { ...row, ...(highlightColor ? { highlightColor } : { highlightColor: undefined }) }
+        : row),
+    });
+    setRowMenuId(null);
+  }
+
+  function renameRow(rowId: string) {
+    setRowMenuId(null);
+    const target = rowRefs.current.get(rowId)?.querySelector<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("input:not([type='checkbox']), select, .notes-page-cell");
+    target?.focus();
+    if (target instanceof HTMLInputElement) target.select();
   }
 
   return (
@@ -281,7 +330,6 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
               {COLUMN_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
             {column.type === "select" && <input aria-label={`Options for ${column.name} column`} value={column.options?.join(", ") ?? ""} placeholder="Options, comma separated" onChange={(event) => updateColumn(column.id, { options: parseOptions(event.target.value) })} />}
-            <button type="button" onClick={() => removeColumn(column.id)} aria-label={`Delete ${column.name} column`}>Delete</button>
           </div>)}
         </div>
         <form className="notes-column-create" onSubmit={addColumn}>
@@ -296,11 +344,34 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
       <div className="notes-table-scroll">
         <table className="notes-table">
           <thead><tr>{collection.columns.map((column) => (
-            <th key={column.id}>
-              <button type="button" className="notes-column-sort" onClick={() => sortBy(column.id)}>{column.name}{collection.sortColumnId === column.id ? (collection.sortDirection === "desc" ? " ↓" : " ↑") : ""}</button>
+            <th key={column.id} className="notes-column-header">
+              <div className="notes-column-header-main">
+                {renamingColumnId === column.id ? <input
+                  autoFocus
+                  className="notes-column-rename"
+                  aria-label={`Rename ${column.name} column`}
+                  value={column.name}
+                  onChange={(event) => updateColumn(column.id, { name: event.target.value })}
+                  onBlur={() => setRenamingColumnId(null)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === "Escape") setRenamingColumnId(null);
+                  }}
+                /> : <button type="button" className="notes-column-sort" onClick={() => sortBy(column.id)}>{column.name}{collection.sortColumnId === column.id ? (collection.sortDirection === "desc" ? " ↓" : " ↑") : ""}</button>}
+                <button type="button" className="notes-column-menu-trigger" aria-haspopup="menu" aria-expanded={columnMenuId === column.id} aria-label={`Column actions for ${column.name}`} onClick={() => { setRowMenuId(null); setColumnMenuId((current) => current === column.id ? null : column.id); }}>•••</button>
+              </div>
+              {columnMenuId === column.id && <div className="notes-context-menu notes-column-menu" role="menu" aria-label={`Actions for ${column.name} column`}>
+                <button type="button" role="menuitem" onClick={() => { setRenamingColumnId(column.id); setColumnMenuId(null); }}>Rename</button>
+                <button type="button" role="menuitem" onClick={() => { setShowColumns(true); setColumnMenuId(null); }}>+ Add column</button>
+                <button type="button" role="menuitem" className="danger" disabled={collection.columns.length === 1} onClick={() => { removeColumn(column.id); setColumnMenuId(null); }}>Delete column</button>
+              </div>}
             </th>
           ))}<th aria-label="Row actions" /></tr></thead>
-          <tbody>{visibleRows.map(({ row, depth, hasChildren, collapsed }, rowIndex) => <tr key={row.id} data-row-depth={depth}>{collection.columns.map((column, columnIndex) => <td key={column.id}><div className={columnIndex === 0 ? "notes-tree-cell" : undefined} style={columnIndex === 0 ? { paddingLeft: `${depth * 1.1}rem` } : undefined}>{columnIndex === 0 && (hasChildren ? (
+          <tbody>{visibleRows.map(({ row, depth, hasChildren, collapsed }, rowIndex) => <tr
+            key={row.id}
+            ref={(element) => { if (element) rowRefs.current.set(row.id, element); else rowRefs.current.delete(row.id); }}
+            data-row-depth={depth}
+            data-row-highlight={row.highlightColor}
+          >{collection.columns.map((column, columnIndex) => <td key={column.id}><div className={columnIndex === 0 ? "notes-tree-cell" : undefined} style={columnIndex === 0 ? { paddingLeft: `${depth * 1.1}rem` } : undefined}>{columnIndex === 0 && (hasChildren ? (
             <button type="button" className="notes-row-toggle" aria-label={`${collapsed ? "Expand" : "Collapse"} row ${rowIndex + 1}`} aria-expanded={!collapsed} onClick={() => toggleRow(row.id)}>{collapsed ? "▸" : "▾"}</button>
           ) : <span className="notes-row-toggle-spacer" />)}{columnIndex === 0 && <button type="button" className="notes-subrow-add" onClick={() => addRow(row.id)} aria-label={`Add subrow to row ${rowIndex + 1}`} title="Add a subrow">+</button>}{column.type === "page" ? (
             typeof row.cells[column.id] === "string" && pages.some((page) => page.id === row.cells[column.id] && !page.archived)
@@ -312,7 +383,18 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
             <select aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)}><option value="">Select…</option>{column.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
           ) : (
             <input type={column.type} aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)} />
-          )}</div></td>)}<td><div className="notes-row-actions"><button type="button" className="notes-row-delete" onClick={() => removeRow(row.id)} aria-label={`Delete row ${rowIndex + 1}`} title="Delete row">×</button></div></td></tr>)}</tbody>
+          )}</div></td>)}<td className="notes-row-actions-cell"><div className="notes-row-actions">
+            <button type="button" className="notes-row-menu-trigger" aria-haspopup="menu" aria-expanded={rowMenuId === row.id} aria-label={`Row actions for row ${rowIndex + 1}`} onClick={() => { setColumnMenuId(null); setRowMenuId((current) => current === row.id ? null : row.id); }}>•••</button>
+            {rowMenuId === row.id && <div className="notes-context-menu notes-row-menu" role="menu" aria-label={`Actions for row ${rowIndex + 1}`}>
+              <button type="button" role="menuitem" onClick={() => { addRow(row.id); setRowMenuId(null); }}>+ Add subrow</button>
+              <button type="button" role="menuitem" onClick={() => renameRow(row.id)}>Rename row</button>
+              <div className="notes-highlight-options" role="group" aria-label={`Highlight row ${rowIndex + 1}`}>
+                {ROW_HIGHLIGHT_OPTIONS.map((option) => <button type="button" role="menuitem" key={option.value} data-color={option.value} aria-label={`Highlight row ${rowIndex + 1} ${option.label}`} onClick={() => updateRowHighlight(row.id, option.value)}><span className="notes-color-swatch" aria-hidden="true" />{option.label}</button>)}
+                {row.highlightColor && <button type="button" role="menuitem" onClick={() => updateRowHighlight(row.id)}>Clear highlight</button>}
+              </div>
+              <button type="button" role="menuitem" className="danger" onClick={() => { removeRow(row.id); setRowMenuId(null); }}>Delete row</button>
+            </div>}
+          </div></td></tr>)}</tbody>
         </table>
       </div>
       <button type="button" className="notes-add-row" onClick={() => addRow()}>+ Add row</button>

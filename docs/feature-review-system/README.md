@@ -1,33 +1,18 @@
 # Feature Review System
 
-FTR records manual page-level findings and keeps each correction and verification with the finding that produced it. These are reviews of [IMP-1001 Write](../implementation-system/implementations/IMP-1001-write.md), not future implementation plans.
+Feature reviews capture manual page-level findings, their implemented corrections, and verification evidence. Each review owns its detailed findings in a dedicated record and links to the implementation it evaluates.
 
-## FTR-1001 — Write manual review
+## Review register
 
-**Manual source:** `TEST-IV-1001`, “Testing Table and Notes” · **Source/transcribed:** 2026-07-24 · **Status:** 8/8 verified
-
-| Finding | Problem | Verified correction | Finished |
+| Review | Implementation | Scope | Status |
 |---|---|---|---|
-| `FTR-1001.1` | Subrows missing | Nested rows, persisted collapse, reload normalization, sibling sorting | 2026-07-24 |
-| `FTR-1001.2` | Tables/notes could not be deleted | Confirmed recoverable subtree Delete in the parent `•••` menu | 2026-07-24 |
-| `FTR-1001.3` | Parent lists could not collapse | Persisted page-section expand/collapse | 2026-07-25 |
-| `FTR-1001.4` | Notes needed a fuller toolbar | Headings, emphasis, lists, quote, code, history, clear formatting | 2026-07-25 |
-| `FTR-1001.4.1` | Table cells could not become full pages | Page columns create and reopen linked pages | 2026-07-25 |
-| `FTR-1001.5` | Notes/tables could not move between sections | Hierarchy-safe drag/drop and keyboard moves | 2026-07-25 |
-| `FTR-1001.6` | Sections could not be renamed | Persistent inline section rename verified | 2026-07-25 |
-| `FTR-1001.7` | Archived content could not be reliably recovered | Ancestor/subtree recovery and Restore all | 2026-07-25 |
+| [FTR-1001 — Write manual review](reviews/FTR-1001-write-manual-review.md) | [IMP-1001 — Write](../implementation-system/implementations/IMP-1001-write.md) | Page hierarchy, editing, tables, organization, rename, and archive recovery | 8/8 verified |
+| [FTR-1002 — Write actions review](reviews/FTR-1002-write-actions-review.md) | [IMP-1001 — Write](../implementation-system/implementations/IMP-1001-write.md) | Context menu behavior, icons, imports, positioning, page selection, and templates | 6/6 verified |
+| [FTR-1003 — Write table column menu review](reviews/FTR-1003-write-table-column-menu-review.md) | [IMP-1001 — Write](../implementation-system/implementations/IMP-1001-write.md) | Column menu, subrow, rename, plus, row highlighting, hover visibility, and delete placement | 7/7 verified |
 
-## FTR-1002 — Write actions review
+## Record ownership
 
-**Manual source date:** not supplied · **Transcribed:** 2026-07-24 · **Status:** 6/6 verified
-
-| Finding | Problem | Verified correction | Finished |
-|---|---|---|---|
-| `FTR-1002.1` | Dropdown behind page content | Document-layer menu at z-index 1001 | 2026-07-24 |
-| `FTR-1002.2` | Page icon could not change | Persisted per-page icon choices | 2026-07-24 |
-| `FTR-1002.3` | Import appeared TXT-only | TXT, Markdown, CSV, and JSON import | 2026-07-24 |
-| `FTR-1002.4` | Menu too far from dots | Anchored six pixels beside trigger | 2026-07-24 |
-| `FTR-1002.5` | Another page’s menu selected that page | Decoupled menu opening from page selection | 2026-07-24 |
-| `FTR-1002.6` | Template choice could not add or replace | Add new page, Replace current page, and Cancel | 2026-07-24 |
-
-The repeated trailing `FTR-1002.6` in the transcription contained no additional finding and remains a transcription duplicate, not a seventh issue. Former FTR-IMP identifiers remain searchable only in the Deployment Ledger migration history.
+- Each `FTR-XXXX` file owns its source metadata, findings, corrections, dates, status, and verification evidence.
+- Corrections remain under the finding that produced them; no separate correction series is created.
+- The Deployment Ledger and implementation records summarize and link each review without duplicating its detailed evidence.
+- FTR records describe observed behavior and completed corrections; future product work remains in IMP and DPL records.

@@ -285,7 +285,6 @@ describe("Notes workspace", () => {
     const addSubrow = screen.getByRole("button", { name: "Add subrow to row 1" });
     expect(addSubrow).toHaveTextContent("+");
     expect(addSubrow.closest("td")).toContainElement(screen.getByRole("textbox", { name: "Name for row 1" }));
-    expect(screen.getByRole("button", { name: "Delete row 1" })).toHaveTextContent("×");
     fireEvent.click(addSubrow);
     fireEvent.change(screen.getByRole("textbox", { name: "Name for row 2" }), { target: { value: "Child" } });
 
@@ -294,5 +293,63 @@ describe("Notes workspace", () => {
     expect(screen.queryByDisplayValue("Child")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Expand row 1" }));
     expect(screen.getByDisplayValue("Child")).toBeInTheDocument();
+  });
+
+  it("uses contextual column and row menus for table actions", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Add row" }));
+
+    expect(screen.queryByRole("button", { name: "Delete row 1" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Column actions for Name" }));
+    const columnMenu = screen.getByRole("menu", { name: "Actions for Name column" });
+    expect(columnMenu).toHaveTextContent("Rename");
+    expect(columnMenu).toHaveTextContent("+ Add column");
+    expect(columnMenu).toHaveTextContent("Delete column");
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "Rename" }));
+    const renameColumn = screen.getByRole("textbox", { name: "Rename Name column" });
+    fireEvent.change(renameColumn, { target: { value: "Task" } });
+    fireEvent.keyDown(renameColumn, { key: "Enter" });
+    expect(screen.getByRole("button", { name: "Task" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Row actions for row 1" }));
+    const rowMenu = screen.getByRole("menu", { name: "Actions for row 1" });
+    expect(rowMenu).toHaveTextContent("+ Add subrow");
+    expect(rowMenu).toHaveTextContent("Rename row");
+    expect(rowMenu).toHaveTextContent("Delete row");
+    for (const color of ["Cyan", "Green", "Yellow", "Red", "Purple"]) {
+      expect(screen.getByRole("menuitem", { name: `Highlight row 1 ${color}` })).toBeInTheDocument();
+    }
+
+    fireEvent.click(screen.getByRole("menuitem", { name: "Highlight row 1 Green" }));
+    expect(screen.getByRole("textbox", { name: "Task for row 1" }).closest("tr")).toHaveAttribute("data-row-highlight", "green");
+
+    fireEvent.click(screen.getByRole("button", { name: "Row actions for row 1" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "+ Add subrow" }));
+    expect(screen.getByRole("textbox", { name: "Task for row 2" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Row actions for row 1" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Rename row" }));
+    await waitFor(() => expect(screen.getByRole("textbox", { name: "Task for row 1" })).toHaveFocus());
+
+    fireEvent.click(screen.getByRole("button", { name: "Row actions for row 1" }));
+    fireEvent.keyDown(screen.getByRole("button", { name: "Row actions for row 1" }), { key: "Escape" });
+    expect(screen.queryByRole("menu", { name: "Actions for row 1" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "+ Column" }));
+    expect(screen.queryByRole("button", { name: "Delete Task column" })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("textbox", { name: "New column name" }), { target: { value: "Status" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add column" }));
+    fireEvent.click(screen.getByRole("button", { name: "Column actions for Status" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete column" }));
+    expect(screen.queryByRole("button", { name: "Status" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Row actions for row 2" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete row" }));
+    expect(screen.queryByRole("textbox", { name: "Task for row 2" })).not.toBeInTheDocument();
+    expect(window.confirm).toHaveBeenCalledTimes(2);
   });
 });

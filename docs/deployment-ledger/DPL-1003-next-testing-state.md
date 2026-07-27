@@ -4,7 +4,7 @@
 
 | Outcome | Owning work |
 |---|---|
-| Complete Write persistence, rich-text hardening, and cross-area links | IMP-1001.3.1–1001.3.2 · SYS DBG-1007/1008 · SEC DBG-1011 |
+| Complete Write persistence, rich-text hardening, and cross-area links; include the verified FTR-1003 table-menu correction | IMP-1001.3.1–1001.3.2 · FTR-1003 · SYS DBG-1007/1008 · SEC DBG-1011 |
 | Refine the complete Code Vault repository-change workflow | IMP-1002.2.1–1002.2.5 · SYS DBG-1015 |
 | Deliver the typed Projects table before graph modes | IMP-1003.2.1–1003.2.2 |
 | Deliver Mentor Agent onboarding and controlled teaching workflow | IMP-1004.2.1–1004.2.5 |

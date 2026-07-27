@@ -45,9 +45,11 @@ The Write workspace provides a focused knowledge environment built around naviga
 
 **Latest refinement:** 35 tests and the production build passed on 2026-07-24. A signed-in browser check confirmed the parent `•••` menu exposes Add page, Add table, Import, Rename, Save as template, and Delete without changing workspace data.
 
-**FTR-1002 correction:** [FTR-1002](../../feature-review-system/README.md#ftr-1002--write-actions-review) is 6/6 verified. The foreground menu stays beside its trigger without selecting another page; icons persist, imports accept TXT/Markdown/CSV/JSON, and templates ask whether to add or replace.
+**FTR-1002 correction:** [FTR-1002](../../feature-review-system/reviews/FTR-1002-write-actions-review.md) is 6/6 verified. The foreground menu stays beside its trigger without selecting another page; icons persist, imports accept TXT/Markdown/CSV/JSON, and templates ask whether to add or replace.
 
-**TEST-IV-1001 completion:** [FTR-1001](../../feature-review-system/README.md#ftr-1001--write-manual-review) is 8/8 verified. Its corrections added page-section collapse, the expanded toolbar, linked Page cells, drag/keyboard organization, persistent rename coverage, and complete archive recovery. Verification: 44 tests, production build, and signed-in browser acceptance on 2026-07-25.
+**FTR-1003 correction:** [FTR-1003](../../feature-review-system/reviews/FTR-1003-write-table-column-menu-review.md) is 7/7 verified. Column and row actions now use target-specific contextual menus; subrow controls respond to hover, focus, and touch; row highlights persist; and destructive actions require confirmation. Verification: 46 tests, production build, authenticated persistence, and signed-in browser acceptance on 2026-07-26.
+
+**TEST-IV-1001 completion:** [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) is 8/8 verified. Its corrections added page-section collapse, the expanded toolbar, linked Page cells, drag/keyboard organization, persistent rename coverage, and complete archive recovery. Verification: 44 tests, production build, and signed-in browser acceptance on 2026-07-25.
 
 **Acceptance:** migration, hierarchy, collections, recoverable archive, and explicit assistant context are covered by model/component tests. Full status remains below `✅ Verified` until reload/account-sync and keyboard workflows have a durable browser E2E gate.
 
@@ -62,10 +64,11 @@ SEC-1.0 and SYS-1.0 own evidence and corrections outside this product implementa
 | ✅ [DBG-1017](../../audit-system/SYS-1.0-system-baseline.md#dbg-1017--typed-table-column-behavior) | Replaced browser prompts with inline creation, rename/type editing, select options, and six typed cell controls | Passed 2026-07-23 |
 | [DBG-1007/1008](../../audit-system/SYS-1.0-system-baseline.md) | Normalize collection data and make persistence/conflict handling durable | Component and signed-in browser E2E cover the complete collection lifecycle |
 | [DBG-1011](../../audit-system/SEC-1.0-security-baseline.md#dbg-1011--rich-text-sanitization) | Sanitize stored HTML and finish safe editor behavior | Sanitization, formatting, focus, and keyboard tests pass with the production build |
+| ✅ [FTR-1003](../../feature-review-system/reviews/FTR-1003-write-table-column-menu-review.md) | Added target-specific column and row menus, persisted row highlighting, contextual subrow controls, and confirmed deletion | Passed 2026-07-26 |
 
 DBG-1017 is verified. Persistence/sync and rich-text findings remain Open in their owning audit lanes. Rapid reload before the current 800 ms server-sync window remains part of SYS-1.0.
 
-The [FTR-1001 manual review](../../feature-review-system/README.md#ftr-1001--write-manual-review), sourced from `TEST-IV-1001`, owns all eight verified findings and corrections.
+The [FTR-1001 manual review](../../feature-review-system/reviews/FTR-1001-write-manual-review.md), sourced from `TEST-IV-1001`, owns all eight verified findings and corrections.
 
 ## Engineering dependencies
 

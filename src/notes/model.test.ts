@@ -63,6 +63,25 @@ describe("Notes model", () => {
     expect(normalized.pages[0].collection?.sortColumnId).toBe("number");
   });
 
+  it("preserves supported row highlight colors and removes invalid values", () => {
+    const write = createInitialWriteState();
+    write.pages[0] = {
+      ...write.pages[0],
+      kind: "collection",
+      collection: {
+        columns: [{ id: "name", name: "Name", type: "text" }],
+        rows: [
+          { id: "green", cells: { name: "Kept" }, highlightColor: "green" },
+          { id: "invalid", cells: { name: "Removed" }, highlightColor: "orange" as never },
+        ],
+        view: "all",
+      },
+    };
+    const normalized = normalizeWriteState(write);
+    expect(normalized.pages[0].collection?.rows[0].highlightColor).toBe("green");
+    expect(normalized.pages[0].collection?.rows[1].highlightColor).toBeUndefined();
+  });
+
   it("preserves valid nested rows and repairs invalid row hierarchies", () => {
     const write = createInitialWriteState();
     write.pages = [{

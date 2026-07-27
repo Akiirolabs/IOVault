@@ -11,7 +11,10 @@ export type NoteCollectionRow = {
   id: string;
   cells: Record<string, string | boolean>;
   parentRowId?: string;
+  highlightColor?: NoteRowHighlight;
 };
+
+export type NoteRowHighlight = "cyan" | "green" | "yellow" | "red" | "purple";
 
 export type NoteCollection = {
   columns: NoteColumn[];
@@ -103,6 +106,7 @@ function isNotePage(value: unknown): value is NotePage {
 }
 
 const NOTE_COLUMN_TYPES = new Set<NoteColumnType>(["text", "number", "date", "checkbox", "select", "url", "page"]);
+const NOTE_ROW_HIGHLIGHTS = new Set<NoteRowHighlight>(["cyan", "green", "yellow", "red", "purple"]);
 
 function normalizeCollection(raw: unknown): NoteCollection | undefined {
   if (!raw || typeof raw !== "object") return undefined;
@@ -130,6 +134,7 @@ function normalizeCollection(raw: unknown): NoteCollection | undefined {
       id: candidate.id,
       cells: Object.fromEntries(Object.entries(candidate.cells).filter(([key, cell]) => columnIds.has(key) && (typeof cell === "string" || typeof cell === "boolean"))),
       ...(typeof candidate.parentRowId === "string" ? { parentRowId: candidate.parentRowId } : {}),
+      ...(NOTE_ROW_HIGHLIGHTS.has(candidate.highlightColor as NoteRowHighlight) ? { highlightColor: candidate.highlightColor as NoteRowHighlight } : {}),
     }];
   });
 

@@ -40,8 +40,8 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 
 | Record | Included Version 1.0 result | State |
 |---|---|---|
-| [FTR-1001 — Write manual review](../feature-review-system/README.md#ftr-1001--write-manual-review) | Nested rows, page deletion and recovery, collapsible sections, expanded formatting, linked Page columns, drag/keyboard organization, rename, and archive restoration | 8/8 verified |
-| [FTR-1002 — Write actions review](../feature-review-system/README.md#ftr-1002--write-actions-review) | Foreground page menus, persisted icons, multi-format imports, trigger anchoring, stable page selection, and explicit template add-or-replace choices | 6/6 verified |
+| [FTR-1001 — Write manual review](../feature-review-system/reviews/FTR-1001-write-manual-review.md) | Nested rows, page deletion and recovery, collapsible sections, expanded formatting, linked Page columns, drag/keyboard organization, rename, and archive restoration | 8/8 verified |
+| [FTR-1002 — Write actions review](../feature-review-system/reviews/FTR-1002-write-actions-review.md) | Foreground page menus, persisted icons, multi-format imports, trigger anchoring, stable page selection, and explicit template add-or-replace choices | 6/6 verified |
 | [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) | Authenticated AI access, bounded explicit context, and HttpOnly cookie sessions through DBG-1002–1004 | Three verified; five security findings remain open |
 | [SYS-1.0](../audit-system/SYS-1.0-system-baseline.md) | Responsive workspace behavior and reliable typed table-column controls through DBG-1001 and DBG-1017 | Two verified; seven system findings remain open |
 
