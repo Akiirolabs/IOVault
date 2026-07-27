@@ -6,13 +6,13 @@ IMP owns page-level product outcomes moving the current testing state toward [DP
 
 | Parent | Page | Current state | Next numbered outcome |
 |---|---|---|---|
-| [IMP-1001](implementations/IMP-1001-write.md) | Write | Workspace and hierarchy implemented; FTR-1001/1002 verified | `IMP-1001.3` cross-area links |
+| [IMP-1001](implementations/IMP-1001-write.md) | Write | Workspace and hierarchy implemented; FTR-1001–1003 verified | `IMP-1001.3` cross-area links |
 | [IMP-1002](implementations/IMP-1002-code-vault.md) | Code Vault | `IMP-1002.1` mini IDE implemented | `IMP-1002.2` repository workflow refinement |
 | [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1` full-page editor implemented | `IMP-1003.2` typed table |
 | [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | `IMP-1004.1` current workspace partial | `IMP-1004.2` controlled Mentor Agent |
 | [IMP-1005](implementations/IMP-1005-career.md) | Career | `IMP-1005.1` current workspace partial | `IMP-1005.2` Career Agent Review mode |
 
-Each page owns its hierarchy: `IMP-1001.*` never describes Code Vault, and `IMP-1002.*` never describes another page. A rollout uses `.1`; a distinct capability inside that rollout uses `.1.1`.
+Each page owns its hierarchy: `IMP-1001.*` never describes Code Vault, and `IMP-1002.*` never describes another page. A rollout uses `.1`; a distinct capability inside that rollout uses `.1.1`; a separately scoped nested capability may use `.1.1.1`. Rollout rows such as `.1` and `.2` remain unindented and use no arrow. Every deeper numeric segment adds one visible indentation level and a `↳` marker. When a parent outcome is decomposed, matched numbered markers identify the parent phrase owned by each deeper row without relying on color.
 
 ## Lifecycle
 
@@ -49,8 +49,9 @@ See [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) and [SYS-1.0](../aud
 
 | Date | Work | Evidence |
 |---|---|---|
-| 2026-07-25 | FTR-1001 · IMP-1001 | 44 tests, production build, signed-in formatting/hierarchy/keyboard acceptance |
-| 2026-07-24 | FTR-1002 · IMP-1001 | 38 tests, production build, signed-in menu/template acceptance |
+| 2026-07-26 | FTR-1003 · IMP-1001.1.3 | 46 tests, production build, authenticated persistence, and signed-in table-menu acceptance |
+| 2026-07-25 | FTR-1001 · IMP-1001.1.2/1.1.3/1.2.1–1.2.3 | 44 tests, production build, signed-in formatting/hierarchy/keyboard acceptance |
+| 2026-07-24 | FTR-1002 · IMP-1001.1.4/1.2.2/1.2.4 | 38 tests, production build, signed-in menu/template acceptance |
 | 2026-07-24 | IMP-1004/1005 | Agent roles, policies, feasibility, phases, limits, and acceptance documented |
 | 2026-07-23 | DBG-1017 · IMP-1001 | 30 tests, build, signed-in typed-column save/reload acceptance |
 | 2026-07-22 | IMP-1001 | 27 tests, build, signed-in smoke check with zero console errors |

@@ -3,6 +3,7 @@
 | Field | Detail |
 |---|---|
 | Implementation | [IMP-1001 — Write](../../implementation-system/implementations/IMP-1001-write.md) |
+| Affected IMP work | [IMP-1001.1.3](../../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) |
 | Surface | Write page table |
 | Manual source title | Column Menu: FTR-1003 |
 | Source file | `FTR-1003.pdf` |

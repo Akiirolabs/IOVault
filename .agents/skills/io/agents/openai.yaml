@@ -1,0 +1,4 @@
+interface:
+  display_name: "IO Work Router"
+  short_description: "Route IO Vault work into the correct lifecycle"
+  default_prompt: "Use $io to classify and route this IO Vault work correctly."

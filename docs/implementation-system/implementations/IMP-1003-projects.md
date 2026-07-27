@@ -2,26 +2,23 @@
 
 **State:** Partial · **Priority:** P2
 
-## Rollouts
+## Numbered implementation
 
-| Child | Rollout | Status |
+| Code | Outcome | Status |
 |---|---|---|
 | `IMP-1003.1` | Full-page editor | Implemented |
+| &emsp;↳ `IMP-1003.1.1` | Shared full-screen project overlay | Implemented |
+| &emsp;↳ `IMP-1003.1.2` | Independent rich-text and Markdown documents with preview | Implemented |
+| &emsp;↳ `IMP-1003.1.3` | Persist title, status, `docHtml`, and `docMarkdown` | Implemented |
 | `IMP-1003.2` | Typed table | Planned |
+| &emsp;↳ `IMP-1003.2.1` | Versioned text, number, date, checkbox, and select columns | Planned |
+| &emsp;↳ `IMP-1003.2.2` | Inline row/column editing, select options, deletion cleanup, and sync | Planned |
 | `IMP-1003.3` | Flowchart | Planned |
+| &emsp;↳ `IMP-1003.3.1` | Manual nodes, directed edges, labels, colors, zoom, and fit | Planned |
+| &emsp;↳ `IMP-1003.3.2` | Persist drag positions and remove orphaned edges | Planned |
 | `IMP-1003.4` | Object mindmap | Planned |
-
-| Sub-code | Outcome | Status |
-|---|---|---|
-| `IMP-1003.1.1` | Shared full-screen project overlay | Implemented |
-| `IMP-1003.1.2` | Independent rich-text and Markdown documents with preview | Implemented |
-| `IMP-1003.1.3` | Persist title, status, `docHtml`, and `docMarkdown` | Implemented |
-| `IMP-1003.2.1` | Versioned text, number, date, checkbox, and select columns | Planned |
-| `IMP-1003.2.2` | Inline row/column editing, select options, deletion cleanup, and sync | Planned |
-| `IMP-1003.3.1` | Manual nodes, directed edges, labels, colors, zoom, and fit | Planned |
-| `IMP-1003.3.2` | Persist drag positions and remove orphaned edges | Planned |
-| `IMP-1003.4.1` | Object, parent, relation, and key/value model | Planned |
-| `IMP-1003.4.2` | Derived edges, cycle validation, deterministic automatic layout, and fit | Planned |
+| &emsp;↳ `IMP-1003.4.1` | Object, parent, relation, and key/value model | Planned |
+| &emsp;↳ `IMP-1003.4.2` | Derived edges, cycle validation, deterministic automatic layout, and fit | Planned |
 
 | Capability | State |
 |---|---|

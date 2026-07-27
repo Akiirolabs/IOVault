@@ -4,11 +4,11 @@ Feature reviews capture manual page-level findings, their implemented correction
 
 ## Review register
 
-| Review | Implementation | Scope | Status |
+| Review | Affected IMP work | Scope | Status |
 |---|---|---|---|
-| [FTR-1001 — Write manual review](reviews/FTR-1001-write-manual-review.md) | [IMP-1001 — Write](../implementation-system/implementations/IMP-1001-write.md) | Page hierarchy, editing, tables, organization, rename, and archive recovery | 8/8 verified |
-| [FTR-1002 — Write actions review](reviews/FTR-1002-write-actions-review.md) | [IMP-1001 — Write](../implementation-system/implementations/IMP-1001-write.md) | Context menu behavior, icons, imports, positioning, page selection, and templates | 6/6 verified |
-| [FTR-1003 — Write table column menu review](reviews/FTR-1003-write-table-column-menu-review.md) | [IMP-1001 — Write](../implementation-system/implementations/IMP-1001-write.md) | Column menu, subrow, rename, plus, row highlighting, hover visibility, and delete placement | 7/7 verified |
+| [FTR-1001 — Write manual review](reviews/FTR-1001-write-manual-review.md) | [IMP-1001.1.2, 1001.1.3, 1001.2.1–1001.2.3](../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) | Page hierarchy, editing, tables, organization, rename, and archive recovery | 8/8 verified |
+| [FTR-1002 — Write actions review](reviews/FTR-1002-write-actions-review.md) | [IMP-1001.1.4, 1001.2.2, and 1001.2.4](../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) | Context menu behavior, icons, imports, positioning, page selection, and templates | 6/6 verified |
+| [FTR-1003 — Write table column menu review](reviews/FTR-1003-write-table-column-menu-review.md) | [IMP-1001.1.3](../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) | Column menu, subrow, rename, plus, row highlighting, hover visibility, and delete placement | 7/7 verified |
 
 ## Record ownership
 

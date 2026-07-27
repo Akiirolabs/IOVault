@@ -3,6 +3,7 @@
 | Field | Detail |
 |---|---|
 | Implementation | [IMP-1001 — Write](../../implementation-system/implementations/IMP-1001-write.md) |
+| Affected IMP work | [IMP-1001.1.2, 1001.1.3, and 1001.2.1–1001.2.3](../../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) |
 | Manual source | `TEST-IV-1001` — Testing Table and Notes |
 | Source date | 2026-07-24 |
 | Transcribed | 2026-07-24 |

@@ -3,6 +3,7 @@
 | Field | Detail |
 |---|---|
 | Implementation | [IMP-1001 — Write](../../implementation-system/implementations/IMP-1001-write.md) |
+| Affected IMP work | [IMP-1001.1.4, 1001.2.2, and 1001.2.4](../../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) |
 | Manual source date | Not supplied |
 | Transcribed | 2026-07-24 |
 | Status | **Complete — 6 of 6 findings verified** |

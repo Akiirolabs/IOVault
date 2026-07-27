@@ -24,10 +24,16 @@ Use the final diff and actual verification output; never infer completion.
 1. Use `project-owner-voice` for every human-facing description or narrative change.
 2. Keep one detailed owner, but require concise linked summaries in DPL, README, register, and other aggregate records.
 3. A README explains its system and indexes records; it does not replace dedicated FTR, IMP, DPL, SEC, or SYS records.
-4. A DPL release manifest links every included IMP, FTR, SEC, and SYS record and states its included scope and exact status.
-5. Never replace traceability with a generic lane label or an unlinked list.
-6. Update DPL-1002 architecture only when runtime boundaries change; never alter protected Mermaid blocks.
-7. Search for superseded paths, retired terminology, prompt/process language, screenshot framing, assistant voice, and unlinked aggregated work.
-8. Validate links, headings, tables, Mermaid fences, skill metadata, and `git diff --check`.
+4. Every FTR identifies the exact affected IMP child or sub-code, and each affected IMP rollout row links back to that FTR as review evidence. Do not create a deeper IMP code unless it owns a distinct nested implementation outcome.
+5. Keep each IMP hierarchy in one numbered table. Leave rollout rows such as `.1` and `.2` unindented and arrow-free; indent deeper rows once per additional segment and mark them with `↳` without shortening the code.
+6. When deeper rows own specific parts of a compound parent outcome, use matching bold numbered markers in the parent phrases and child outcomes; do not rely on color alone.
+7. A DPL release manifest links every included IMP, FTR, SEC, and SYS record and states its included scope and exact status.
+8. Treat the active DPL as a living testing-state manifest. Add every newly verified result and refresh its date, included scope, verification totals, readiness, and limitations until the next DPL replaces it.
+9. Keep planned work in the next DPL; remove an outcome from that future scope once it is verified into the active DPL unless additional work remains.
+10. Update the active DPL commit SHA only after the state is committed. Identify pending committed-state alignment explicitly rather than attributing uncommitted work to an older SHA.
+11. Never replace traceability with a generic lane label or an unlinked list.
+12. Update DPL-1002 architecture only when runtime boundaries change; never alter protected Mermaid blocks.
+13. Search for superseded paths, retired terminology, prompt/process language, screenshot framing, assistant voice, and unlinked aggregated work.
+14. Validate links, headings, tables, Mermaid fences, skill metadata, and `git diff --check`.
 
 Only DPL and IMP contain future outcomes. Every DBG belongs to one lane. Documentation-only maintenance receives no work code. Never record secrets, private content, invented evidence, or unrun results.

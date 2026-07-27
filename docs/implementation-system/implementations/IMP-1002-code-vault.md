@@ -9,28 +9,34 @@ Code Vault is IO Vault’s GitHub-backed, AI-assisted mini IDE. GitHub remains a
 | Code | Outcome | Status |
 |---|---|---|
 | `IMP-1002.1` | Mini IDE v1 | Implemented |
-| `IMP-1002.1.1` | Migrate legacy editor text to `Untitled.<language>` without losing snippets or notes | Implemented |
-| `IMP-1002.1.2` | Three-pane Files/Snippets, Monaco, and Assistant/Changes workspace | Implemented |
-| `IMP-1002.1.3` | Lazy-load Monaco and repository data | Implemented |
-| `IMP-1002.1.4` | Open-file tabs, search, syntax highlighting, diagnostics, and dirty indicators | Implemented |
-| `IMP-1002.1.5` | Create, rename, edit, delete, cache, and persist scratch files | Implemented |
-| `IMP-1002.1.6` | Edit snippet filenames with extensions and infer syntax from the extension | Implemented |
-| `IMP-1002.1.7` | Preserve snippets with tags, descriptions, timestamps, and optional repository provenance | Implemented |
-| `IMP-1002.1.8` | Explicit selected-file AI context and opt-in task scratchpad | Implemented |
-| `IMP-1002.1.9` | Stream structured explanations and proposed file operations | Implemented |
-| `IMP-1002.1.10` | Review diffs per file; accept, reject, apply, and undo without automatic mutation | Implemented |
-| `IMP-1002.1.11` | Bounded IndexedDB tree, text, edit, and search cache with clean-file LRU eviction | Implemented |
-| `IMP-1002.1.12` | User-scoped SQLite scratch, session, patch, GitHub, and publication records | Implemented |
-| `IMP-1002.1.13` | GitHub App repository discovery with short-lived server-side installation tokens | Implemented |
-| `IMP-1002.1.14` | Stale-SHA check, new `iovault/*` branch, atomic commit, and draft pull request | Implemented |
-| `IMP-1002.1.15` | Conservative standalone Monaco diagnostics to avoid misleading semantic errors | Implemented |
-| `IMP-1002.1.16` | Reject unsafe paths, ignored/secret/binary files, files over 1 MB, and unapproved changes | Implemented |
+| &emsp;↳ `IMP-1002.1.1` | Migrate legacy editor text to `Untitled.<language>` without losing snippets or notes | Implemented |
+| &emsp;↳ `IMP-1002.1.2` | Three-pane Files/Snippets, Monaco, and Assistant/Changes workspace | Implemented |
+| &emsp;↳ `IMP-1002.1.3` | Lazy-load Monaco and repository data | Implemented |
+| &emsp;↳ `IMP-1002.1.4` | Open-file tabs, search, syntax highlighting, diagnostics, and dirty indicators | Implemented |
+| &emsp;↳ `IMP-1002.1.5` | Create, rename, edit, delete, cache, and persist scratch files | Implemented |
+| &emsp;↳ `IMP-1002.1.6` | Edit snippet filenames with extensions and infer syntax from the extension | Implemented |
+| &emsp;↳ `IMP-1002.1.7` | Preserve snippets with tags, descriptions, timestamps, and optional repository provenance | Implemented |
+| &emsp;↳ `IMP-1002.1.8` | Explicit selected-file AI context and opt-in task scratchpad | Implemented |
+| &emsp;↳ `IMP-1002.1.9` | Stream structured explanations and proposed file operations | Implemented |
+| &emsp;↳ `IMP-1002.1.10` | Patch review — **① per-file changes**, **② independent approval**, and **③ apply/undo** without automatic mutation | Implemented |
+| &emsp;&emsp;↳ `IMP-1002.1.10.1` | **①** Render each proposed create, edit, rename, or delete as a separate reviewable file change | Implemented |
+| &emsp;&emsp;↳ `IMP-1002.1.10.2` | **②** Accept or reject proposed file changes independently before local mutation | Implemented |
+| &emsp;&emsp;↳ `IMP-1002.1.10.3` | **③** Apply only accepted changes and restore the previous file snapshot through undo | Implemented |
+| &emsp;↳ `IMP-1002.1.11` | Bounded IndexedDB tree, text, edit, and search cache with clean-file LRU eviction | Implemented |
+| &emsp;↳ `IMP-1002.1.12` | User-scoped SQLite scratch, session, patch, GitHub, and publication records | Implemented |
+| &emsp;↳ `IMP-1002.1.13` | GitHub App repository discovery with short-lived server-side installation tokens | Implemented |
+| &emsp;↳ `IMP-1002.1.14` | GitHub publication — **① base validation**, **② atomic branch/commit**, and **③ draft pull-request record** | Implemented |
+| &emsp;&emsp;↳ `IMP-1002.1.14.1` | **①** Revalidate the repository base SHA before publishing approved changes | Implemented |
+| &emsp;&emsp;↳ `IMP-1002.1.14.2` | **②** Build one atomic Git tree and commit on a new `iovault/*` branch | Implemented |
+| &emsp;&emsp;↳ `IMP-1002.1.14.3` | **③** Open a draft pull request and retain the resulting publication record | Implemented |
+| &emsp;↳ `IMP-1002.1.15` | Conservative standalone Monaco diagnostics to avoid misleading semantic errors | Implemented |
+| &emsp;↳ `IMP-1002.1.16` | Reject unsafe paths, ignored/secret/binary files, files over 1 MB, and unapproved changes | Implemented |
 | `IMP-1002.2` | Refined repository-change workflow | Planned |
-| `IMP-1002.2.1` | Clarify repository selection, file discovery, and branch/base state | Planned |
-| `IMP-1002.2.2` | Clarify assistant progress, context, assumptions, warnings, and failures | Planned |
-| `IMP-1002.2.3` | Complete connect → multi-file proposal → partial rejection → draft PR acceptance | Planned |
-| `IMP-1002.2.4` | Complete keyboard, narrow-screen, offline, and cache-recovery acceptance | Planned |
-| `IMP-1002.2.5` | Profile realistic repository memory and render behavior with SYS DBG-1015 | Planned |
+| &emsp;↳ `IMP-1002.2.1` | Clarify repository selection, file discovery, and branch/base state | Planned |
+| &emsp;↳ `IMP-1002.2.2` | Clarify assistant progress, context, assumptions, warnings, and failures | Planned |
+| &emsp;↳ `IMP-1002.2.3` | Complete connect → multi-file proposal → partial rejection → draft PR acceptance | Planned |
+| &emsp;↳ `IMP-1002.2.4` | Complete keyboard, narrow-screen, offline, and cache-recovery acceptance | Planned |
+| &emsp;↳ `IMP-1002.2.5` | Profile realistic repository memory and render behavior with SYS DBG-1015 | Planned |
 
 ## User workflow
 

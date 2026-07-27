@@ -2,24 +2,21 @@
 
 **State:** Partial · **Priority:** P2
 
-## Rollouts
+## Numbered implementation
 
-| Child | Rollout | Status |
+| Code | Outcome | Status |
 |---|---|---|
 | `IMP-1005.1` | Current career workspace | Partial |
+| &emsp;↳ `IMP-1005.1.1` | Preserve the current resume editor and AI draft | Partial |
+| &emsp;↳ `IMP-1005.1.2` | Upload and parse resumes into user-confirmed claims and skills | Planned |
 | `IMP-1005.2` | Career Agent | Planned |
-
-| Sub-code | Outcome | Status |
-|---|---|---|
-| `IMP-1005.1.1` | Preserve the current resume editor and AI draft | Partial |
-| `IMP-1005.1.2` | Upload and parse resumes into user-confirmed claims and skills | Planned |
-| `IMP-1005.2.1` | Conversational career profile and evidence linking | Planned |
-| `IMP-1005.2.2` | Connected opportunity discovery, deduplication, scoring, and visible reasons | Planned |
-| `IMP-1005.2.3` | Truthful application materials and unanswered-question handling | Planned |
-| `IMP-1005.2.4` | Review mode with user approval for every submission | Planned |
-| `IMP-1005.2.5` | Opportunity pipeline, contacts, interviews, follow-ups, and run history | Planned |
-| `IMP-1005.2.6` | One supported official connector with OAuth, idempotency, retries, and audit history | Planned |
-| `IMP-1005.2.7` | Connector-specific bounded autopilot after security and acceptance gates | Planned |
+| &emsp;↳ `IMP-1005.2.1` | Conversational career profile and evidence linking | Planned |
+| &emsp;↳ `IMP-1005.2.2` | Connected opportunity discovery, deduplication, scoring, and visible reasons | Planned |
+| &emsp;↳ `IMP-1005.2.3` | Truthful application materials and unanswered-question handling | Planned |
+| &emsp;↳ `IMP-1005.2.4` | Review mode with user approval for every submission | Planned |
+| &emsp;↳ `IMP-1005.2.5` | Opportunity pipeline, contacts, interviews, follow-ups, and run history | Planned |
+| &emsp;↳ `IMP-1005.2.6` | One supported official connector with OAuth, idempotency, retries, and audit history | Planned |
+| &emsp;↳ `IMP-1005.2.7` | Connector-specific bounded autopilot after security and acceptance gates | Planned |
 
 The current Career page edits a resume and produces an AI draft. The target is a Career Agent that builds a verified skill profile, finds suitable employment and freelance opportunities, prepares applications, submits eligible applications within the user’s policy, and maintains the complete pipeline.
 

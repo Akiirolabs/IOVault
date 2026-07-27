@@ -2,23 +2,20 @@
 
 **State:** Partial · **Priority:** P2
 
-## Rollouts
+## Numbered implementation
 
-| Child | Rollout | Status |
+| Code | Outcome | Status |
 |---|---|---|
 | `IMP-1004.1` | Current learning workspace | Partial |
+| &emsp;↳ `IMP-1004.1.1` | Preserve current notes, connections, and weekly focus | Partial |
+| &emsp;↳ `IMP-1004.1.2` | Extract Learning from the frontend monolith without data loss | Planned |
 | `IMP-1004.2` | Mentor Agent | Planned |
-
-| Sub-code | Outcome | Status |
-|---|---|---|
-| `IMP-1004.1.1` | Preserve current notes, connections, and weekly focus | Partial |
-| `IMP-1004.1.2` | Extract Learning from the frontend monolith without data loss | Planned |
-| `IMP-1004.2.1` | Conversational learning-profile onboarding | Planned |
-| `IMP-1004.2.2` | User-approved curriculum, milestones, sessions, and schedule | Planned |
-| `IMP-1004.2.3` | Lessons, exercises, quizzes, projects, and Code Vault practice | Planned |
-| `IMP-1004.2.4` | Evidence-based assessment and adaptive skill confidence | Planned |
-| `IMP-1004.2.5` | Scheduled runs, notifications, pause controls, and auditable history | Planned |
-| `IMP-1004.2.6` | Approved calendar, course, and content connectors | Planned |
+| &emsp;↳ `IMP-1004.2.1` | Conversational learning-profile onboarding | Planned |
+| &emsp;↳ `IMP-1004.2.2` | User-approved curriculum, milestones, sessions, and schedule | Planned |
+| &emsp;↳ `IMP-1004.2.3` | Lessons, exercises, quizzes, projects, and Code Vault practice | Planned |
+| &emsp;↳ `IMP-1004.2.4` | Evidence-based assessment and adaptive skill confidence | Planned |
+| &emsp;↳ `IMP-1004.2.5` | Scheduled runs, notifications, pause controls, and auditable history | Planned |
+| &emsp;↳ `IMP-1004.2.6` | Approved calendar, course, and content connectors | Planned |
 
 The current Learning page stores notes, connections, and weekly focus. The target is a conversational Mentor Agent that learns the user’s goals and skill level, teaches actively, assigns work, evaluates progress, and adapts the learning plan over time.
 

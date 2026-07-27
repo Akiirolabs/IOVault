@@ -2,26 +2,23 @@
 
 **State:** Implemented v1 · **Priority:** P1
 
-## Rollouts
+## Numbered implementation
 
-| Child | Rollout | Status |
-|---|---|---|
-| `IMP-1001.1` | Workspace v1 | Implemented |
-| `IMP-1001.2` | Hierarchy and page actions | Implemented |
-| `IMP-1001.3` | Cross-area record links | Planned |
-
-| Sub-code | Outcome | Status |
-|---|---|---|
-| `IMP-1001.1.1` | Migrate legacy Write HTML into a versioned first note | Implemented |
-| `IMP-1001.1.2` | Rich-text page with title, metadata, formatting, and explicit assistant context | Implemented |
-| `IMP-1001.1.3` | Typed collections, nested rows, filters, sorting, views, and linked Page cells | Implemented |
-| `IMP-1001.1.4` | Repository-valid Testing Panel and reusable templates | Implemented |
-| `IMP-1001.2.1` | Collapsible, draggable, keyboard-accessible page hierarchy | Implemented |
-| `IMP-1001.2.2` | Parent `•••` actions for page/table creation, import, rename, template, and delete | Implemented |
-| `IMP-1001.2.3` | Recoverable subtree archive and complete restoration | Implemented |
-| `IMP-1001.2.4` | Persisted page icons and menu behavior verified by FTR-1001/FTR-1002 | Implemented |
-| `IMP-1001.3.1` | Link Write records to Projects, Learning, Career, and Code Vault evidence | Planned |
-| `IMP-1001.3.2` | Preserve links through account sync, archive, and recovery | Planned |
+| Code | Outcome | Review evidence | Status |
+|---|---|---|---|
+| `IMP-1001.1` | Workspace v1 | — | Implemented |
+| &emsp;↳ `IMP-1001.1.1` | Migrate legacy Write HTML into a versioned first note | — | Implemented |
+| &emsp;↳ `IMP-1001.1.2` | Rich-text page with title, metadata, formatting, and explicit assistant context | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) | Implemented |
+| &emsp;↳ `IMP-1001.1.3` | Typed collections, nested rows, filters, sorting, views, linked Page cells, contextual actions, and row highlighting | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) · [FTR-1003](../../feature-review-system/reviews/FTR-1003-write-table-column-menu-review.md) | Implemented |
+| &emsp;↳ `IMP-1001.1.4` | Repository-valid Testing Panel and reusable templates | [FTR-1002](../../feature-review-system/reviews/FTR-1002-write-actions-review.md) | Implemented |
+| `IMP-1001.2` | Hierarchy and page actions | — | Implemented |
+| &emsp;↳ `IMP-1001.2.1` | Collapsible, draggable, keyboard-accessible page hierarchy | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) | Implemented |
+| &emsp;↳ `IMP-1001.2.2` | Parent `•••` actions for page/table creation, import, rename, template, and delete | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) · [FTR-1002](../../feature-review-system/reviews/FTR-1002-write-actions-review.md) | Implemented |
+| &emsp;↳ `IMP-1001.2.3` | Recoverable subtree archive and complete restoration | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) | Implemented |
+| &emsp;↳ `IMP-1001.2.4` | Persisted page icons and action-menu behavior | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) · [FTR-1002](../../feature-review-system/reviews/FTR-1002-write-actions-review.md) | Implemented |
+| `IMP-1001.3` | Cross-area record links | — | Planned |
+| &emsp;↳ `IMP-1001.3.1` | Link Write records to Projects, Learning, Career, and Code Vault evidence | — | Planned |
+| &emsp;↳ `IMP-1001.3.2` | Preserve links through account sync, archive, and recovery | — | Planned |
 
 The Write workspace provides a focused knowledge environment built around navigable pages, structured content, typed collections, reusable templates, and controlled assistant context.
 
