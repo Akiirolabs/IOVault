@@ -6,7 +6,7 @@ IMP owns page-level product outcomes moving the current testing state toward [DP
 
 | Parent | Page | Current state | Next numbered outcome |
 |---|---|---|---|
-| [IMP-1001](implementations/IMP-1001-write.md) | Write | Workspace and hierarchy implemented; FTR-1001–1003 verified | `IMP-1001.3` cross-area links |
+| [IMP-1001](implementations/IMP-1001-write.md) | Write | Workspace and hierarchy implemented; FTR-1001–1003 verified; FTR-1005 partial | `IMP-1001.3` cross-area links plus open FTR-1004/1005 scope |
 | [IMP-1002](implementations/IMP-1002-code-vault.md) | Code Vault | `IMP-1002.1` mini IDE implemented | `IMP-1002.2` repository workflow refinement |
 | [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1` full-page editor implemented | `IMP-1003.2` typed table |
 | [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | `IMP-1004.1` current workspace partial | `IMP-1004.2` controlled Mentor Agent |
@@ -49,6 +49,7 @@ See [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) and [SYS-1.0](../aud
 
 | Date | Work | Evidence |
 |---|---|---|
+| 2026-07-27 | FTR-1005 · IMP-1001.1.2.1 | 46 tests, production build, linked-page coverage, and signed-in menu/toolbar acceptance |
 | 2026-07-26 | FTR-1003 · IMP-1001.1.3 | 46 tests, production build, authenticated persistence, and signed-in table-menu acceptance |
 | 2026-07-25 | FTR-1001 · IMP-1001.1.2/1.1.3/1.2.1–1.2.3 | 44 tests, production build, signed-in formatting/hierarchy/keyboard acceptance |
 | 2026-07-24 | FTR-1002 · IMP-1001.1.4/1.2.2/1.2.4 | 38 tests, production build, signed-in menu/template acceptance |

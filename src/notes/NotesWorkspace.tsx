@@ -63,36 +63,110 @@ function parseCsv(text: string) {
   return records;
 }
 
+type NoteFormatAction = {
+  label: string;
+  shortLabel: string;
+  command: string;
+  value?: string;
+  group: "Text" | "Formatting" | "Lists and blocks" | "History";
+};
+
+const NOTE_FORMAT_ACTIONS: NoteFormatAction[] = [
+  { label: "Text", shortLabel: "T", command: "formatBlock", value: "p", group: "Text" },
+  { label: "H1", shortLabel: "H1", command: "formatBlock", value: "h1", group: "Text" },
+  { label: "H2", shortLabel: "H2", command: "formatBlock", value: "h2", group: "Text" },
+  { label: "Bold", shortLabel: "B", command: "bold", group: "Formatting" },
+  { label: "Italic", shortLabel: "I", command: "italic", group: "Formatting" },
+  { label: "Underline", shortLabel: "U", command: "underline", group: "Formatting" },
+  { label: "Strikethrough", shortLabel: "S", command: "strikeThrough", group: "Formatting" },
+  { label: "Clear", shortLabel: "Clear", command: "removeFormat", group: "Formatting" },
+  { label: "Bullets", shortLabel: "• List", command: "insertUnorderedList", group: "Lists and blocks" },
+  { label: "Numbered", shortLabel: "1. List", command: "insertOrderedList", group: "Lists and blocks" },
+  { label: "Quote", shortLabel: "Quote", command: "formatBlock", value: "blockquote", group: "Lists and blocks" },
+  { label: "Code", shortLabel: "Code", command: "formatBlock", value: "pre", group: "Lists and blocks" },
+  { label: "Undo", shortLabel: "Undo", command: "undo", group: "History" },
+  { label: "Redo", shortLabel: "Redo", command: "redo", group: "History" },
+];
+
 function RichNoteEditor({ page, onChange }: { page: NotePage; onChange: (html: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [showFormatMenu, setShowFormatMenu] = useState(false);
+  const [showHoverToolbar, setShowHoverToolbar] = useState(false);
 
   useEffect(() => {
     if (ref.current) ref.current.innerHTML = page.docHtml;
   }, [page.id]);
 
+  useEffect(() => {
+    function closeMenu(event: PointerEvent) {
+      if (!shellRef.current?.contains(event.target as Node)) {
+        setShowFormatMenu(false);
+        setShowHoverToolbar(false);
+      }
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setShowFormatMenu(false);
+    }
+    document.addEventListener("pointerdown", closeMenu);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeMenu);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
   function format(command: string, value?: string) {
     ref.current?.focus();
     document.execCommand(command, false, value);
     if (ref.current) onChange(ref.current.innerHTML);
+    setShowFormatMenu(false);
   }
 
   return (
-    <>
-      <div className="notes-format-bar" role="toolbar" aria-label="Note formatting">
-        <button type="button" onClick={() => format("formatBlock", "p")}>Text</button>
-        <button type="button" onClick={() => format("formatBlock", "h1")}>H1</button>
-        <button type="button" onClick={() => format("formatBlock", "h2")}>H2</button>
-        <button type="button" onClick={() => format("bold")} aria-label="Bold"><strong>B</strong></button>
-        <button type="button" onClick={() => format("italic")} aria-label="Italic"><em>I</em></button>
-        <button type="button" onClick={() => format("underline")} aria-label="Underline"><u>U</u></button>
-        <button type="button" onClick={() => format("strikeThrough")} aria-label="Strikethrough"><s>S</s></button>
-        <button type="button" onClick={() => format("insertUnorderedList")}>Bullets</button>
-        <button type="button" onClick={() => format("insertOrderedList")}>Numbered</button>
-        <button type="button" onClick={() => format("formatBlock", "blockquote")}>Quote</button>
-        <button type="button" onClick={() => format("formatBlock", "pre")}>Code</button>
-        <button type="button" onClick={() => format("undo")}>Undo</button>
-        <button type="button" onClick={() => format("redo")}>Redo</button>
-        <button type="button" onClick={() => format("removeFormat")}>Clear</button>
+    <div
+      ref={shellRef}
+      className="notes-rich-editor-shell"
+      onMouseEnter={() => setShowHoverToolbar(true)}
+      onMouseLeave={() => { if (!showFormatMenu) setShowHoverToolbar(false); }}
+      onFocusCapture={() => setShowHoverToolbar(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null) && !showFormatMenu) setShowHoverToolbar(false);
+      }}
+    >
+      <div className="notes-editor-controls">
+        <button
+          type="button"
+          className="notes-format-add"
+          aria-label="Open insert and formatting menu"
+          aria-haspopup="menu"
+          aria-expanded={showFormatMenu}
+          onClick={() => setShowFormatMenu((current) => !current)}
+        >+</button>
+        {showHoverToolbar && !showFormatMenu && <div className="notes-format-bar" role="toolbar" aria-label="Note formatting">
+          {NOTE_FORMAT_ACTIONS.map((action) => <button
+            type="button"
+            key={action.label}
+            aria-label={action.label}
+            title={action.label}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => format(action.command, action.value)}
+          >{action.shortLabel}</button>)}
+        </div>}
+        {showFormatMenu && <div className="notes-format-menu" role="menu" aria-label="Insert and formatting">
+          {(["Text", "Formatting", "Lists and blocks", "History"] as const).map((group) => <section key={group} aria-label={group}>
+            <p>{group}</p>
+            <div>
+              {NOTE_FORMAT_ACTIONS.filter((action) => action.group === group).map((action) => <button
+                type="button"
+                role="menuitem"
+                key={action.label}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => format(action.command, action.value)}
+              ><span aria-hidden="true">{action.shortLabel}</span>{action.label}</button>)}
+            </div>
+          </section>)}
+        </div>}
       </div>
       <div
         ref={ref}
@@ -105,7 +179,7 @@ function RichNoteEditor({ page, onChange }: { page: NotePage; onChange: (html: s
         data-placeholder="Start writing…"
         onInput={(event) => onChange(event.currentTarget.innerHTML)}
       />
-    </>
+    </div>
   );
 }
 

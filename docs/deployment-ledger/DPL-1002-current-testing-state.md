@@ -3,7 +3,7 @@
 | Field | Current state |
 |---|---|
 | Status | Deployed for testing |
-| Date | 2026-07-26 |
+| Date | 2026-07-27 |
 | Commit | `73d45ac` baseline; current verified changes pending commit |
 | Version | **1.0 — Current** |
 | Environment | Repository-backed local testing state; no external production claim |
@@ -19,7 +19,7 @@
 | Authentication | JWT-backed HttpOnly SameSite cookie with CSRF protection; bearer compatibility for non-browser clients |
 | Data | SQLite user/workspace/code records, `localStorage` workspace cache, and bounded IndexedDB Code Vault cache |
 | Code Vault | Monaco, scratch and repository files, selected context, structured patch review/undo, and draft PR publication |
-| Write | Structured hierarchy, typed collections, linked Page cells, contextual table actions, persisted row highlighting, recovery, rich editing, and explicit AI context |
+| Write | Structured hierarchy, typed collections, linked Page cells, contextual table actions, persisted row highlighting, `+` formatting menu, hover/focus toolbar, recovery, rich editing, and explicit AI context |
 | AI | Authenticated, rate-limited requests with bounded explicit context and content-free usage auditing |
 
 Current runtime detail is consolidated below; Code Vault feature architecture is owned by [IMP-1002](../implementation-system/implementations/IMP-1002-code-vault.md).
@@ -43,6 +43,7 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 | [FTR-1001 — Write manual review](../feature-review-system/reviews/FTR-1001-write-manual-review.md) | Nested rows, page deletion and recovery, collapsible sections, expanded formatting, linked Page columns, drag/keyboard organization, rename, and archive restoration | 8/8 verified |
 | [FTR-1002 — Write actions review](../feature-review-system/reviews/FTR-1002-write-actions-review.md) | Foreground page menus, persisted icons, multi-format imports, trigger anchoring, stable page selection, and explicit template add-or-replace choices | 6/6 verified |
 | [FTR-1003 — Write table column menu review](../feature-review-system/reviews/FTR-1003-write-table-column-menu-review.md) | Target-specific column and row menus, contextual subrow controls, persisted row highlighting, and confirmed destructive actions | 7/7 verified |
+| [FTR-1005 — Write plus menu review](../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) | Functional `+` formatting menu, hover/focus top toolbar, linked-page availability, and foreground anchoring | Partial — 3/4 verified; advanced insertion blocks remain open |
 | [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) | Authenticated AI access, bounded explicit context, and HttpOnly cookie sessions through DBG-1002–1004 | Three verified; five security findings remain open |
 | [SYS-1.0](../audit-system/SYS-1.0-system-baseline.md) | Responsive workspace behavior and reliable typed table-column controls through DBG-1001 and DBG-1017 | Two verified; seven system findings remain open |
 
@@ -50,8 +51,8 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 
 | Gate | Result |
 |---|---|
-| Tests | `npm test`: 10 files and 46 tests passed on 2026-07-26 |
-| Production build | `npm run build`: TypeScript and Vite production build passed on 2026-07-26 |
+| Tests | `npm test`: 10 files and 46 tests passed on 2026-07-27 |
+| Production build | `npm run build`: TypeScript and Vite production build passed on 2026-07-27 |
 | Database | SQLite schema auto-initializes; whole-workspace JSON and conflict handling remain known limitations |
 | Environment/secrets | Local environment supported; production JWT fail-closed validation remains open in DBG-1005 |
 | Monitoring | Application-level production monitoring is not established |

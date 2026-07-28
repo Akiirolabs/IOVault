@@ -203,15 +203,38 @@ describe("Notes workspace", () => {
     expect(screen.getByRole("button", { name: "Untitled note" })).toBeInTheDocument();
   });
 
-  it("provides the expanded note formatting toolbar", () => {
+  it("opens formatting from the plus menu and shows the top toolbar only during editor interaction", () => {
     const execCommand = vi.fn().mockReturnValue(true);
     Object.defineProperty(document, "execCommand", { configurable: true, value: execCommand });
     render(<Harness />);
+
+    expect(screen.queryByRole("toolbar", { name: "Note formatting" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open insert and formatting menu" }));
+    expect(screen.getByRole("menu", { name: "Insert and formatting" })).toBeInTheDocument();
     for (const name of ["Text", "H1", "H2", "Bold", "Italic", "Underline", "Strikethrough", "Bullets", "Numbered", "Quote", "Code", "Undo", "Redo", "Clear"]) {
-      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+      expect(screen.getByRole("menuitem", { name })).toBeInTheDocument();
     }
-    fireEvent.click(screen.getByRole("button", { name: "Bold" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Bold" }));
     expect(execCommand).toHaveBeenCalledWith("bold", false, undefined);
+    expect(screen.queryByRole("menu", { name: "Insert and formatting" })).not.toBeInTheDocument();
+
+    const editor = screen.getByRole("textbox", { name: "Imported writing content" });
+    const shell = editor.closest(".notes-rich-editor-shell");
+    expect(shell).not.toBeNull();
+    fireEvent.mouseEnter(shell!);
+    const toolbar = screen.getByRole("toolbar", { name: "Note formatting" });
+    expect(toolbar).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Bold" })).toBeInTheDocument();
+    fireEvent.mouseLeave(shell!);
+    expect(screen.queryByRole("toolbar", { name: "Note formatting" })).not.toBeInTheDocument();
+
+    fireEvent.focus(editor);
+    expect(screen.getByRole("toolbar", { name: "Note formatting" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open insert and formatting menu" }));
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menu", { name: "Insert and formatting" })).not.toBeInTheDocument();
+    fireEvent.pointerDown(screen.getByRole("textbox", { name: "Page title" }));
+    expect(screen.queryByRole("toolbar", { name: "Note formatting" })).not.toBeInTheDocument();
   });
 
   it("creates and opens a full page from a Page column cell", () => {
@@ -225,9 +248,11 @@ describe("Notes workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add column" }));
     fireEvent.click(screen.getByRole("button", { name: "Create Page page for row 1" }));
     expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Task details");
+    expect(screen.getByRole("button", { name: "Open insert and formatting menu" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Untitled collection" }));
     fireEvent.click(screen.getByRole("button", { name: "Open Page page for row 1" }));
     expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Task details");
+    expect(screen.getByRole("button", { name: "Open insert and formatting menu" })).toBeInTheDocument();
   });
 
   it("drags a page into another section and offers keyboard move actions", () => {

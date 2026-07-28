@@ -8,14 +8,15 @@
 |---|---|---|---|
 | `IMP-1001.1` | Workspace v1 | — | Implemented |
 | &emsp;↳ `IMP-1001.1.1` | Migrate legacy Write HTML into a versioned first note | — | Implemented |
-| &emsp;↳ `IMP-1001.1.2` | Rich-text page with title, metadata, formatting, and explicit assistant context | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) | Implemented |
-| &emsp;↳ `IMP-1001.1.3` | Typed collections, nested rows, filters, sorting, views, linked Page cells, contextual actions, and row highlighting | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) · [FTR-1003](../../feature-review-system/reviews/FTR-1003-write-table-column-menu-review.md) | Implemented |
+| &emsp;↳ `IMP-1001.1.2` | Rich-text page with title, metadata, **① formatting and insertion controls**, and explicit assistant context | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) | Implemented |
+| &emsp;&emsp;↳ `IMP-1001.1.2.1` | **①** Functional `+` formatting menu with a hover/focus top toolbar and linked-page availability | [FTR-1005](../../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) | Partial |
+| &emsp;↳ `IMP-1001.1.3` | Typed collections, nested rows, filters, sorting, views, linked Page cells, contextual actions, and row highlighting | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) · [FTR-1003](../../feature-review-system/reviews/FTR-1003-write-table-column-menu-review.md) · [FTR-1004](../../feature-review-system/reviews/FTR-1004-write-table-follow-up-review.md) | Implemented; follow-up open |
 | &emsp;↳ `IMP-1001.1.4` | Repository-valid Testing Panel and reusable templates | [FTR-1002](../../feature-review-system/reviews/FTR-1002-write-actions-review.md) | Implemented |
 | `IMP-1001.2` | Hierarchy and page actions | — | Implemented |
 | &emsp;↳ `IMP-1001.2.1` | Collapsible, draggable, keyboard-accessible page hierarchy | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) | Implemented |
-| &emsp;↳ `IMP-1001.2.2` | Parent `•••` actions for page/table creation, import, rename, template, and delete | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) · [FTR-1002](../../feature-review-system/reviews/FTR-1002-write-actions-review.md) | Implemented |
+| &emsp;↳ `IMP-1001.2.2` | Parent `•••` actions for page/table creation, import, rename, template, and delete | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) · [FTR-1002](../../feature-review-system/reviews/FTR-1002-write-actions-review.md) · [FTR-1004](../../feature-review-system/reviews/FTR-1004-write-table-follow-up-review.md) | Implemented; follow-up open |
 | &emsp;↳ `IMP-1001.2.3` | Recoverable subtree archive and complete restoration | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) | Implemented |
-| &emsp;↳ `IMP-1001.2.4` | Persisted page icons and action-menu behavior | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) · [FTR-1002](../../feature-review-system/reviews/FTR-1002-write-actions-review.md) | Implemented |
+| &emsp;↳ `IMP-1001.2.4` | Persisted page icons and action-menu behavior | [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) · [FTR-1002](../../feature-review-system/reviews/FTR-1002-write-actions-review.md) · [FTR-1004](../../feature-review-system/reviews/FTR-1004-write-table-follow-up-review.md) | Implemented; follow-up open |
 | `IMP-1001.3` | Cross-area record links | — | Planned |
 | &emsp;↳ `IMP-1001.3.1` | Link Write records to Projects, Learning, Career, and Code Vault evidence | — | Planned |
 | &emsp;↳ `IMP-1001.3.2` | Preserve links through account sync, archive, and recovery | — | Planned |
@@ -46,6 +47,8 @@ The Write workspace provides a focused knowledge environment built around naviga
 
 **FTR-1003 correction:** [FTR-1003](../../feature-review-system/reviews/FTR-1003-write-table-column-menu-review.md) is 7/7 verified. Column and row actions now use target-specific contextual menus; subrow controls respond to hover, focus, and touch; row highlights persist; and destructive actions require confirmation. Verification: 46 tests, production build, authenticated persistence, and signed-in browser acceptance on 2026-07-26.
 
+**FTR-1005 refinement:** [FTR-1005](../../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) is 3/4 verified. Supported formatting commands now live in the note `+` menu and appear in a hover/focus toolbar; linked Page notes retain the same control, and the dropdown remains anchored in the foreground. Advanced insertion blocks remain open under `IMP-1001.1.2.1`.
+
 **TEST-IV-1001 completion:** [FTR-1001](../../feature-review-system/reviews/FTR-1001-write-manual-review.md) is 8/8 verified. Its corrections added page-section collapse, the expanded toolbar, linked Page cells, drag/keyboard organization, persistent rename coverage, and complete archive recovery. Verification: 44 tests, production build, and signed-in browser acceptance on 2026-07-25.
 
 **Acceptance:** migration, hierarchy, collections, recoverable archive, and explicit assistant context are covered by model/component tests. Full status remains below `✅ Verified` until reload/account-sync and keyboard workflows have a durable browser E2E gate.
@@ -62,6 +65,8 @@ SEC-1.0 and SYS-1.0 own evidence and corrections outside this product implementa
 | [DBG-1007/1008](../../audit-system/SYS-1.0-system-baseline.md) | Normalize collection data and make persistence/conflict handling durable | Component and signed-in browser E2E cover the complete collection lifecycle |
 | [DBG-1011](../../audit-system/SEC-1.0-security-baseline.md#dbg-1011--rich-text-sanitization) | Sanitize stored HTML and finish safe editor behavior | Sanitization, formatting, focus, and keyboard tests pass with the production build |
 | ✅ [FTR-1003](../../feature-review-system/reviews/FTR-1003-write-table-column-menu-review.md) | Added target-specific column and row menus, persisted row highlighting, contextual subrow controls, and confirmed deletion | Passed 2026-07-26 |
+| [FTR-1004](../../feature-review-system/reviews/FTR-1004-write-table-follow-up-review.md) | Complete the linked-page, row-control, column-sizing, icon, import, status, and filter findings | Open — 0/11 verified |
+| [FTR-1005](../../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) | Complete the functional note insertion catalog beyond the verified toolbar and menu foundation | Partial — 3/4 verified on 2026-07-27 |
 
 DBG-1017 is verified. Persistence/sync and rich-text findings remain Open in their owning audit lanes. Rapid reload before the current 800 ms server-sync window remains part of SYS-1.0.
 
