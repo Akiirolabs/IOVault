@@ -5,6 +5,7 @@ export type NoteColumn = {
   name: string;
   type: NoteColumnType;
   options?: string[];
+  width?: number;
 };
 
 export type NoteCollectionRow = {
@@ -122,6 +123,7 @@ function normalizeCollection(raw: unknown): NoteCollection | undefined {
       name: candidate.name,
       type: candidate.type as NoteColumnType,
       ...(candidate.type === "select" ? { options: Array.isArray(candidate.options) ? candidate.options.filter((option): option is string => typeof option === "string") : [] } : {}),
+      ...(typeof candidate.width === "number" && candidate.width >= 120 && candidate.width <= 720 ? { width: candidate.width } : {}),
     }];
   });
 

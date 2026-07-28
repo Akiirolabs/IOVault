@@ -26,7 +26,7 @@ function importedTitle(fileName: string) {
   return fileName.replace(/\.[^.]+$/, "").trim() || "Imported page";
 }
 
-const PAGE_ICONS = ["📄", "📝", "📌", "✅", "💡", "📚", "🗂️", "🚀"];
+const PAGE_ICONS = ["📄", "📝", "📌", "✅", "💡", "📚", "🗂️", "🚀", "🎯", "⭐", "🔖", "📊", "📅", "🧠", "🔧", "🌱"];
 
 function pageIcon(page: NotePage) {
   return page.icon || (page.kind === "collection" ? "▦" : "▤");
@@ -223,22 +223,23 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
   const [showColumns, setShowColumns] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [newColumnType, setNewColumnType] = useState<NoteColumnType>("text");
-  const [newColumnOptions, setNewColumnOptions] = useState("");
+  const [newColumnOptions, setNewColumnOptions] = useState<string[]>([]);
+  const [newColumnOptionDraft, setNewColumnOptionDraft] = useState("");
   const [columnMenuId, setColumnMenuId] = useState<string | null>(null);
   const [renamingColumnId, setRenamingColumnId] = useState<string | null>(null);
-  const [rowMenuId, setRowMenuId] = useState<string | null>(null);
+  const [rowMenu, setRowMenu] = useState<{ id: string; top: number; left: number } | null>(null);
   const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target?.closest(".notes-column-header, .notes-row-actions")) return;
+      if (target?.closest(".notes-column-header, .notes-row-actions, .notes-inline-row-actions, .notes-context-menu")) return;
       setColumnMenuId(null);
-      setRowMenuId(null);
+      setRowMenu(null);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       setColumnMenuId(null);
-      setRowMenuId(null);
+      setRowMenu(null);
     };
     document.addEventListener("pointerdown", closeMenus);
     document.addEventListener("keydown", closeOnEscape);
@@ -300,16 +301,18 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
       id: makeId("column"),
       name,
       type: newColumnType,
-      ...(newColumnType === "select" ? { options: parseOptions(newColumnOptions) } : {}),
+      ...(newColumnType === "select" ? { options: newColumnOptions } : {}),
     };
     onChange({ ...collection, columns: [...collection.columns, column] });
     setNewColumnName("");
     setNewColumnType("text");
-    setNewColumnOptions("");
+    setNewColumnOptions([]);
+    setNewColumnOptionDraft("");
   }
 
-  function parseOptions(value: string) {
-    return [...new Set(value.split(",").map((option) => option.trim()).filter(Boolean))];
+  function commitOption(value: string, options: string[], update: (options: string[]) => void) {
+    const option = value.trim();
+    if (option && !options.includes(option)) update([...options, option]);
   }
 
   function updateColumn(columnId: string, updates: Partial<NoteColumn>) {
@@ -378,15 +381,43 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
         ? { ...row, ...(highlightColor ? { highlightColor } : { highlightColor: undefined }) }
         : row),
     });
-    setRowMenuId(null);
+    setRowMenu(null);
   }
 
   function renameRow(rowId: string) {
-    setRowMenuId(null);
+    setRowMenu(null);
     const target = rowRefs.current.get(rowId)?.querySelector<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("input:not([type='checkbox']), select, .notes-page-cell");
     target?.focus();
     if (target instanceof HTMLInputElement) target.select();
   }
+
+  function openRowMenu(event: React.MouseEvent<HTMLButtonElement>, rowId: string) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const width = 190;
+    setColumnMenuId(null);
+    setRowMenu((current) => current?.id === rowId ? null : {
+      id: rowId,
+      top: Math.min(window.innerHeight - 280, rect.bottom + 6),
+      left: Math.max(8, Math.min(window.innerWidth - width - 8, rect.left)),
+    });
+  }
+
+  function resizeColumn(columnId: string, event: React.PointerEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    const column = collection.columns.find((item) => item.id === columnId);
+    if (!column) return;
+    const startX = event.clientX;
+    const startWidth = column.width ?? 160;
+    const move = (moveEvent: PointerEvent) => updateColumn(columnId, { width: Math.max(120, Math.min(720, startWidth + moveEvent.clientX - startX)) });
+    const stop = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+  }
+
+  const menuRow = rowMenu ? visibleRows.find(({ row }) => row.id === rowMenu.id)?.row : undefined;
 
   return (
     <div className="notes-collection">
@@ -403,7 +434,7 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
             <select aria-label={`Type for ${column.name} column`} value={column.type} onChange={(event) => updateColumn(column.id, { type: event.target.value as NoteColumnType })}>
               {COLUMN_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
-            {column.type === "select" && <input aria-label={`Options for ${column.name} column`} value={column.options?.join(", ") ?? ""} placeholder="Options, comma separated" onChange={(event) => updateColumn(column.id, { options: parseOptions(event.target.value) })} />}
+            {column.type === "select" && <div className="notes-status-options"><div>{column.options?.map((option) => <span key={option}>{option}<button type="button" aria-label={`Remove ${option} from ${column.name}`} onClick={() => updateColumn(column.id, { options: column.options?.filter((item) => item !== option) })}>×</button></span>)}</div><input aria-label={`Add option to ${column.name} column`} placeholder="Type an option and press Enter" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); commitOption(event.currentTarget.value, column.options ?? [], (options) => updateColumn(column.id, { options })); event.currentTarget.value = ""; } }} /></div>}
           </div>)}
         </div>
         <form className="notes-column-create" onSubmit={addColumn}>
@@ -411,14 +442,14 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
           <select aria-label="New column type" value={newColumnType} onChange={(event) => setNewColumnType(event.target.value as NoteColumnType)}>
             {COLUMN_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
-          {newColumnType === "select" && <input aria-label="New column options" placeholder="Options, comma separated" value={newColumnOptions} onChange={(event) => setNewColumnOptions(event.target.value)} />}
+          {newColumnType === "select" && <div className="notes-status-options"><div>{newColumnOptions.map((option) => <span key={option}>{option}<button type="button" aria-label={`Remove new option ${option}`} onClick={() => setNewColumnOptions((items) => items.filter((item) => item !== option))}>×</button></span>)}</div><input aria-label="New column option" placeholder="Type an option and press Enter" value={newColumnOptionDraft} onChange={(event) => setNewColumnOptionDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); commitOption(newColumnOptionDraft, newColumnOptions, setNewColumnOptions); setNewColumnOptionDraft(""); } }} /></div>}
           <button type="submit" disabled={!newColumnName.trim()}>Add column</button>
         </form>
       </section>}
       <div className="notes-table-scroll">
         <table className="notes-table">
           <thead><tr>{collection.columns.map((column) => (
-            <th key={column.id} className="notes-column-header">
+            <th key={column.id} className="notes-column-header" style={column.width ? { width: column.width, minWidth: column.width, maxWidth: column.width } : undefined}>
               <div className="notes-column-header-main">
                 {renamingColumnId === column.id ? <input
                   autoFocus
@@ -431,8 +462,9 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
                     if (event.key === "Enter" || event.key === "Escape") setRenamingColumnId(null);
                   }}
                 /> : <button type="button" className="notes-column-sort" onClick={() => sortBy(column.id)}>{column.name}{collection.sortColumnId === column.id ? (collection.sortDirection === "desc" ? " ↓" : " ↑") : ""}</button>}
-                <button type="button" className="notes-column-menu-trigger" aria-haspopup="menu" aria-expanded={columnMenuId === column.id} aria-label={`Column actions for ${column.name}`} onClick={() => { setRowMenuId(null); setColumnMenuId((current) => current === column.id ? null : column.id); }}>•••</button>
+                <button type="button" className="notes-column-menu-trigger" aria-haspopup="menu" aria-expanded={columnMenuId === column.id} aria-label={`Column actions for ${column.name}`} onClick={() => { setRowMenu(null); setColumnMenuId((current) => current === column.id ? null : column.id); }}>•••</button>
               </div>
+              <button type="button" className="notes-column-resize" aria-label={`Resize ${column.name} column`} onPointerDown={(event) => resizeColumn(column.id, event)} />
               {columnMenuId === column.id && <div className="notes-context-menu notes-column-menu" role="menu" aria-label={`Actions for ${column.name} column`}>
                 <button type="button" role="menuitem" onClick={() => { setRenamingColumnId(column.id); setColumnMenuId(null); }}>Rename</button>
                 <button type="button" role="menuitem" onClick={() => { setShowColumns(true); setColumnMenuId(null); }}>+ Add column</button>
@@ -445,9 +477,9 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
             ref={(element) => { if (element) rowRefs.current.set(row.id, element); else rowRefs.current.delete(row.id); }}
             data-row-depth={depth}
             data-row-highlight={row.highlightColor}
-          >{collection.columns.map((column, columnIndex) => <td key={column.id}><div className={columnIndex === 0 ? "notes-tree-cell" : undefined} style={columnIndex === 0 ? { paddingLeft: `${depth * 1.1}rem` } : undefined}>{columnIndex === 0 && (hasChildren ? (
+          >{collection.columns.map((column, columnIndex) => <td key={column.id} style={column.width ? { width: column.width, minWidth: column.width, maxWidth: column.width } : undefined}><div className={columnIndex === 0 ? "notes-tree-cell" : undefined} style={columnIndex === 0 ? { paddingLeft: `${depth * 1.1}rem` } : undefined}>{columnIndex === 0 && (hasChildren ? (
             <button type="button" className="notes-row-toggle" aria-label={`${collapsed ? "Expand" : "Collapse"} row ${rowIndex + 1}`} aria-expanded={!collapsed} onClick={() => toggleRow(row.id)}>{collapsed ? "▸" : "▾"}</button>
-          ) : <span className="notes-row-toggle-spacer" />)}{columnIndex === 0 && <button type="button" className="notes-subrow-add" onClick={() => addRow(row.id)} aria-label={`Add subrow to row ${rowIndex + 1}`} title="Add a subrow">+</button>}{column.type === "page" ? (
+          ) : <span className="notes-row-toggle-spacer" />)}{columnIndex === 0 && <div className="notes-inline-row-actions" onPointerDown={(event) => event.stopPropagation()}><button type="button" className="notes-subrow-add" onClick={() => addRow(row.id)} aria-label={`Add subrow to row ${rowIndex + 1}`} title="Add a subrow">+</button><button type="button" className="notes-row-menu-trigger" aria-haspopup="menu" aria-expanded={rowMenu?.id === row.id} aria-label={`Row actions for row ${rowIndex + 1}`} onClick={(event) => openRowMenu(event, row.id)}>•••</button></div>}{column.type === "page" ? (
             typeof row.cells[column.id] === "string" && pages.some((page) => page.id === row.cells[column.id] && !page.archived)
               ? <button type="button" className="notes-page-cell" onClick={() => onOpenPage(String(row.cells[column.id]))} aria-label={`Open ${column.name} page for row ${rowIndex + 1}`}>Open {pages.find((page) => page.id === row.cells[column.id])?.title}</button>
               : <button type="button" className="notes-page-cell" onClick={() => onCreatePageCell(row.id, column.id)} aria-label={`Create ${column.name} page for row ${rowIndex + 1}`}>+ Page</button>
@@ -457,21 +489,15 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
             <select aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)}><option value="">Select…</option>{column.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
           ) : (
             <input type={column.type} aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)} />
-          )}</div></td>)}<td className="notes-row-actions-cell"><div className="notes-row-actions">
-            <button type="button" className="notes-row-menu-trigger" aria-haspopup="menu" aria-expanded={rowMenuId === row.id} aria-label={`Row actions for row ${rowIndex + 1}`} onClick={() => { setColumnMenuId(null); setRowMenuId((current) => current === row.id ? null : row.id); }}>•••</button>
-            {rowMenuId === row.id && <div className="notes-context-menu notes-row-menu" role="menu" aria-label={`Actions for row ${rowIndex + 1}`}>
-              <button type="button" role="menuitem" onClick={() => { addRow(row.id); setRowMenuId(null); }}>+ Add subrow</button>
-              <button type="button" role="menuitem" onClick={() => renameRow(row.id)}>Rename row</button>
-              <div className="notes-highlight-options" role="group" aria-label={`Highlight row ${rowIndex + 1}`}>
-                {ROW_HIGHLIGHT_OPTIONS.map((option) => <button type="button" role="menuitem" key={option.value} data-color={option.value} aria-label={`Highlight row ${rowIndex + 1} ${option.label}`} onClick={() => updateRowHighlight(row.id, option.value)}><span className="notes-color-swatch" aria-hidden="true" />{option.label}</button>)}
-                {row.highlightColor && <button type="button" role="menuitem" onClick={() => updateRowHighlight(row.id)}>Clear highlight</button>}
-              </div>
-              <button type="button" role="menuitem" className="danger" onClick={() => { removeRow(row.id); setRowMenuId(null); }}>Delete row</button>
-            </div>}
-          </div></td></tr>)}</tbody>
+          )}</div></td>)}<td className="notes-row-actions-cell" /></tr>)}</tbody>
         </table>
       </div>
       <button type="button" className="notes-add-row" onClick={() => addRow()}>+ Add row</button>
+      {rowMenu && menuRow && createPortal(<div className="notes-context-menu notes-row-menu notes-row-menu-portal" role="menu" aria-label={`Actions for row ${visibleRows.findIndex(({ row }) => row.id === menuRow.id) + 1}`} style={{ top: rowMenu.top, left: rowMenu.left }} onPointerDown={(event) => event.stopPropagation()}>
+        <button type="button" role="menuitem" onClick={() => { addRow(menuRow.id); setRowMenu(null); }}>+ Add subrow</button><button type="button" role="menuitem" onClick={() => renameRow(menuRow.id)}>Rename row</button>
+        <div className="notes-highlight-options" role="group" aria-label="Row colors">{ROW_HIGHLIGHT_OPTIONS.map((option) => <button type="button" role="menuitem" key={option.value} data-color={option.value} aria-label={`Highlight row ${visibleRows.findIndex(({ row }) => row.id === menuRow.id) + 1} ${option.label}`} onClick={() => updateRowHighlight(menuRow.id, option.value)}><span className="notes-color-swatch" aria-hidden="true" />{option.label}</button>)}{menuRow.highlightColor && <button type="button" role="menuitem" onClick={() => updateRowHighlight(menuRow.id)}>Clear highlight</button>}</div>
+        <button type="button" role="menuitem" className="danger" onClick={() => { removeRow(menuRow.id); setRowMenu(null); }}>Delete row</button>
+      </div>, document.body)}
     </div>
   );
 }
@@ -487,6 +513,7 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
   const [renameDraft, setRenameDraft] = useState("");
   const [importParentId, setImportParentId] = useState<string | null>(null);
   const [draggedPageId, setDraggedPageId] = useState<string | null>(null);
+  const [overlayPageId, setOverlayPageId] = useState<string | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const active = write.pages.find((page) => page.id === write.activePageId) ?? write.pages[0];
   const visiblePages = write.pages.filter((page) => page.archived === showArchived && page.title.toLowerCase().includes(query.toLowerCase()));
@@ -706,7 +733,8 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
     const timestamp = now();
     const page: NotePage = { id: makeId("note"), parentId: active.id, title: typeof firstValue === "string" ? firstValue : `${column.name} page`, kind: "note", docHtml: "", archived: false, createdAt: timestamp, updatedAt: timestamp };
     const collection = { ...active.collection, rows: active.collection.rows.map((item) => item.id === rowId ? { ...item, cells: { ...item.cells, [columnId]: page.id } } : item) };
-    commit([...write.pages.map((item) => item.id === active.id ? { ...item, collection, updatedAt: timestamp } : item), page], page.id);
+    commit([...write.pages.map((item) => item.id === active.id ? { ...item, collection, updatedAt: timestamp } : item), page], active.id);
+    setOverlayPageId(page.id);
   }
 
   function openPageMenu(event: React.MouseEvent<HTMLButtonElement>, pageId: string) {
@@ -778,7 +806,7 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
           <button type="button" onClick={() => createPage("collection", "testing", null)}>Testing panel</button>
         </div>
         {(write.templates?.length ?? 0) > 0 && <label className="notes-template-create">Templates<select aria-label="Create from template" value="" onChange={(event) => { const template = write.templates?.find((item) => item.id === event.target.value); if (template) setPendingTemplate(template); }}><option value="">Choose…</option>{write.templates?.map((template) => <option key={template.id} value={template.id}>{template.title}</option>)}</select></label>}
-        <input ref={importRef} className="notes-import-input" type="file" accept=".txt,.md,.markdown,.csv,.json,text/plain,text/markdown,text/csv,application/json" onChange={(event) => void importFile(event.target.files?.[0])} />
+        <input ref={importRef} className="notes-import-input" type="file" accept=".txt,.md,.markdown,.csv,.json,.html,.htm,text/plain,text/html,text/markdown,text/csv,application/json" onChange={(event) => void importFile(event.target.files?.[0])} />
         <nav className="notes-tree" aria-label={showArchived ? "Archived notes" : "Note pages"}>{renderTree(null)}</nav>
         <div className="notes-archive-actions"><button type="button" className="notes-archive-toggle" onClick={() => setShowArchived((value) => !value)}>{showArchived ? "← Active pages" : `Archived (${write.pages.filter((page) => page.archived).length})`}</button>{showArchived && write.pages.some((page) => page.archived) && <button type="button" onClick={restoreAllPages}>Restore all</button>}</div>
       </aside>
@@ -792,8 +820,9 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
             {active.archived && <button type="button" onClick={() => restorePage(active.id)}>Restore subtree</button>}
           </div>
         </header>
-        {active.kind === "note" ? <RichNoteEditor key={active.id} page={active} onChange={(docHtml) => updateActive({ docHtml })} /> : <CollectionEditor collection={active.collection ?? { columns: [], rows: [], view: "all" }} pages={write.pages} onChange={(collection) => updateActive({ collection })} onCreatePageCell={createPageCell} onOpenPage={(pageId) => commit(write.pages, pageId)} />}
+        {active.kind === "note" ? <RichNoteEditor key={active.id} page={active} onChange={(docHtml) => updateActive({ docHtml })} /> : <CollectionEditor collection={active.collection ?? { columns: [], rows: [], view: "all" }} pages={write.pages} onChange={(collection) => updateActive({ collection })} onCreatePageCell={createPageCell} onOpenPage={setOverlayPageId} />}
       </section>
+      {overlayPageId && (() => { const overlayPage = write.pages.find((page) => page.id === overlayPageId && !page.archived); return overlayPage ? createPortal(<div className="notes-linked-page-backdrop" role="presentation"><section className="notes-linked-page" role="dialog" aria-modal="true" aria-label={`${overlayPage.title} linked page`}><header><span>{pageIcon(overlayPage)}</span><input aria-label="Linked page title" value={overlayPage.title} onChange={(event) => commit(write.pages.map((page) => page.id === overlayPage.id ? { ...page, title: event.target.value, updatedAt: now() } : page), active.id)} /><button type="button" onClick={() => setOverlayPageId(null)} aria-label="Minimize linked page">—</button></header><RichNoteEditor key={overlayPage.id} page={overlayPage} onChange={(docHtml) => commit(write.pages.map((page) => page.id === overlayPage.id ? { ...page, docHtml, updatedAt: now() } : page), active.id)} /></section></div>, document.body) : null; })()}
       {pendingTemplate && createPortal(<div className="notes-dialog-backdrop" role="presentation"><section className="notes-template-dialog" role="dialog" aria-modal="true" aria-labelledby="template-choice-title"><h3 id="template-choice-title">Use “{pendingTemplate.title}” template?</h3><p>Add it as a new top-level page or replace the current page's content.</p><div><button type="button" onClick={() => createFromTemplate(pendingTemplate)}>Add new page</button><button type="button" onClick={() => replaceFromTemplate(pendingTemplate)}>Replace current page</button><button type="button" onClick={() => setPendingTemplate(null)}>Cancel</button></div></section></div>, document.body)}
     </div>
   );

@@ -24,7 +24,7 @@ flowchart LR
 | 2026-07-24–25 | FTR-1001/1002 | Manual Write findings corrected and verified | DPL-1002 |
 | 2026-07-25 | [DPL-1002](DPL-1002-current-testing-state.md) | Post-Monaco testing state established at `73d45ac`; Version 1.0 | Active testing state |
 | 2026-07-26 | [FTR-1003](../feature-review-system/reviews/FTR-1003-write-table-column-menu-review.md) | Write table menus, contextual subrow controls, persisted highlighting, and confirmed deletion verified with 46 tests and the production build | DPL-1002 active state |
-| 2026-07-27 | [FTR-1004](../feature-review-system/reviews/FTR-1004-write-table-follow-up-review.md) / [FTR-1005](../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) | Table follow-up findings recorded; note `+` formatting menu, hover/focus toolbar, linked-page control, and foreground placement verified | DPL-1002 active state; remaining findings flow to DPL-1003 |
+| 2026-07-27–28 | [FTR-1004](../feature-review-system/reviews/FTR-1004-write-table-follow-up-review.md) / [FTR-1005](../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) | Table follow-up completed with linked-page overlays, foreground row controls, persisted resizing, expanded icons/imports, individual status options, and compact filters; note insertion remains partial | DPL-1002 active state; remaining FTR-1005 scope flows to DPL-1003 |
 | — | [DPL-1003](DPL-1003-next-testing-state.md) | Planned next complete testing state | Not deployed |
 
 Open SEC/SYS findings are accepted testing limitations, not production-readiness evidence.
@@ -33,7 +33,7 @@ Open SEC/SYS findings are accepted testing limitations, not production-readiness
 
 | Version | DPL | Status | Date | Meaning |
 |---|---|---|---|---|
-| 1.0 | [DPL-1002](DPL-1002-current-testing-state.md) | Current | 2026-07-27 | Current product identity in the documented testing state |
+| 1.0 | [DPL-1002](DPL-1002-current-testing-state.md) | Current | 2026-07-28 | Current product identity in the documented testing state |
 
 A later testing DPL does not automatically change the Version. The package manifest’s `0.1.0` is build metadata, not the product Version authority.
 

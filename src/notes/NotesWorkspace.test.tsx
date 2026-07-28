@@ -151,7 +151,11 @@ describe("Notes workspace", () => {
     const addColumn = (name: string, type: string, options?: string) => {
       fireEvent.change(screen.getByRole("textbox", { name: "New column name" }), { target: { value: name } });
       fireEvent.change(screen.getByRole("combobox", { name: "New column type" }), { target: { value: type } });
-      if (options) fireEvent.change(screen.getByRole("textbox", { name: "New column options" }), { target: { value: options } });
+      if (options) for (const option of options.split(", ")) {
+        const input = screen.getByRole("textbox", { name: "New column option" });
+        fireEvent.change(input, { target: { value: option } });
+        fireEvent.keyDown(input, { key: "Enter" });
+      }
       fireEvent.click(screen.getByRole("button", { name: "Add column" }));
     };
 
@@ -247,12 +251,13 @@ describe("Notes workspace", () => {
     fireEvent.change(screen.getByRole("combobox", { name: "New column type" }), { target: { value: "page" } });
     fireEvent.click(screen.getByRole("button", { name: "Add column" }));
     fireEvent.click(screen.getByRole("button", { name: "Create Page page for row 1" }));
-    expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Task details");
-    expect(screen.getByRole("button", { name: "Open insert and formatting menu" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Untitled collection" }));
+    expect(screen.getByRole("dialog", { name: "Task details linked page" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Linked page title" })).toHaveValue("Task details");
+    fireEvent.click(screen.getByRole("button", { name: "Minimize linked page" }));
+    expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Untitled collection");
     fireEvent.click(screen.getByRole("button", { name: "Open Page page for row 1" }));
-    expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Task details");
-    expect(screen.getByRole("button", { name: "Open insert and formatting menu" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Task details linked page" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Linked page title" })).toHaveValue("Task details");
   });
 
   it("drags a page into another section and offers keyboard move actions", () => {
@@ -376,5 +381,42 @@ describe("Notes workspace", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Delete row" }));
     expect(screen.queryByRole("textbox", { name: "Task for row 2" })).not.toBeInTheDocument();
     expect(window.confirm).toHaveBeenCalledTimes(2);
+  });
+
+  it("resizes columns and keeps row colors in the foreground actions menu", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Add row" }));
+    const resize = screen.getByRole("button", { name: "Resize Name column" });
+    fireEvent.pointerDown(resize, { clientX: 100 });
+    fireEvent.pointerMove(window, { clientX: 180 });
+    fireEvent.pointerUp(window);
+    expect(resize.closest("th")).toHaveStyle({ width: "240px" });
+
+    expect(screen.queryByRole("button", { name: "Row color for row 1" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Row actions for row 1" }));
+    const menu = screen.getByRole("menu", { name: "Actions for row 1" });
+    expect(menu).toHaveClass("notes-row-menu-portal");
+    expect(menu).toHaveTextContent("Delete row");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Highlight row 1 Purple" }));
+    expect(screen.getByRole("textbox", { name: "Name for row 1" }).closest("tr")).toHaveAttribute("data-row-highlight", "purple");
+  });
+
+  it("adds and removes status choices individually while preserving the cell dropdown", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Add row" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Column" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "New column name" }), { target: { value: "Status" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "New column type" }), { target: { value: "select" } });
+    for (const option of ["Todo", "Doing", "Done"]) {
+      const input = screen.getByRole("textbox", { name: "New column option" });
+      fireEvent.change(input, { target: { value: option } });
+      fireEvent.keyDown(input, { key: "Enter" });
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Add column" }));
+    expect(screen.getByRole("combobox", { name: "Status for row 1" })).toHaveTextContent("Doing");
+    fireEvent.click(screen.getByRole("button", { name: "Remove Doing from Status" }));
+    expect(screen.getByRole("combobox", { name: "Status for row 1" })).not.toHaveTextContent("Doing");
   });
 });
