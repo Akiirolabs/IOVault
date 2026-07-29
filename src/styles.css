@@ -3081,6 +3081,158 @@ textarea {
   color: hsl(var(--theme-hue) 88% 72%);
 }
 
+/* Night keeps the motion system over true black surfaces. */
+.home-screen.theme-default,
+.vault-dashboard.theme-default {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.14), transparent 28rem),
+    linear-gradient(135deg, #010313 0%, #03102b 42%, #020817 100%);
+}
+
+.theme-default::before {
+  opacity: 1;
+  background: conic-gradient(from 180deg, rgba(0, 41, 95, 0.15), rgba(37, 99, 235, 0.55), rgba(8, 145, 178, 0.38), rgba(1, 5, 18, 0.2), rgba(37, 99, 235, 0.55));
+}
+
+.theme-default::after {
+  opacity: 1;
+  background:
+    linear-gradient(115deg, transparent 0%, rgba(96, 165, 250, 0.16) 45%, transparent 70%),
+    radial-gradient(circle at 50% 58%, rgba(125, 211, 252, 0.12), transparent 22rem);
+}
+
+.theme-default .orb { background: rgba(56, 189, 248, 0.24); box-shadow: 0 0 120px rgba(56, 189, 248, 0.55); }
+.theme-default .orb-two { background: rgba(37, 99, 235, 0.26); }
+.theme-default .orb-three { background: rgba(14, 165, 233, 0.18); }
+.theme-default .workspace-topline,
+.theme-default .editor-panel,
+.theme-default .floating-snippet,
+.theme-default .project-block,
+.theme-default .learning-drawer { border-color: rgba(125, 211, 252, 0.14); }
+.theme-default .kicker,
+.theme-default .title-icon,
+.theme-default a,
+.theme-default .theme-controls small { color: #7dd3fc; }
+.theme-default .theme-controls input[type="range"] { accent-color: #38bdf8; }
+.theme-default .theme-preview {
+  border-color: rgba(125, 211, 252, 0.14);
+  background:
+    radial-gradient(circle at 45% 42%, rgba(56, 189, 248, 0.28), transparent 33%),
+    linear-gradient(145deg, #020817, #03102b);
+}
+.theme-default .theme-preview::before {
+  background: conic-gradient(from 120deg, transparent, rgba(37, 99, 235, 0.6), rgba(8, 145, 178, 0.32), transparent);
+}
+.theme-default .theme-preview span {
+  border-color: rgba(125, 211, 252, 0.22);
+  background: rgba(7, 18, 38, 0.72);
+  box-shadow: 0 1rem 4rem rgba(56, 189, 248, 0.16);
+}
+.theme-default .theme-preview span:nth-child(3) { background: rgba(56, 189, 248, 0.42); }
+
+/* Night keeps the motion system over true black surfaces. */
+.home-screen.theme-night,
+.vault-dashboard.theme-night {
+  color: #f4f7fb;
+  background:
+    radial-gradient(circle at 50% 50%, hsl(var(--theme-hue) 84% 45% / 0.08), transparent 28rem),
+    #000;
+}
+
+.theme-night::before { opacity: 0.42; }
+.theme-night::after { opacity: 0.34; }
+.theme-night .editor-panel,
+.theme-night .floating-snippet,
+.theme-night .project-block,
+.theme-night .learning-drawer,
+.theme-night .workspace-topline,
+.theme-night .workspace-nav,
+.theme-night .notes-context-menu,
+.theme-night .notes-page-menu {
+  border-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Light uses white glass surfaces while retaining the same animated geometry. */
+.home-screen.theme-light,
+.vault-dashboard.theme-light {
+  color: #142337;
+  background:
+    radial-gradient(circle at 50% 50%, hsl(var(--theme-hue) 88% 58% / 0.12), transparent 28rem),
+    linear-gradient(135deg, #fff 0%, hsl(var(--theme-hue) 52% 97%) 48%, #f8fbff 100%);
+}
+
+.theme-light::before { opacity: 0.2; filter: blur(100px); }
+.theme-light::after { opacity: 0.32; mix-blend-mode: multiply; }
+.theme-light .grid-overlay { opacity: 0.48; }
+.theme-light .orb { opacity: 0.38; }
+.theme-light h1,
+.theme-light h2,
+.theme-light h3,
+.theme-light strong,
+.theme-light .workspace-topline h1,
+.theme-light .brand {
+  color: #0d1d31;
+  text-shadow: none;
+}
+
+.theme-light p,
+.theme-light label,
+.theme-light small,
+.theme-light .settings-intro > p:last-child {
+  color: #526b7d;
+}
+
+.theme-light .editor-panel,
+.theme-light .floating-snippet,
+.theme-light .project-block,
+.theme-light .learning-drawer,
+.theme-light .workspace-topline,
+.theme-light .workspace-nav,
+.theme-light .notes-context-menu,
+.theme-light .notes-page-menu,
+.theme-light .notes-column-manager,
+.theme-light .notes-linked-page {
+  border-color: hsl(var(--theme-hue) 42% 42% / 0.18);
+  color: #142337;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1.5rem 5rem rgba(35, 62, 86, 0.12);
+}
+
+.theme-light button,
+.theme-light input,
+.theme-light select,
+.theme-light textarea {
+  color: #183149;
+}
+
+.theme-light input,
+.theme-light select,
+.theme-light textarea {
+  border-color: rgba(46, 91, 121, 0.18);
+  background-color: rgba(246, 250, 253, 0.92);
+}
+
+.theme-light .notes-table th,
+.theme-light .notes-linked-page > header,
+.theme-light .notes-editor-controls,
+.theme-light .notes-format-menu {
+  color: #34576d;
+  background: rgba(248, 252, 255, 0.97);
+}
+
+.theme-light .theme-preview {
+  background:
+    radial-gradient(circle at 45% 42%, hsl(var(--theme-hue) 92% 58% / 0.2), transparent 33%),
+    linear-gradient(145deg, #fff, hsl(var(--theme-hue) 60% 96%));
+}
+
+.theme-light .theme-presets button,
+.theme-light .theme-reset {
+  color: #34576d;
+  background: rgba(248, 252, 255, 0.8);
+}
+
 @keyframes floatTwo {
   50% {
     transform: translate(-7vw, -7vh) scale(1.18);

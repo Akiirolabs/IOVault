@@ -175,6 +175,7 @@ export type VaultState = {
   settings: {
     navIcons: Record<PageKey, IconId>;
     theme: {
+      mode: "default" | "tinted" | "night" | "light";
       hue: number;
       glow: number;
       depth: number;
@@ -282,7 +283,7 @@ const defaultVaultState: VaultState = {
       projects: "folder",
       settings: "cog",
     },
-    theme: { hue: 198, glow: 55, depth: 8 },
+    theme: { mode: "default", hue: 198, glow: 55, depth: 8 },
   },
   learning: {
     docHtml:
@@ -364,6 +365,7 @@ function normalizeVaultState(raw: unknown): VaultState {
         const theme = parsed.settings?.theme;
         const clamp = (value: unknown, minimum: number, maximum: number, fallback: number) => typeof value === "number" && Number.isFinite(value) ? Math.max(minimum, Math.min(maximum, value)) : fallback;
         return {
+          mode: theme?.mode === "default" || theme?.mode === "tinted" || theme?.mode === "night" || theme?.mode === "light" ? theme.mode : "default",
           hue: clamp(theme?.hue, 0, 360, defaultVaultState.settings.theme.hue),
           glow: clamp(theme?.glow, 20, 100, defaultVaultState.settings.theme.glow),
           depth: clamp(theme?.depth, 0, 20, defaultVaultState.settings.theme.depth),
@@ -1160,7 +1162,7 @@ function App() {
   if (!isUnlocked) {
     return (
       <>
-        <main className="home-screen" aria-label="IO Vault home screen" style={themeStyle}>
+        <main className={`home-screen theme-${vaultState.settings.theme.mode}`} aria-label="IO Vault home screen" style={themeStyle}>
           <div className="orb orb-one" />
           <div className="orb orb-two" />
           <div className="orb orb-three" />
@@ -1185,7 +1187,7 @@ function App() {
 
   return (
     <>
-      <main className={`vault-dashboard nav-${isNavOpen ? "open" : "closed"}`} style={themeStyle}>
+      <main className={`vault-dashboard nav-${isNavOpen ? "open" : "closed"} theme-${vaultState.settings.theme.mode}`} style={themeStyle}>
         {/* Left nav: switch between Code, Learning, Career, Projects */}
         <aside className={`workspace-nav ${isNavOpen ? "open" : ""}`}>
           <button className="nav-toggle" type="button" onClick={() => setIsNavOpen((value) => !value)}>
@@ -1294,7 +1296,16 @@ function App() {
                   <label><span><strong>Accent shade</strong><small>{vaultState.settings.theme.hue}°</small></span><input aria-label="Theme accent shade" type="range" min="0" max="360" value={vaultState.settings.theme.hue} onChange={(event) => updateSettings({ theme: { ...vaultState.settings.theme, hue: Number(event.target.value) } })} /></label>
                   <label><span><strong>Ambient glow</strong><small>{vaultState.settings.theme.glow}%</small></span><input aria-label="Theme ambient glow" type="range" min="20" max="100" value={vaultState.settings.theme.glow} onChange={(event) => updateSettings({ theme: { ...vaultState.settings.theme, glow: Number(event.target.value) } })} /></label>
                   <label><span><strong>Surface depth</strong><small>{vaultState.settings.theme.depth}%</small></span><input aria-label="Theme surface depth" type="range" min="0" max="20" value={vaultState.settings.theme.depth} onChange={(event) => updateSettings({ theme: { ...vaultState.settings.theme, depth: Number(event.target.value) } })} /></label>
-                  <div className="theme-presets" role="group" aria-label="Theme presets">{[{ name: "IO Blue", hue: 198 }, { name: "Violet", hue: 265 }, { name: "Aurora", hue: 155 }, { name: "Solar", hue: 32 }, { name: "Rose", hue: 335 }].map((preset) => <button type="button" key={preset.name} className={vaultState.settings.theme.hue === preset.hue ? "active" : ""} onClick={() => updateSettings({ theme: { ...vaultState.settings.theme, hue: preset.hue } })}><span style={{ background: `hsl(${preset.hue} 82% 58%)` }} />{preset.name}</button>)}</div>
+                  <div className="theme-presets" role="group" aria-label="Theme presets">{[
+                    { name: "IO Blue", theme: { mode: "default" as const, hue: 198, glow: 55, depth: 8 } },
+                    { name: "Dark", theme: { mode: "tinted" as const, hue: 210, glow: 28, depth: 2 } },
+                    { name: "Night", theme: { mode: "night" as const, hue: vaultState.settings.theme.hue, glow: 24, depth: 0 } },
+                    { name: "Light", theme: { mode: "light" as const, hue: vaultState.settings.theme.hue, glow: 42, depth: 4 } },
+                    { name: "Violet", theme: { ...vaultState.settings.theme, mode: "tinted" as const, hue: 265 } },
+                    { name: "Aurora", theme: { ...vaultState.settings.theme, mode: "tinted" as const, hue: 155 } },
+                    { name: "Solar", theme: { ...vaultState.settings.theme, mode: "tinted" as const, hue: 32 } },
+                    { name: "Rose", theme: { ...vaultState.settings.theme, mode: "tinted" as const, hue: 335 } },
+                  ].map((preset) => <button type="button" key={preset.name} className={vaultState.settings.theme.mode === preset.theme.mode && vaultState.settings.theme.hue === preset.theme.hue && vaultState.settings.theme.glow === preset.theme.glow && vaultState.settings.theme.depth === preset.theme.depth ? "active" : ""} onClick={() => updateSettings({ theme: preset.theme })}><span style={{ background: preset.name === "Night" ? "#000" : preset.name === "Light" ? "#fff" : preset.name === "Dark" ? "#07101d" : `hsl(${preset.theme.hue} 82% 58%)` }} />{preset.name}</button>)}</div>
                   <button className="theme-reset" type="button" onClick={() => updateSettings({ theme: { ...defaultVaultState.settings.theme } })}><span aria-hidden="true">↺</span>Default <small>IO Blue</small></button>
                 </div>
               </div>

@@ -20,7 +20,7 @@
 | Data | SQLite user/workspace/code records, `localStorage` workspace cache, and bounded IndexedDB Code Vault cache |
 | Code Vault | Monaco, scratch and repository files, selected context, structured patch review/undo, and draft PR publication |
 | Write | Structured hierarchy, advanced typed collections, embedded Page cells, explicit column editing/sorting, keyboard traversal, normalized external paste, dismissible linked-page overlays, persisted column sizing, foreground row controls, compact filters, a toolbar-area hover control, recovery, rich editing, and explicit AI context |
-| Settings | Persisted Theme Mode with accent, glow, depth, curated presets, live preview, and a Default control for restoring IO Blue while preserving the animated visual system |
+| Settings | Persisted Theme Mode with tinted color tuning, subdued Dark, true-black Night, white Light, additional curated colors, live preview, and a Default control while preserving the animated visual system |
 | AI | Authenticated, rate-limited requests with bounded explicit context and content-free usage auditing |
 
 Current runtime detail is consolidated below; Code Vault feature architecture is owned by [IMP-1002](../implementation-system/implementations/IMP-1002-code-vault.md).
@@ -36,7 +36,7 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 | [IMP-1003 — Projects](../implementation-system/implementations/IMP-1003-projects.md) | Project cards and the full-page Rich Text and Markdown editor | Partial; typed table and graph modes remain planned |
 | [IMP-1004 — Learning / Mentor](../implementation-system/implementations/IMP-1004-learning-mentor.md) | Learning notes, connections, and weekly-focus workspace | Partial; Mentor Agent remains planned |
 | [IMP-1005 — Career](../implementation-system/implementations/IMP-1005-career.md) | Resume editing and AI-assisted drafting | Partial; Career Agent and platform integrations remain planned |
-| [IMP-1006 — Settings](../implementation-system/implementations/IMP-1006-settings.md) | Theme Mode with persisted shade, glow, depth, presets, live preview, and default restoration | Implemented v1 |
+| [IMP-1006 — Settings](../implementation-system/implementations/IMP-1006-settings.md) | Theme Mode with persisted tinted, Night, and Light contracts, shade/glow/depth controls, presets, live preview, and default restoration | Implemented v1 |
 
 ### Verified reviews and corrections
 

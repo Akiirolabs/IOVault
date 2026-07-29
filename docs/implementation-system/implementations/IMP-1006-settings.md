@@ -7,7 +7,7 @@
 | Code | Outcome | Review evidence | Status |
 |---|---|---|---|
 | `IMP-1006.1` | Theme Mode | — | Implemented and verified |
-| &emsp;↳ `IMP-1006.1.1` | Persist accent shade, ambient glow, and surface-depth preferences with IO Blue defaults | — | Implemented and verified |
+| &emsp;↳ `IMP-1006.1.1` | Persist color mode, accent shade, ambient glow, and surface-depth preferences with IO Blue defaults | — | Implemented and verified |
 | &emsp;↳ `IMP-1006.1.2` | Retain the existing animated gradients, moving grid, orbs, layout, typography, and interaction system while tuning color | — | Implemented and verified |
 | &emsp;↳ `IMP-1006.1.3` | Provide a minimal live studio with continuous controls, curated presets, and a clearly labeled Default button for restoring IO Blue | — | Implemented and verified |
 
@@ -17,11 +17,12 @@ Settings centralizes personal interface preferences without fragmenting the appl
 
 | Control | Range | Default | Behavior |
 |---|---:|---:|---|
+| Color mode | Default, Tinted, Night, Light | Default | Default restores the exact original blue CSS values; other modes use tunable contracts |
 | Accent shade | 0–360° | 198° | Tunes the shared color family |
 | Ambient glow | 20–100% | 55% | Adjusts animated light intensity |
 | Surface depth | 0–20% | 8% | Adjusts the tonal separation of dark surfaces |
-| Presets | IO Blue, Violet, Aurora, Solar, Rose | IO Blue | Applies a curated accent without changing layout or motion |
-| Default | One action | IO Blue | Restores 198° hue, 55% glow, and 8% surface depth |
+| Presets | IO Blue, Dark, Night, Light, Violet, Aurora, Solar, Rose | IO Blue | Applies a curated atmosphere without changing layout or motion; Night uses true black and Light uses white surfaces |
+| Default | One action | Original IO Blue | Restores the exact original gradients, glows, orbs, 198° control value, 55% glow, and 8% depth |
 
 Preferences remain user-scoped inside the existing workspace state and survive local caching and authenticated vault synchronization. Monaco syntax colors, document content, user images, data state, and page behavior are not rewritten by Theme Mode.
 
@@ -40,4 +41,4 @@ Preferences remain user-scoped inside the existing workspace state and survive l
 
 ## Limits
 
-Theme Mode v1 is a unified dark-theme color tuner. Independent per-component colors, light mode, shared theme publishing, scheduled themes, and operating-system synchronization remain outside this rollout.
+Theme Mode v1 provides unified tinted, true-black Night, and white Light contracts. Independent per-component colors, shared theme publishing, scheduled themes, and operating-system synchronization remain outside this rollout.
