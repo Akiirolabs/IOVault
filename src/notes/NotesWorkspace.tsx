@@ -36,6 +36,23 @@ function escapedDocument(text: string) {
   return `<p>${text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\r?\n/g, "<br>")}</p>`;
 }
 
+function cleanPastedHtml(html: string) {
+  const documentCopy = new DOMParser().parseFromString(html, "text/html");
+  documentCopy.querySelectorAll("script, style, link, meta, iframe, object, embed").forEach((element) => element.remove());
+  documentCopy.body.querySelectorAll<HTMLElement>("*").forEach((element) => {
+    element.removeAttribute("class");
+    element.removeAttribute("id");
+    for (const attribute of [...element.attributes]) {
+      if (attribute.name.toLowerCase().startsWith("on")) element.removeAttribute(attribute.name);
+    }
+    for (const property of Array.from(element.style)) {
+      if (property.startsWith("background")) element.style.removeProperty(property);
+    }
+    if (!element.getAttribute("style")?.trim()) element.removeAttribute("style");
+  });
+  return documentCopy.body.innerHTML;
+}
+
 function parseCsv(text: string) {
   const records: string[][] = [];
   let record: string[] = [];
@@ -173,8 +190,11 @@ function RichNoteEditor({ page, onChange }: { page: NotePage; onChange: (html: s
         data-placeholder="Start writing…"
         onInput={(event) => onChange(event.currentTarget.innerHTML)}
         onPaste={(event) => {
-          const editor = event.currentTarget;
-          window.setTimeout(() => onChange(editor.innerHTML), 0);
+          event.preventDefault();
+          const html = event.clipboardData.getData("text/html");
+          const text = event.clipboardData.getData("text/plain");
+          document.execCommand(html ? "insertHTML" : "insertText", false, html ? cleanPastedHtml(html) : text);
+          onChange(event.currentTarget.innerHTML);
         }}
       />
     </div>
@@ -499,7 +519,7 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
         <input aria-label={`Edit ${column.name} name`} value={column.name} onChange={(event) => updateColumn(column.id, { name: event.target.value })} />
         <select aria-label={`Edit ${column.name} type`} value={column.type} onChange={(event) => updateColumn(column.id, { type: event.target.value as NoteColumnType })}>{COLUMN_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
         {column.type === "select" && <div className="notes-status-options"><div>{column.options?.map((option) => <span key={option}>{option}<button type="button" aria-label={`Remove ${option} from ${column.name}`} onClick={() => updateColumn(column.id, { options: column.options?.filter((item) => item !== option) })}>×</button></span>)}</div><input aria-label={`Add option to ${column.name} column`} placeholder="Type an option and press Enter" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); commitOption(event.currentTarget.value, column.options ?? [], (options) => updateColumn(column.id, { options })); event.currentTarget.value = ""; } }} /></div>}
-        {column.type === "formula" && <input aria-label={`Formula for ${column.name}`} value={column.formula ?? ""} placeholder="Example: {Price} * {Quantity}" onChange={(event) => updateColumn(column.id, { formula: event.target.value })} />}
+        {column.type === "formula" && <div className="notes-formula-config"><input aria-label={`Formula for ${column.name}`} value={column.formula ?? ""} placeholder="Example: {Price} * {Quantity}" onChange={(event) => updateColumn(column.id, { formula: event.target.value })} /><small>Use numeric column names inside braces. Available: {collection.columns.filter((item) => item.id !== column.id && ["number", "currency", "percent"].includes(item.type)).map((item) => `{${item.name}}`).join(", ") || "add a numeric column first"}.</small></div>}
       </section>)(collection.columns.find((column) => column.id === editingColumnId)!)}
       <div className="notes-table-scroll">
         <table className="notes-table">
@@ -548,7 +568,7 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
           ) : column.type === "relation" ? (
             <select data-column-id={column.id} aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onKeyDown={(event) => moveToNextRow(event, rowIndex, column.id)} onChange={(event) => updateCell(row.id, column.id, event.target.value)}><option value="">Link page…</option>{pages.filter((page) => !page.archived).map((page) => <option key={page.id} value={page.id}>{page.title}</option>)}</select>
           ) : column.type === "formula" ? (
-            <output className="notes-formula-cell" aria-label={`${column.name} for row ${rowIndex + 1}`}>{formulaValue(row, column)}</output>
+            <div className="notes-formula-property"><output className="notes-formula-cell" aria-label={`${column.name} for row ${rowIndex + 1}`}>{formulaValue(row, column)}</output>{formulaValue(row, column) === "—" && <button type="button" onClick={() => setEditingColumnId(column.id)}>Configure formula</button>}</div>
           ) : column.type === "currency" || column.type === "percent" ? (
             <label className="notes-number-property"><span aria-hidden="true">{column.type === "currency" ? "$" : "%"}</span><input data-column-id={column.id} type="number" step="0.01" aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onKeyDown={(event) => moveToNextRow(event, rowIndex, column.id)} onChange={(event) => updateCell(row.id, column.id, event.target.value)} /></label>
           ) : (

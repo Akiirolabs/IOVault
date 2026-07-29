@@ -181,6 +181,8 @@ describe("Notes workspace", () => {
     expect(screen.getByRole("textbox", { name: "Owner email for row 1" })).toHaveAttribute("type", "email");
     expect(screen.getByRole("button", { name: "Create Details page for row 1" })).toBeInTheDocument();
     expect(screen.getByRole("status", { name: "Total for row 1" })).toHaveTextContent("—");
+    fireEvent.click(screen.getByRole("button", { name: "Configure formula" }));
+    expect(screen.getByRole("region", { name: "Edit Total column" })).toHaveTextContent("{Estimate}");
     expect(screen.getByRole("combobox", { name: "Related for row 1" })).toHaveTextContent("Imported writing");
 
     fireEvent.change(screen.getByRole("textbox", { name: "Name for row 1" }), { target: { value: "Typed row" } });
@@ -196,8 +198,6 @@ describe("Notes workspace", () => {
     expect(screen.getByRole("combobox", { name: "Status for row 1" })).toHaveValue("Done");
     expect(screen.getByRole("textbox", { name: "Reference for row 1" })).toHaveValue("https://example.com");
 
-    fireEvent.click(screen.getByRole("button", { name: "Column actions for Total" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Edit column" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Formula for Total" }), { target: { value: "{Estimate} * 2" } });
     expect(screen.getByRole("status", { name: "Total for row 1" })).toHaveTextContent("25");
 
@@ -253,6 +253,20 @@ describe("Notes workspace", () => {
 
     fireEvent.focus(editor);
     expect(screen.queryByRole("toolbar", { name: "Note formatting" })).not.toBeInTheDocument();
+  });
+
+  it("removes source-page backgrounds while preserving pasted text formatting", () => {
+    const execCommand = vi.fn().mockReturnValue(true);
+    Object.defineProperty(document, "execCommand", { configurable: true, value: execCommand });
+    render(<Harness />);
+    const editor = screen.getByRole("textbox", { name: "Imported writing content" });
+    fireEvent.paste(editor, { clipboardData: { getData: (type: string) => type === "text/html"
+      ? '<div class="source" id="copied" style="background: rgb(0,0,0); color: red" onclick="bad()"><strong>Important</strong> text<script>bad()</script></div>'
+      : "Important text" } });
+    expect(execCommand).toHaveBeenCalledWith("insertHTML", false, '<div style="color: red;"><strong>Important</strong> text</div>');
+
+    fireEvent.paste(editor, { clipboardData: { getData: (type: string) => type === "text/plain" ? "Plain text" : "" } });
+    expect(execCommand).toHaveBeenCalledWith("insertText", false, "Plain text");
   });
 
   it("creates and opens a full page from a Page column cell", () => {

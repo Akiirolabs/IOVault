@@ -30,7 +30,7 @@ describe("authenticated API fetch", () => {
       projects: { blocks: [] },
       write: createInitialWriteState("<p>private writing</p>"),
       github: { repo: "private/repo" },
-      settings: { navIcons: { code: "code", write: "pencil", learning: "cap", career: "briefcase", projects: "folder" } },
+      settings: { navIcons: { code: "code", write: "pencil", learning: "cap", career: "briefcase", projects: "folder", settings: "cog" }, theme: { hue: 198, glow: 55, depth: 8 } },
     } as VaultState;
     const context = buildAgentContext("learning", state);
     const serialized = JSON.stringify(context);
@@ -39,5 +39,6 @@ describe("authenticated API fetch", () => {
     expect(serialized).not.toContain("private resume");
     expect(serialized).not.toContain("private writing");
     expect(serialized).not.toContain("private/repo");
+    expect(buildAgentContext("settings", state)).toEqual({ scope: "settings", data: { theme: { hue: 198, glow: 55, depth: 8 } } });
   });
 });

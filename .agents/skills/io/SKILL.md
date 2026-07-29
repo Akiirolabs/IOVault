@@ -26,7 +26,7 @@ Route work through:
 | Reliability, persistence, performance, architecture, maintainability, testing infrastructure, UI systems, or operations evidence | `SYS` baseline with one owning `DBG` |
 | Documentation-only maintenance | No work code |
 
-Permanent implementations are Write `IMP-1001`, Code Vault `IMP-1002`, Projects `IMP-1003`, Learning/Mentor `IMP-1004`, and Career `IMP-1005`. Number their rollouts and changes beneath the matching parent.
+Permanent implementations are Write `IMP-1001`, Code Vault `IMP-1002`, Projects `IMP-1003`, Learning/Mentor `IMP-1004`, Career `IMP-1005`, and Settings `IMP-1006`. Number their rollouts and changes beneath the matching parent.
 
 Link every FTR to the exact IMP child or sub-code whose behavior it reviews, not only to the page parent. Add the FTR as linked review evidence in that IMP rollout table. Reuse an existing sub-code when it already owns the behavior; create a deeper code such as `IMP-1002.1.1.1` only when the work is a distinct nested implementation outcome with its own scope and acceptance criteria. Code Vault may need this depth for repository, editor, assistant, patch-review, or publishing capabilities, but depth follows ownership rather than page preference.
 

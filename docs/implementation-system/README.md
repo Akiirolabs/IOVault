@@ -11,6 +11,7 @@ IMP owns page-level product outcomes moving the current testing state toward [DP
 | [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1` full-page editor implemented | `IMP-1003.2` typed table |
 | [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | `IMP-1004.1` current workspace partial | `IMP-1004.2` controlled Mentor Agent |
 | [IMP-1005](implementations/IMP-1005-career.md) | Career | `IMP-1005.1` current workspace partial | `IMP-1005.2` Career Agent Review mode |
+| [IMP-1006](implementations/IMP-1006-settings.md) | Settings | `IMP-1006.1` Theme Mode implemented | Future settings remain unassigned until planned |
 
 Each page owns its hierarchy: `IMP-1001.*` never describes Code Vault, and `IMP-1002.*` never describes another page. A rollout uses `.1`; a distinct capability inside that rollout uses `.1.1`; a separately scoped nested capability may use `.1.1.1`. Rollout rows such as `.1` and `.2` remain unindented and use no arrow. Every deeper numeric segment adds one visible indentation level and a `↳` marker. When a parent outcome is decomposed, matched numbered markers identify the parent phrase owned by each deeper row without relying on color.
 
@@ -18,7 +19,7 @@ Each page owns its hierarchy: `IMP-1001.*` never describes Code Vault, and `IMP-
 
 ```mermaid
 flowchart LR
-  Current["DPL-1002 · Version 1.0"] --> IMP["IMP-1001–1005"]
+  Current["DPL-1002 · Version 1.0"] --> IMP["IMP-1001–1006"]
   IMP --> Review["FTR, SEC-1.0, and SYS-1.0 evidence"]
   Review --> Verify["Corrections and verification in owning records"]
   Verify --> Next["DPL-1003 · planned testing state"]
@@ -34,6 +35,7 @@ flowchart LR
 | IMP-1003 Projects | SYS persistence/sync; SEC rich-text and dependency safety |
 | IMP-1004 Mentor | SEC validation/limits; SYS persistence and modular boundaries |
 | IMP-1005 Career | SEC credentials/validation; SYS persistence and modular boundaries |
+| IMP-1006 Settings | SYS workspace persistence and shared UI-system boundaries |
 
 See [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) and [SYS-1.0](../audit-system/SYS-1.0-system-baseline.md). IMP files link to findings but never duplicate their status.
 
@@ -49,6 +51,8 @@ See [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) and [SYS-1.0](../aud
 
 | Date | Work | Evidence |
 |---|---|---|
+| 2026-07-29 | IMP-1006.1 · Settings Theme Mode | 50 tests, production build, signed-in live/persist/restore acceptance, retained `rotateGlow` motion, and zero console errors |
+| 2026-07-29 | FTR-1006 · IMP-1001.1.2.1/1001.1.3/1001.1.3.1 | 50 tests, production build, corrected signed-in acceptance, guided Formula setup, and zero console errors |
 | 2026-07-28 | FTR-1004 · IMP-1001.1.3/1001.2.2/1001.2.4 | 48 tests, production build, signed-in control rendering, and clean browser console |
 | 2026-07-27 | FTR-1005 · IMP-1001.1.2.1 | 46 tests, production build, linked-page coverage, and signed-in menu/toolbar acceptance |
 | 2026-07-26 | FTR-1003 · IMP-1001.1.3 | 46 tests, production build, authenticated persistence, and signed-in table-menu acceptance |

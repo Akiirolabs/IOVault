@@ -4,7 +4,7 @@
  * Flow: unlock screen → dashboard with workspace pages (Code, Write, Learning, Career, Projects).
  * All workspace data persists to localStorage. AI features call POST /api/agent (see server/index.js).
  */
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import ReactMarkdown from "react-markdown";
 import type { IconType } from "react-icons";
 import { FaLinkedin } from "react-icons/fa";
@@ -45,7 +45,7 @@ import { activeNoteContext, createInitialWriteState, normalizeWriteState, type W
 
 // --- Types: shape of each workspace page and full saved state ---
 
-type PageKey = "code" | "write" | "learning" | "career" | "projects";
+type PageKey = "code" | "write" | "learning" | "career" | "projects" | "settings";
 type Status = "Planned" | "In progress" | "Done";
 
 type IconId =
@@ -174,6 +174,11 @@ export type VaultState = {
   };
   settings: {
     navIcons: Record<PageKey, IconId>;
+    theme: {
+      hue: number;
+      glow: number;
+      depth: number;
+    };
   };
 };
 
@@ -215,6 +220,7 @@ export function buildAgentContext(page: PageKey, state: VaultState): AgentContex
       omittedProjects: Math.max(0, state.projects.blocks.length - 20),
     } };
   }
+  if (page === "settings") return { scope: page, data: { theme: state.settings.theme } };
   const noteContext = activeNoteContext(state.write);
   return { scope: page, data: {
     ...noteContext,
@@ -236,6 +242,7 @@ const navItems: NavItem[] = [
   { key: "learning", label: "Learning", defaultIcon: SiCoursera },
   { key: "career", label: "Career", defaultIcon: FaLinkedin },
   { key: "projects", label: "Projects", defaultIcon: SiNotion },
+  { key: "settings", label: "Settings", defaultIcon: HiOutlineCog6Tooth },
 ];
 
 /** localStorage key — entire VaultState is JSON-serialized here on every edit */
@@ -273,7 +280,9 @@ const defaultVaultState: VaultState = {
       learning: "cap",
       career: "briefcase",
       projects: "folder",
+      settings: "cog",
     },
+    theme: { hue: 198, glow: 55, depth: 8 },
   },
   learning: {
     docHtml:
@@ -351,6 +360,15 @@ function normalizeVaultState(raw: unknown): VaultState {
         typeof parsed.settings?.navIcons === "object" && parsed.settings?.navIcons
           ? { ...defaultVaultState.settings.navIcons, ...(parsed.settings.navIcons as Record<string, unknown>) }
           : defaultVaultState.settings.navIcons,
+      theme: (() => {
+        const theme = parsed.settings?.theme;
+        const clamp = (value: unknown, minimum: number, maximum: number, fallback: number) => typeof value === "number" && Number.isFinite(value) ? Math.max(minimum, Math.min(maximum, value)) : fallback;
+        return {
+          hue: clamp(theme?.hue, 0, 360, defaultVaultState.settings.theme.hue),
+          glow: clamp(theme?.glow, 20, 100, defaultVaultState.settings.theme.glow),
+          depth: clamp(theme?.depth, 0, 20, defaultVaultState.settings.theme.depth),
+        };
+      })(),
     },
     projects: {
       blocks: Array.isArray(parsed.projects?.blocks)
@@ -704,6 +722,11 @@ function App() {
   const activeNavIconId = vaultState.settings.navIcons[activeNavItem.key];
   const ActivePageIcon = (activeNavIconId && ICONS_BY_ID[activeNavIconId]) || activeNavItem.defaultIcon;
   const openProject = vaultState.projects.blocks.find((block) => block.id === openProjectId) || null;
+  const themeStyle = {
+    "--theme-hue": vaultState.settings.theme.hue,
+    "--theme-glow": `${vaultState.settings.theme.glow}%`,
+    "--theme-depth": `${vaultState.settings.theme.depth}%`,
+  } as CSSProperties;
   const projectStats = useMemo(() => {
     const active = vaultState.projects.blocks.filter((block) => block.status === "In progress").length;
     const done = vaultState.projects.blocks.filter((block) => block.status === "Done").length;
@@ -1137,7 +1160,7 @@ function App() {
   if (!isUnlocked) {
     return (
       <>
-        <main className="home-screen" aria-label="IO Vault home screen">
+        <main className="home-screen" aria-label="IO Vault home screen" style={themeStyle}>
           <div className="orb orb-one" />
           <div className="orb orb-two" />
           <div className="orb orb-three" />
@@ -1162,7 +1185,7 @@ function App() {
 
   return (
     <>
-      <main className={`vault-dashboard nav-${isNavOpen ? "open" : "closed"}`}>
+      <main className={`vault-dashboard nav-${isNavOpen ? "open" : "closed"}`} style={themeStyle}>
         {/* Left nav: switch between Code, Learning, Career, Projects */}
         <aside className={`workspace-nav ${isNavOpen ? "open" : ""}`}>
           <button className="nav-toggle" type="button" onClick={() => setIsNavOpen((value) => !value)}>
@@ -1256,6 +1279,26 @@ function App() {
               includeAssistantContext={includeAgentContext}
               onAssistantContextChange={setIncludeAgentContext}
             />
+          )}
+
+          {activePage === "settings" && (
+            <section className="settings-workspace" aria-label="Theme settings">
+              <header className="settings-intro">
+                <p className="kicker">Appearance</p>
+                <h2>Theme Mode</h2>
+                <p>Tune the color atmosphere while preserving IO Vault’s motion, depth, and interface design.</p>
+              </header>
+              <div className="theme-studio editor-panel">
+                <div className="theme-preview" aria-hidden="true"><span /><span /><span /></div>
+                <div className="theme-controls">
+                  <label><span><strong>Accent shade</strong><small>{vaultState.settings.theme.hue}°</small></span><input aria-label="Theme accent shade" type="range" min="0" max="360" value={vaultState.settings.theme.hue} onChange={(event) => updateSettings({ theme: { ...vaultState.settings.theme, hue: Number(event.target.value) } })} /></label>
+                  <label><span><strong>Ambient glow</strong><small>{vaultState.settings.theme.glow}%</small></span><input aria-label="Theme ambient glow" type="range" min="20" max="100" value={vaultState.settings.theme.glow} onChange={(event) => updateSettings({ theme: { ...vaultState.settings.theme, glow: Number(event.target.value) } })} /></label>
+                  <label><span><strong>Surface depth</strong><small>{vaultState.settings.theme.depth}%</small></span><input aria-label="Theme surface depth" type="range" min="0" max="20" value={vaultState.settings.theme.depth} onChange={(event) => updateSettings({ theme: { ...vaultState.settings.theme, depth: Number(event.target.value) } })} /></label>
+                  <div className="theme-presets" role="group" aria-label="Theme presets">{[{ name: "IO Blue", hue: 198 }, { name: "Violet", hue: 265 }, { name: "Aurora", hue: 155 }, { name: "Solar", hue: 32 }, { name: "Rose", hue: 335 }].map((preset) => <button type="button" key={preset.name} className={vaultState.settings.theme.hue === preset.hue ? "active" : ""} onClick={() => updateSettings({ theme: { ...vaultState.settings.theme, hue: preset.hue } })}><span style={{ background: `hsl(${preset.hue} 82% 58%)` }} />{preset.name}</button>)}</div>
+                  <button className="theme-reset" type="button" onClick={() => updateSettings({ theme: { ...defaultVaultState.settings.theme } })}><span aria-hidden="true">↺</span>Default <small>IO Blue</small></button>
+                </div>
+              </div>
+            </section>
           )}
 
           {/* Page: Learning — docs, course connections drawer, focus calendar */}

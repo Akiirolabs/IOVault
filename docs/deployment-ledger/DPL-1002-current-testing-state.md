@@ -19,7 +19,8 @@
 | Authentication | JWT-backed HttpOnly SameSite cookie with CSRF protection; bearer compatibility for non-browser clients |
 | Data | SQLite user/workspace/code records, `localStorage` workspace cache, and bounded IndexedDB Code Vault cache |
 | Code Vault | Monaco, scratch and repository files, selected context, structured patch review/undo, and draft PR publication |
-| Write | Structured hierarchy, advanced typed collections, embedded Page cells, explicit column editing/sorting, keyboard traversal, formatted paste persistence, dismissible linked-page overlays, persisted column sizing, foreground row controls, compact filters, a toolbar-area hover control, recovery, rich editing, and explicit AI context |
+| Write | Structured hierarchy, advanced typed collections, embedded Page cells, explicit column editing/sorting, keyboard traversal, normalized external paste, dismissible linked-page overlays, persisted column sizing, foreground row controls, compact filters, a toolbar-area hover control, recovery, rich editing, and explicit AI context |
+| Settings | Persisted Theme Mode with accent, glow, depth, curated presets, live preview, and a Default control for restoring IO Blue while preserving the animated visual system |
 | AI | Authenticated, rate-limited requests with bounded explicit context and content-free usage auditing |
 
 Current runtime detail is consolidated below; Code Vault feature architecture is owned by [IMP-1002](../implementation-system/implementations/IMP-1002-code-vault.md).
@@ -35,6 +36,7 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 | [IMP-1003 — Projects](../implementation-system/implementations/IMP-1003-projects.md) | Project cards and the full-page Rich Text and Markdown editor | Partial; typed table and graph modes remain planned |
 | [IMP-1004 — Learning / Mentor](../implementation-system/implementations/IMP-1004-learning-mentor.md) | Learning notes, connections, and weekly-focus workspace | Partial; Mentor Agent remains planned |
 | [IMP-1005 — Career](../implementation-system/implementations/IMP-1005-career.md) | Resume editing and AI-assisted drafting | Partial; Career Agent and platform integrations remain planned |
+| [IMP-1006 — Settings](../implementation-system/implementations/IMP-1006-settings.md) | Theme Mode with persisted shade, glow, depth, presets, live preview, and default restoration | Implemented v1 |
 
 ### Verified reviews and corrections
 
@@ -45,7 +47,7 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 | [FTR-1003 — Write table column menu review](../feature-review-system/reviews/FTR-1003-write-table-column-menu-review.md) | Target-specific column and row menus, contextual subrow controls, persisted row highlighting, and confirmed destructive actions | 7/7 verified |
 | [FTR-1004 — Write table follow-up review](../feature-review-system/reviews/FTR-1004-write-table-follow-up-review.md) | Linked-page overlays, consolidated foreground row actions, persisted column sizing, expanded icons/imports, individual status options, and compact filters | 11/11 verified |
 | [FTR-1005 — Write plus menu review](../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) | Functional `+` formatting menu, toolbar-area hover activation, embedded-page availability, and foreground anchoring | Partial — 3/4 verified; advanced insertion blocks remain open |
-| [FTR-1006 — Write toolbar and table review](../feature-review-system/reviews/FTR-1006-write-toolbar-and-table-review.md) | Hover-bound toolbar, table keyboard/clipboard behavior, dismissible sticky linked-page controls, embedded Page cells, explicit column actions, and advanced property types | Verified — 12/12 |
+| [FTR-1006 — Write toolbar and table review](../feature-review-system/reviews/FTR-1006-write-toolbar-and-table-review.md) | Hover-bound toolbar, normalized external paste, table keyboard behavior, dismissible sticky linked-page controls, embedded Page cells, guided Formula configuration, explicit column actions, and advanced property types | Verified — 14/14 |
 | [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) | Authenticated AI access, bounded explicit context, and HttpOnly cookie sessions through DBG-1002–1004 | Three verified; five security findings remain open |
 | [SYS-1.0](../audit-system/SYS-1.0-system-baseline.md) | Responsive workspace behavior and reliable typed table-column controls through DBG-1001 and DBG-1017 | Two verified; seven system findings remain open |
 
@@ -53,8 +55,8 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 
 | Gate | Result |
 |---|---|
-| Tests | `npm test`: 10 files and 48 tests passed on 2026-07-28 |
-| Production build | `npm run build`: TypeScript and Vite production build passed on 2026-07-28 |
+| Tests | `npm test`: 10 files and 50 tests passed on 2026-07-29 |
+| Production build | `npm run build`: TypeScript and Vite production build passed on 2026-07-29 |
 | Database | SQLite schema auto-initializes; whole-workspace JSON and conflict handling remain known limitations |
 | Environment/secrets | Local environment supported; production JWT fail-closed validation remains open in DBG-1005 |
 | Monitoring | Application-level production monitoring is not established |
