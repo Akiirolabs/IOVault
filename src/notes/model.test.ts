@@ -47,6 +47,11 @@ describe("Notes model", () => {
           { id: "check", name: "Check", type: "checkbox" },
           { id: "status", name: "Status", type: "select", options: ["Todo", "Done"] },
           { id: "url", name: "URL", type: "url" },
+          { id: "currency", name: "Currency", type: "currency" },
+          { id: "percent", name: "Percent", type: "percent" },
+          { id: "email", name: "Email", type: "email" },
+          { id: "formula", name: "Formula", type: "formula", formula: "{Number} * 2" },
+          { id: "relation", name: "Relation", type: "relation" },
         ],
         rows: [{ id: "row", cells: { text: "A", number: "2", date: "2026-07-23", check: true, status: "Done", url: "https://example.com" } }],
         view: "done",
@@ -57,10 +62,11 @@ describe("Notes model", () => {
     write.activePageId = "typed-table";
 
     const normalized = normalizeWriteState(JSON.parse(JSON.stringify(write)));
-    expect(normalized.pages[0].collection?.columns.map((column) => column.type)).toEqual(["text", "number", "date", "checkbox", "select", "url"]);
+    expect(normalized.pages[0].collection?.columns.map((column) => column.type)).toEqual(["text", "number", "date", "checkbox", "select", "url", "currency", "percent", "email", "formula", "relation"]);
     expect(normalized.pages[0].collection?.columns[4].options).toEqual(["Todo", "Done"]);
     expect(normalized.pages[0].collection?.rows[0].cells.status).toBe("Done");
     expect(normalized.pages[0].collection?.sortColumnId).toBe("number");
+    expect(normalized.pages[0].collection?.columns[9].formula).toBe("{Number} * 2");
   });
 
   it("preserves supported row highlight colors and removes invalid values", () => {
@@ -132,10 +138,11 @@ describe("Notes model", () => {
 
   it("preserves Page columns and collapsed page sections", () => {
     const write = createInitialWriteState();
-    write.pages[0] = { ...write.pages[0], kind: "collection", collection: { columns: [{ id: "page", name: "Page", type: "page" }], rows: [{ id: "row", cells: { page: "linked-page" } }], view: "all" } };
+    write.pages[0] = { ...write.pages[0], kind: "collection", collection: { columns: [{ id: "page", name: "Page", type: "page" }], rows: [{ id: "row", cells: {} }], pageCells: { "row:page": { title: "Embedded", docHtml: "<p>Saved</p>", updatedAt: "2026-07-29T00:00:00.000Z" } }, view: "all" } };
     write.collapsedPageIds = [write.pages[0].id, "missing"];
     const normalized = normalizeWriteState(JSON.parse(JSON.stringify(write)));
     expect(normalized.pages[0].collection?.columns[0].type).toBe("page");
+    expect(normalized.pages[0].collection?.pageCells?.["row:page"].docHtml).toBe("<p>Saved</p>");
     expect(normalized.collapsedPageIds).toEqual([write.pages[0].id]);
   });
 });

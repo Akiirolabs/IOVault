@@ -1,10 +1,11 @@
-export type NoteColumnType = "text" | "number" | "date" | "checkbox" | "select" | "url" | "page";
+export type NoteColumnType = "text" | "number" | "currency" | "percent" | "date" | "email" | "checkbox" | "select" | "url" | "page" | "formula" | "relation";
 
 export type NoteColumn = {
   id: string;
   name: string;
   type: NoteColumnType;
   options?: string[];
+  formula?: string;
   width?: number;
 };
 
@@ -20,6 +21,7 @@ export type NoteRowHighlight = "cyan" | "green" | "yellow" | "red" | "purple";
 export type NoteCollection = {
   columns: NoteColumn[];
   rows: NoteCollectionRow[];
+  pageCells?: Record<string, { title: string; docHtml: string; updatedAt: string }>;
   collapsedRowIds?: string[];
   view: "all" | "open" | "done";
   sortColumnId?: string;
@@ -106,7 +108,7 @@ function isNotePage(value: unknown): value is NotePage {
     && typeof page.docHtml === "string";
 }
 
-const NOTE_COLUMN_TYPES = new Set<NoteColumnType>(["text", "number", "date", "checkbox", "select", "url", "page"]);
+const NOTE_COLUMN_TYPES = new Set<NoteColumnType>(["text", "number", "currency", "percent", "date", "email", "checkbox", "select", "url", "page", "formula", "relation"]);
 const NOTE_ROW_HIGHLIGHTS = new Set<NoteRowHighlight>(["cyan", "green", "yellow", "red", "purple"]);
 
 function normalizeCollection(raw: unknown): NoteCollection | undefined {
@@ -123,6 +125,7 @@ function normalizeCollection(raw: unknown): NoteCollection | undefined {
       name: candidate.name,
       type: candidate.type as NoteColumnType,
       ...(candidate.type === "select" ? { options: Array.isArray(candidate.options) ? candidate.options.filter((option): option is string => typeof option === "string") : [] } : {}),
+      ...(candidate.type === "formula" && typeof candidate.formula === "string" ? { formula: candidate.formula.slice(0, 500) } : {}),
       ...(typeof candidate.width === "number" && candidate.width >= 120 && candidate.width <= 720 ? { width: candidate.width } : {}),
     }];
   });
@@ -164,10 +167,19 @@ function normalizeCollection(raw: unknown): NoteCollection | undefined {
     : [];
 
   const sortColumnId = typeof value.sortColumnId === "string" && columnIds.has(value.sortColumnId) ? value.sortColumnId : undefined;
+  const pageCells = value.pageCells && typeof value.pageCells === "object"
+    ? Object.fromEntries(Object.entries(value.pageCells).flatMap(([key, page]) => {
+      if (!page || typeof page !== "object") return [];
+      const candidate = page as { title?: unknown; docHtml?: unknown; updatedAt?: unknown };
+      if (typeof candidate.title !== "string" || typeof candidate.docHtml !== "string") return [];
+      return [[key, { title: candidate.title, docHtml: candidate.docHtml, updatedAt: typeof candidate.updatedAt === "string" ? candidate.updatedAt : INITIAL_TIMESTAMP }]];
+    }))
+    : {};
 
   return {
     columns,
     rows,
+    ...(Object.keys(pageCells).length ? { pageCells } : {}),
     ...(collapsedRowIds.length ? { collapsedRowIds } : {}),
     view: value.view === "open" || value.view === "done" ? value.view : "all",
     ...(sortColumnId ? { sortColumnId, sortDirection: value.sortDirection === "desc" ? "desc" as const : "asc" as const } : {}),

@@ -15,16 +15,16 @@
 
 | Finding | Observed requirement | Correction | Status |
 |---|---|---|---|
-| `FTR-1005.1` | The note page needs a `+` menu covering Basic, Layout, Media, and Math/Code insertion categories | Added a functional first release containing text styles, formatting, lists, quote, code, clear formatting, and history; additional block types remain open | Partial |
-| `FTR-1005.1.1` | Formatting controls should live in the `+` menu and also appear at the top only while the editor is hovered or keyboard-focused | Added a shared command model, hover/focus top toolbar, and `+` formatting menu without exposing unsupported actions | ✅ Verified |
-| `FTR-1005.2` | The same `+` control should remain available when a note is opened from a table Page column | Kept the control inside the shared note editor used by linked Page cells | ✅ Verified |
-| `FTR-1005.3` | The dropdown should remain beside the `+` trigger and above surrounding content | Anchored the menu to the trigger inside a sticky foreground control layer with bounded scrolling | ✅ Verified |
+| &emsp;`FTR-1005.1` | The note page needs a `+` menu covering Basic, Layout, Media, and Math/Code insertion categories | Added a functional first release containing text styles, formatting, lists, quote, code, clear formatting, and history; additional block types remain open | Partial |
+| &emsp;&emsp;↳ `FTR-1005.1.1` | Formatting controls should live in the `+` menu and appear at the top only while the dedicated toolbar area is hovered | Added a shared command model, toolbar-area hover activation, and `+` formatting menu without exposing unsupported actions; [FTR-1006](FTR-1006-write-toolbar-and-table-review.md) corrected the activation boundary | ✅ Verified |
+| &emsp;`FTR-1005.2` | The same `+` control should remain available when a note is opened from a table Page column | Kept the control inside the shared note editor used by linked Page cells | ✅ Verified |
+| &emsp;`FTR-1005.3` | The dropdown should remain beside the `+` trigger and above surrounding content | Anchored the menu to the trigger inside a sticky foreground control layer with bounded scrolling | ✅ Verified |
 
 ## Verification
 
 | Gate | Evidence | Result |
 |---|---|---|
-| Component behavior | The toolbar is absent initially, the `+` menu exposes all supported commands, formatting executes, hover and focus reveal the top toolbar, Escape dismisses the menu, and linked Page notes retain the control | Passed 2026-07-27 |
+| Component behavior | The toolbar is absent initially, the `+` menu exposes all supported commands, formatting executes, only toolbar-area hover reveals the top controls, Escape dismisses the menu, and embedded Page content retains the control | Passed; corrected acceptance verified 2026-07-29 |
 | Repository suite | `npm test` completed with 10 files and 46 tests passing | Passed 2026-07-27 |
 | Production build | TypeScript and Vite production build completed successfully | Passed 2026-07-27 |
 | Signed-in workflow | The menu replaced the top toolbar while open, remained left-aligned 13 pixels below the trigger at z-index 70, closed after formatting, and produced no console warnings or errors | Passed 2026-07-27 |

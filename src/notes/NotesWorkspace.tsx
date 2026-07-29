@@ -127,14 +127,8 @@ function RichNoteEditor({ page, onChange }: { page: NotePage; onChange: (html: s
     <div
       ref={shellRef}
       className="notes-rich-editor-shell"
-      onMouseEnter={() => setShowHoverToolbar(true)}
-      onMouseLeave={() => { if (!showFormatMenu) setShowHoverToolbar(false); }}
-      onFocusCapture={() => setShowHoverToolbar(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null) && !showFormatMenu) setShowHoverToolbar(false);
-      }}
     >
-      <div className="notes-editor-controls">
+      <div className="notes-editor-controls" onMouseEnter={() => setShowHoverToolbar(true)} onMouseLeave={() => { if (!showFormatMenu) setShowHoverToolbar(false); }} onFocusCapture={() => setShowHoverToolbar(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null) && !showFormatMenu) setShowHoverToolbar(false); }}>
         <button
           type="button"
           className="notes-format-add"
@@ -178,6 +172,10 @@ function RichNoteEditor({ page, onChange }: { page: NotePage; onChange: (html: s
         aria-multiline="true"
         data-placeholder="Start writing…"
         onInput={(event) => onChange(event.currentTarget.innerHTML)}
+        onPaste={(event) => {
+          const editor = event.currentTarget;
+          window.setTimeout(() => onChange(editor.innerHTML), 0);
+        }}
       />
     </div>
   );
@@ -186,11 +184,16 @@ function RichNoteEditor({ page, onChange }: { page: NotePage; onChange: (html: s
 const COLUMN_TYPE_OPTIONS: Array<{ value: NoteColumnType; label: string }> = [
   { value: "text", label: "Text" },
   { value: "number", label: "Number" },
+  { value: "currency", label: "Currency" },
+  { value: "percent", label: "Percent" },
   { value: "date", label: "Date" },
   { value: "checkbox", label: "Checkbox" },
   { value: "select", label: "Select / status" },
+  { value: "email", label: "Email" },
   { value: "url", label: "URL" },
   { value: "page", label: "Page" },
+  { value: "formula", label: "Formula" },
+  { value: "relation", label: "Relation" },
 ];
 
 const ROW_HIGHLIGHT_OPTIONS: Array<{ value: NoteRowHighlight; label: string }> = [
@@ -203,14 +206,14 @@ const ROW_HIGHLIGHT_OPTIONS: Array<{ value: NoteRowHighlight; label: string }> =
 
 function normalizeCellForType(value: string | boolean | undefined, column: NoteColumn) {
   if (column.type === "checkbox") return value === true;
-  if (column.type === "page") return "";
+  if (column.type === "page" || column.type === "relation" || column.type === "formula") return "";
   const text = typeof value === "string" ? value : "";
   if (column.type === "select" && column.options?.length && !column.options.includes(text)) return "";
   return text;
 }
 
 function compareCells(a: string | boolean | undefined, b: string | boolean | undefined, column: NoteColumn) {
-  if (column.type === "number") {
+  if (["number", "currency", "percent", "formula"].includes(column.type)) {
     const left = Number(a);
     const right = Number(b);
     if (!Number.isNaN(left) && !Number.isNaN(right)) return left - right;
@@ -219,7 +222,7 @@ function compareCells(a: string | boolean | undefined, b: string | boolean | und
   return String(a ?? "").localeCompare(String(b ?? ""), undefined, { numeric: column.type === "date" });
 }
 
-function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpenPage }: { collection: NoteCollection; pages: NotePage[]; onChange: (collection: NoteCollection) => void; onCreatePageCell: (rowId: string, columnId: string) => void; onOpenPage: (pageId: string) => void }) {
+function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpenPage }: { collection: NoteCollection; pages: NotePage[]; onChange: (collection: NoteCollection) => void; onCreatePageCell: (rowId: string, columnId: string) => void; onOpenPage: (rowId: string, columnId: string) => void }) {
   const [showColumns, setShowColumns] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [newColumnType, setNewColumnType] = useState<NoteColumnType>("text");
@@ -227,6 +230,7 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
   const [newColumnOptionDraft, setNewColumnOptionDraft] = useState("");
   const [columnMenuId, setColumnMenuId] = useState<string | null>(null);
   const [renamingColumnId, setRenamingColumnId] = useState<string | null>(null);
+  const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [rowMenu, setRowMenu] = useState<{ id: string; top: number; left: number } | null>(null);
   const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
   useEffect(() => {
@@ -320,6 +324,7 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
     if (!previous) return;
     const next = { ...previous, ...updates };
     if (next.type !== "select") delete next.options;
+    if (next.type !== "formula") delete next.formula;
     const typeChanged = next.type !== previous.type || (next.type === "select" && updates.options !== undefined);
     onChange({
       ...collection,
@@ -333,6 +338,7 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
 
   function removeColumn(columnId: string) {
     if (collection.columns.length === 1 || !window.confirm("Delete this column and its cells?")) return;
+    const pageCells = Object.fromEntries(Object.entries(collection.pageCells ?? {}).filter(([key]) => !key.endsWith(`:${columnId}`)));
     onChange({
       ...collection,
       columns: collection.columns.filter((column) => column.id !== columnId),
@@ -342,6 +348,7 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
         return { ...row, cells };
       }),
       sortColumnId: collection.sortColumnId === columnId ? undefined : collection.sortColumnId,
+      ...(Object.keys(pageCells).length ? { pageCells } : { pageCells: undefined }),
     });
   }
 
@@ -351,6 +358,44 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
       sortColumnId: columnId,
       sortDirection: collection.sortColumnId === columnId && collection.sortDirection === "asc" ? "desc" : "asc",
     });
+  }
+
+  function sortByDirection(columnId: string, sortDirection: "asc" | "desc") {
+    onChange({ ...collection, sortColumnId: columnId, sortDirection });
+    setColumnMenuId(null);
+  }
+
+  function moveToNextRow(event: React.KeyboardEvent<HTMLElement>, rowIndex: number, columnId: string) {
+    if (event.key !== "Enter" || event.shiftKey || event.metaKey || event.ctrlKey || event.altKey) return;
+    const nextRow = visibleRows[rowIndex + 1]?.row;
+    if (!nextRow) return;
+    event.preventDefault();
+    rowRefs.current.get(nextRow.id)?.querySelector<HTMLElement>(`[data-column-id="${columnId}"]`)?.focus();
+  }
+
+  function formulaValue(row: NoteCollectionRow, column: NoteColumn) {
+    const expression = (column.formula ?? "").replace(/\{([^}]+)\}/g, (_match, name: string) => {
+      const source = collection.columns.find((item) => item.name.toLowerCase() === name.trim().toLowerCase());
+      const value = source ? Number(row.cells[source.id]) : 0;
+      return Number.isFinite(value) ? String(value) : "0";
+    });
+    if (!expression.trim() || !/^[\d\s+\-*/().%]+$/.test(expression)) return "—";
+    try {
+      const tokens = expression.match(/\d+(?:\.\d+)?|[()+\-*/%]/g) ?? [];
+      let index = 0;
+      const primary = (): number => {
+        const token = tokens[index++];
+        if (token === "(") { const value = sum(); if (tokens[index++] !== ")") throw new Error(); return value; }
+        if (token === "-") return -primary();
+        const value = Number(token);
+        if (!Number.isFinite(value)) throw new Error();
+        return value;
+      };
+      const product = (): number => { let value = primary(); while (["*", "/", "%"].includes(tokens[index])) { const operator = tokens[index++]; const right = primary(); value = operator === "*" ? value * right : operator === "/" ? value / right : value % right; } return value; };
+      const sum = (): number => { let value = product(); while (["+", "-"].includes(tokens[index])) { const operator = tokens[index++]; const right = product(); value = operator === "+" ? value + right : value - right; } return value; };
+      const result = sum();
+      return index === tokens.length && Number.isFinite(result) ? String(Number(result.toFixed(6))) : "—";
+    } catch { return "—"; }
   }
 
   function addRow(parentRowId?: string) {
@@ -367,10 +412,13 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
   function removeRow(rowId: string) {
     if (!window.confirm("Delete this row? Its subrows will move up one level.")) return;
     const parentRowId = collection.rows.find((row) => row.id === rowId)?.parentRowId;
+    const removedIds = new Set([rowId]);
+    const pageCells = Object.fromEntries(Object.entries(collection.pageCells ?? {}).filter(([key]) => !removedIds.has(key.split(":")[0])));
     onChange({
       ...collection,
       rows: collection.rows.filter((row) => row.id !== rowId).map((row) => row.parentRowId === rowId ? { ...row, parentRowId } : row),
       collapsedRowIds: collection.collapsedRowIds?.filter((id) => id !== rowId),
+      ...(Object.keys(pageCells).length ? { pageCells } : { pageCells: undefined }),
     });
   }
 
@@ -446,6 +494,13 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
           <button type="submit" disabled={!newColumnName.trim()}>Add column</button>
         </form>
       </section>}
+      {editingColumnId && collection.columns.find((column) => column.id === editingColumnId) && ((column) => <section className="notes-column-manager notes-column-editor" aria-label={`Edit ${column.name} column`}>
+        <header><strong>Edit column</strong><button type="button" onClick={() => setEditingColumnId(null)} aria-label="Close column editor">×</button></header>
+        <input aria-label={`Edit ${column.name} name`} value={column.name} onChange={(event) => updateColumn(column.id, { name: event.target.value })} />
+        <select aria-label={`Edit ${column.name} type`} value={column.type} onChange={(event) => updateColumn(column.id, { type: event.target.value as NoteColumnType })}>{COLUMN_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
+        {column.type === "select" && <div className="notes-status-options"><div>{column.options?.map((option) => <span key={option}>{option}<button type="button" aria-label={`Remove ${option} from ${column.name}`} onClick={() => updateColumn(column.id, { options: column.options?.filter((item) => item !== option) })}>×</button></span>)}</div><input aria-label={`Add option to ${column.name} column`} placeholder="Type an option and press Enter" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); commitOption(event.currentTarget.value, column.options ?? [], (options) => updateColumn(column.id, { options })); event.currentTarget.value = ""; } }} /></div>}
+        {column.type === "formula" && <input aria-label={`Formula for ${column.name}`} value={column.formula ?? ""} placeholder="Example: {Price} * {Quantity}" onChange={(event) => updateColumn(column.id, { formula: event.target.value })} />}
+      </section>)(collection.columns.find((column) => column.id === editingColumnId)!)}
       <div className="notes-table-scroll">
         <table className="notes-table">
           <thead><tr>{collection.columns.map((column) => (
@@ -466,12 +521,15 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
               </div>
               <button type="button" className="notes-column-resize" aria-label={`Resize ${column.name} column`} onPointerDown={(event) => resizeColumn(column.id, event)} />
               {columnMenuId === column.id && <div className="notes-context-menu notes-column-menu" role="menu" aria-label={`Actions for ${column.name} column`}>
+                <button type="button" role="menuitem" onClick={() => { setEditingColumnId(column.id); setColumnMenuId(null); }}>Edit column</button>
                 <button type="button" role="menuitem" onClick={() => { setRenamingColumnId(column.id); setColumnMenuId(null); }}>Rename</button>
+                <button type="button" role="menuitem" onClick={() => sortByDirection(column.id, "asc")}>Sort ascending</button>
+                <button type="button" role="menuitem" onClick={() => sortByDirection(column.id, "desc")}>Sort descending</button>
                 <button type="button" role="menuitem" onClick={() => { setShowColumns(true); setColumnMenuId(null); }}>+ Add column</button>
                 <button type="button" role="menuitem" className="danger" disabled={collection.columns.length === 1} onClick={() => { removeColumn(column.id); setColumnMenuId(null); }}>Delete column</button>
               </div>}
             </th>
-          ))}<th aria-label="Row actions" /></tr></thead>
+          ))}</tr></thead>
           <tbody>{visibleRows.map(({ row, depth, hasChildren, collapsed }, rowIndex) => <tr
             key={row.id}
             ref={(element) => { if (element) rowRefs.current.set(row.id, element); else rowRefs.current.delete(row.id); }}
@@ -480,16 +538,22 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
           >{collection.columns.map((column, columnIndex) => <td key={column.id} style={column.width ? { width: column.width, minWidth: column.width, maxWidth: column.width } : undefined}><div className={columnIndex === 0 ? "notes-tree-cell" : undefined} style={columnIndex === 0 ? { paddingLeft: `${depth * 1.1}rem` } : undefined}>{columnIndex === 0 && (hasChildren ? (
             <button type="button" className="notes-row-toggle" aria-label={`${collapsed ? "Expand" : "Collapse"} row ${rowIndex + 1}`} aria-expanded={!collapsed} onClick={() => toggleRow(row.id)}>{collapsed ? "▸" : "▾"}</button>
           ) : <span className="notes-row-toggle-spacer" />)}{columnIndex === 0 && <div className="notes-inline-row-actions" onPointerDown={(event) => event.stopPropagation()}><button type="button" className="notes-subrow-add" onClick={() => addRow(row.id)} aria-label={`Add subrow to row ${rowIndex + 1}`} title="Add a subrow">+</button><button type="button" className="notes-row-menu-trigger" aria-haspopup="menu" aria-expanded={rowMenu?.id === row.id} aria-label={`Row actions for row ${rowIndex + 1}`} onClick={(event) => openRowMenu(event, row.id)}>•••</button></div>}{column.type === "page" ? (
-            typeof row.cells[column.id] === "string" && pages.some((page) => page.id === row.cells[column.id] && !page.archived)
-              ? <button type="button" className="notes-page-cell" onClick={() => onOpenPage(String(row.cells[column.id]))} aria-label={`Open ${column.name} page for row ${rowIndex + 1}`}>Open {pages.find((page) => page.id === row.cells[column.id])?.title}</button>
+            collection.pageCells?.[`${row.id}:${column.id}`]
+              ? <button type="button" className="notes-page-cell" onClick={() => onOpenPage(row.id, column.id)} aria-label={`Open ${column.name} page for row ${rowIndex + 1}`}>Open {collection.pageCells[`${row.id}:${column.id}`].title}</button>
               : <button type="button" className="notes-page-cell" onClick={() => onCreatePageCell(row.id, column.id)} aria-label={`Create ${column.name} page for row ${rowIndex + 1}`}>+ Page</button>
           ) : column.type === "checkbox" ? (
-            <input type="checkbox" aria-label={`${column.name} for row ${rowIndex + 1}`} checked={row.cells[column.id] === true} onChange={(event) => updateCell(row.id, column.id, event.target.checked)} />
+            <input data-column-id={column.id} type="checkbox" aria-label={`${column.name} for row ${rowIndex + 1}`} checked={row.cells[column.id] === true} onKeyDown={(event) => moveToNextRow(event, rowIndex, column.id)} onChange={(event) => updateCell(row.id, column.id, event.target.checked)} />
           ) : column.type === "select" ? (
-            <select aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)}><option value="">Select…</option>{column.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
+            <select data-column-id={column.id} aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onKeyDown={(event) => moveToNextRow(event, rowIndex, column.id)} onChange={(event) => updateCell(row.id, column.id, event.target.value)}><option value="">Select…</option>{column.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
+          ) : column.type === "relation" ? (
+            <select data-column-id={column.id} aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onKeyDown={(event) => moveToNextRow(event, rowIndex, column.id)} onChange={(event) => updateCell(row.id, column.id, event.target.value)}><option value="">Link page…</option>{pages.filter((page) => !page.archived).map((page) => <option key={page.id} value={page.id}>{page.title}</option>)}</select>
+          ) : column.type === "formula" ? (
+            <output className="notes-formula-cell" aria-label={`${column.name} for row ${rowIndex + 1}`}>{formulaValue(row, column)}</output>
+          ) : column.type === "currency" || column.type === "percent" ? (
+            <label className="notes-number-property"><span aria-hidden="true">{column.type === "currency" ? "$" : "%"}</span><input data-column-id={column.id} type="number" step="0.01" aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onKeyDown={(event) => moveToNextRow(event, rowIndex, column.id)} onChange={(event) => updateCell(row.id, column.id, event.target.value)} /></label>
           ) : (
-            <input type={column.type} aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onChange={(event) => updateCell(row.id, column.id, event.target.value)} />
-          )}</div></td>)}<td className="notes-row-actions-cell" /></tr>)}</tbody>
+            <input data-column-id={column.id} type={column.type} aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onKeyDown={(event) => moveToNextRow(event, rowIndex, column.id)} onChange={(event) => updateCell(row.id, column.id, event.target.value)} />
+          )}</div></td>)}</tr>)}</tbody>
         </table>
       </div>
       <button type="button" className="notes-add-row" onClick={() => addRow()}>+ Add row</button>
@@ -513,7 +577,7 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
   const [renameDraft, setRenameDraft] = useState("");
   const [importParentId, setImportParentId] = useState<string | null>(null);
   const [draggedPageId, setDraggedPageId] = useState<string | null>(null);
-  const [overlayPageId, setOverlayPageId] = useState<string | null>(null);
+  const [overlayCell, setOverlayCell] = useState<{ rowId: string; columnId: string } | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
   const active = write.pages.find((page) => page.id === write.activePageId) ?? write.pages[0];
   const visiblePages = write.pages.filter((page) => page.archived === showArchived && page.title.toLowerCase().includes(query.toLowerCase()));
@@ -731,10 +795,18 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
     if (!row || !column) return;
     const firstValue = active.collection.columns.map((item) => row.cells[item.id]).find((value) => typeof value === "string" && value.trim());
     const timestamp = now();
-    const page: NotePage = { id: makeId("note"), parentId: active.id, title: typeof firstValue === "string" ? firstValue : `${column.name} page`, kind: "note", docHtml: "", archived: false, createdAt: timestamp, updatedAt: timestamp };
-    const collection = { ...active.collection, rows: active.collection.rows.map((item) => item.id === rowId ? { ...item, cells: { ...item.cells, [columnId]: page.id } } : item) };
-    commit([...write.pages.map((item) => item.id === active.id ? { ...item, collection, updatedAt: timestamp } : item), page], active.id);
-    setOverlayPageId(page.id);
+    const key = `${rowId}:${columnId}`;
+    const collection = { ...active.collection, pageCells: { ...(active.collection.pageCells ?? {}), [key]: { title: typeof firstValue === "string" ? firstValue : `${column.name} page`, docHtml: "", updatedAt: timestamp } } };
+    updateActive({ collection });
+    setOverlayCell({ rowId, columnId });
+  }
+
+  function updateEmbeddedPage(updates: { title?: string; docHtml?: string }) {
+    if (!overlayCell || active.kind !== "collection" || !active.collection) return;
+    const key = `${overlayCell.rowId}:${overlayCell.columnId}`;
+    const current = active.collection.pageCells?.[key];
+    if (!current) return;
+    updateActive({ collection: { ...active.collection, pageCells: { ...(active.collection.pageCells ?? {}), [key]: { ...current, ...updates, updatedAt: now() } } } });
   }
 
   function openPageMenu(event: React.MouseEvent<HTMLButtonElement>, pageId: string) {
@@ -820,9 +892,9 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
             {active.archived && <button type="button" onClick={() => restorePage(active.id)}>Restore subtree</button>}
           </div>
         </header>
-        {active.kind === "note" ? <RichNoteEditor key={active.id} page={active} onChange={(docHtml) => updateActive({ docHtml })} /> : <CollectionEditor collection={active.collection ?? { columns: [], rows: [], view: "all" }} pages={write.pages} onChange={(collection) => updateActive({ collection })} onCreatePageCell={createPageCell} onOpenPage={setOverlayPageId} />}
+        {active.kind === "note" ? <RichNoteEditor key={active.id} page={active} onChange={(docHtml) => updateActive({ docHtml })} /> : <CollectionEditor collection={active.collection ?? { columns: [], rows: [], view: "all" }} pages={write.pages} onChange={(collection) => updateActive({ collection })} onCreatePageCell={createPageCell} onOpenPage={(rowId, columnId) => setOverlayCell({ rowId, columnId })} />}
       </section>
-      {overlayPageId && (() => { const overlayPage = write.pages.find((page) => page.id === overlayPageId && !page.archived); return overlayPage ? createPortal(<div className="notes-linked-page-backdrop" role="presentation"><section className="notes-linked-page" role="dialog" aria-modal="true" aria-label={`${overlayPage.title} linked page`}><header><span>{pageIcon(overlayPage)}</span><input aria-label="Linked page title" value={overlayPage.title} onChange={(event) => commit(write.pages.map((page) => page.id === overlayPage.id ? { ...page, title: event.target.value, updatedAt: now() } : page), active.id)} /><button type="button" onClick={() => setOverlayPageId(null)} aria-label="Minimize linked page">—</button></header><RichNoteEditor key={overlayPage.id} page={overlayPage} onChange={(docHtml) => commit(write.pages.map((page) => page.id === overlayPage.id ? { ...page, docHtml, updatedAt: now() } : page), active.id)} /></section></div>, document.body) : null; })()}
+      {overlayCell && active.kind === "collection" && (() => { const key = `${overlayCell.rowId}:${overlayCell.columnId}`; const embedded = active.collection?.pageCells?.[key]; if (!embedded) return null; const overlayPage: NotePage = { id: `embedded-${key}`, parentId: null, title: embedded.title, kind: "note", docHtml: embedded.docHtml, archived: false, createdAt: embedded.updatedAt, updatedAt: embedded.updatedAt }; return createPortal(<div className="notes-linked-page-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOverlayCell(null); }}><section className="notes-linked-page" role="dialog" aria-modal="true" aria-label={`${embedded.title} linked page`}><header><span>▤</span><input aria-label="Linked page title" value={embedded.title} onChange={(event) => updateEmbeddedPage({ title: event.target.value })} /><button type="button" onClick={() => setOverlayCell(null)} aria-label="Minimize linked page">—</button></header><RichNoteEditor key={overlayPage.id} page={overlayPage} onChange={(docHtml) => updateEmbeddedPage({ docHtml })} /></section></div>, document.body); })()}
       {pendingTemplate && createPortal(<div className="notes-dialog-backdrop" role="presentation"><section className="notes-template-dialog" role="dialog" aria-modal="true" aria-labelledby="template-choice-title"><h3 id="template-choice-title">Use “{pendingTemplate.title}” template?</h3><p>Add it as a new top-level page or replace the current page's content.</p><div><button type="button" onClick={() => createFromTemplate(pendingTemplate)}>Add new page</button><button type="button" onClick={() => replaceFromTemplate(pendingTemplate)}>Replace current page</button><button type="button" onClick={() => setPendingTemplate(null)}>Cancel</button></div></section></div>, document.body)}
     </div>
   );

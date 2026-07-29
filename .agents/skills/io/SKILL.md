@@ -32,6 +32,8 @@ Link every FTR to the exact IMP child or sub-code whose behavior it reviews, not
 
 Render each IMP hierarchy in one numbered table. Keep rollout rows such as `.1` and `.2` unindented and arrow-free. Render `.1.1` with one indentation level and a `↳` marker, then add one more indentation level for each deeper segment such as `.1.1.1`. Preserve the complete code text so indentation never replaces traceability.
 
+Render every FTR finding hierarchy consistently across all review records. Because the FTR record is the parent, first-level findings such as `FTR-1006.1` receive one `&emsp;` indentation and no arrow. Each additional finding segment adds another `&emsp;`; second-level and deeper findings use `↳` before the complete code. Never flatten nested findings into visually equal rows.
+
 When a comma- or semicolon-separated parent outcome is decomposed into deeper work codes, mark each decomposed parent phrase with bold numbered markers such as **①**, **②**, and **③**. Repeat the matching marker at the start of each child outcome. Prefer these accessible, theme-independent markers over colored text or highlighting.
 
 ## Preserve ownership

@@ -3,7 +3,7 @@
 | Field | Current state |
 |---|---|
 | Status | Deployed for testing |
-| Date | 2026-07-28 |
+| Date | 2026-07-29 |
 | Commit | `73d45ac` baseline; current verified changes pending commit |
 | Version | **1.0 — Current** |
 | Environment | Repository-backed local testing state; no external production claim |
@@ -19,7 +19,7 @@
 | Authentication | JWT-backed HttpOnly SameSite cookie with CSRF protection; bearer compatibility for non-browser clients |
 | Data | SQLite user/workspace/code records, `localStorage` workspace cache, and bounded IndexedDB Code Vault cache |
 | Code Vault | Monaco, scratch and repository files, selected context, structured patch review/undo, and draft PR publication |
-| Write | Structured hierarchy, typed collections, linked Page overlays, persisted column sizing, foreground row controls, individual status options, expanded imports/icons, compact filters, `+` formatting menu, hover/focus toolbar, recovery, rich editing, and explicit AI context |
+| Write | Structured hierarchy, advanced typed collections, embedded Page cells, explicit column editing/sorting, keyboard traversal, formatted paste persistence, dismissible linked-page overlays, persisted column sizing, foreground row controls, compact filters, a toolbar-area hover control, recovery, rich editing, and explicit AI context |
 | AI | Authenticated, rate-limited requests with bounded explicit context and content-free usage auditing |
 
 Current runtime detail is consolidated below; Code Vault feature architecture is owned by [IMP-1002](../implementation-system/implementations/IMP-1002-code-vault.md).
@@ -30,7 +30,7 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 
 | Implementation | Included Version 1.0 scope | State |
 |---|---|---|
-| [IMP-1001 — Write](../implementation-system/implementations/IMP-1001-write.md) | Hierarchical pages, rich editing, typed collections, linked Page overlays, persisted column sizing, foreground row controls, individual status options, expanded imports/icons, templates, archive recovery, and explicit assistant context | Implemented v1 |
+| [IMP-1001 — Write](../implementation-system/implementations/IMP-1001-write.md) | Hierarchical pages, rich editing, advanced typed collections, embedded Page cells, Formula and Relation contracts, explicit column editing/sorting, keyboard traversal, dismissible linked-page overlays, templates, archive recovery, and explicit assistant context | Implemented v1 |
 | [IMP-1002 — Code Vault](../implementation-system/implementations/IMP-1002-code-vault.md) | Monaco editing, scratch files, reusable snippets, selected-file AI context, reviewed patches, undo, and GitHub draft-pull-request publishing | Implemented v1 |
 | [IMP-1003 — Projects](../implementation-system/implementations/IMP-1003-projects.md) | Project cards and the full-page Rich Text and Markdown editor | Partial; typed table and graph modes remain planned |
 | [IMP-1004 — Learning / Mentor](../implementation-system/implementations/IMP-1004-learning-mentor.md) | Learning notes, connections, and weekly-focus workspace | Partial; Mentor Agent remains planned |
@@ -44,7 +44,8 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 | [FTR-1002 — Write actions review](../feature-review-system/reviews/FTR-1002-write-actions-review.md) | Foreground page menus, persisted icons, multi-format imports, trigger anchoring, stable page selection, and explicit template add-or-replace choices | 6/6 verified |
 | [FTR-1003 — Write table column menu review](../feature-review-system/reviews/FTR-1003-write-table-column-menu-review.md) | Target-specific column and row menus, contextual subrow controls, persisted row highlighting, and confirmed destructive actions | 7/7 verified |
 | [FTR-1004 — Write table follow-up review](../feature-review-system/reviews/FTR-1004-write-table-follow-up-review.md) | Linked-page overlays, consolidated foreground row actions, persisted column sizing, expanded icons/imports, individual status options, and compact filters | 11/11 verified |
-| [FTR-1005 — Write plus menu review](../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) | Functional `+` formatting menu, hover/focus top toolbar, linked-page availability, and foreground anchoring | Partial — 3/4 verified; advanced insertion blocks remain open |
+| [FTR-1005 — Write plus menu review](../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) | Functional `+` formatting menu, toolbar-area hover activation, embedded-page availability, and foreground anchoring | Partial — 3/4 verified; advanced insertion blocks remain open |
+| [FTR-1006 — Write toolbar and table review](../feature-review-system/reviews/FTR-1006-write-toolbar-and-table-review.md) | Hover-bound toolbar, table keyboard/clipboard behavior, dismissible sticky linked-page controls, embedded Page cells, explicit column actions, and advanced property types | Verified — 12/12 |
 | [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) | Authenticated AI access, bounded explicit context, and HttpOnly cookie sessions through DBG-1002–1004 | Three verified; five security findings remain open |
 | [SYS-1.0](../audit-system/SYS-1.0-system-baseline.md) | Responsive workspace behavior and reliable typed table-column controls through DBG-1001 and DBG-1017 | Two verified; seven system findings remain open |
 

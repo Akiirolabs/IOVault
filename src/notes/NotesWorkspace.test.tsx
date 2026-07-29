@@ -160,18 +160,28 @@ describe("Notes workspace", () => {
     };
 
     addColumn("Estimate", "number");
+    addColumn("Budget", "currency");
+    addColumn("Progress", "percent");
     addColumn("Due", "date");
     addColumn("Complete", "checkbox");
     addColumn("Status", "select", "Todo, Doing, Done");
     addColumn("Reference", "url");
+    addColumn("Owner email", "email");
     addColumn("Details", "page");
+    addColumn("Total", "formula");
+    addColumn("Related", "relation");
 
     expect(screen.getByRole("spinbutton", { name: "Estimate for row 1" })).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: "Budget for row 1" })).toHaveAttribute("step", "0.01");
+    expect(screen.getByRole("spinbutton", { name: "Progress for row 1" })).toHaveAttribute("step", "0.01");
     expect(screen.getByLabelText("Due for row 1")).toHaveAttribute("type", "date");
     expect(screen.getByRole("checkbox", { name: "Complete for row 1" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Status for row 1" })).toHaveTextContent("Doing");
     expect(screen.getByRole("textbox", { name: "Reference for row 1" })).toHaveAttribute("type", "url");
+    expect(screen.getByRole("textbox", { name: "Owner email for row 1" })).toHaveAttribute("type", "email");
     expect(screen.getByRole("button", { name: "Create Details page for row 1" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Total for row 1" })).toHaveTextContent("—");
+    expect(screen.getByRole("combobox", { name: "Related for row 1" })).toHaveTextContent("Imported writing");
 
     fireEvent.change(screen.getByRole("textbox", { name: "Name for row 1" }), { target: { value: "Typed row" } });
     fireEvent.change(screen.getByRole("spinbutton", { name: "Estimate for row 1" }), { target: { value: "12.5" } });
@@ -185,6 +195,11 @@ describe("Notes workspace", () => {
     expect(screen.getByRole("checkbox", { name: "Complete for row 1" })).toBeChecked();
     expect(screen.getByRole("combobox", { name: "Status for row 1" })).toHaveValue("Done");
     expect(screen.getByRole("textbox", { name: "Reference for row 1" })).toHaveValue("https://example.com");
+
+    fireEvent.click(screen.getByRole("button", { name: "Column actions for Total" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit column" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Formula for Total" }), { target: { value: "{Estimate} * 2" } });
+    expect(screen.getByRole("status", { name: "Total for row 1" })).toHaveTextContent("25");
 
     fireEvent.change(screen.getByRole("combobox", { name: "Type for Name column" }), { target: { value: "number" } });
     expect(screen.getByRole("spinbutton", { name: "Name for row 1" })).toBeInTheDocument();
@@ -207,7 +222,7 @@ describe("Notes workspace", () => {
     expect(screen.getByRole("button", { name: "Untitled note" })).toBeInTheDocument();
   });
 
-  it("opens formatting from the plus menu and shows the top toolbar only during editor interaction", () => {
+  it("opens formatting from the plus menu and reveals the toolbar only over its control area", () => {
     const execCommand = vi.fn().mockReturnValue(true);
     Object.defineProperty(document, "execCommand", { configurable: true, value: execCommand });
     render(<Harness />);
@@ -224,20 +239,19 @@ describe("Notes workspace", () => {
 
     const editor = screen.getByRole("textbox", { name: "Imported writing content" });
     const shell = editor.closest(".notes-rich-editor-shell");
+    const controls = editor.parentElement?.querySelector(".notes-editor-controls");
     expect(shell).not.toBeNull();
+    expect(controls).not.toBeNull();
     fireEvent.mouseEnter(shell!);
+    expect(screen.queryByRole("toolbar", { name: "Note formatting" })).not.toBeInTheDocument();
+    fireEvent.mouseEnter(controls!);
     const toolbar = screen.getByRole("toolbar", { name: "Note formatting" });
     expect(toolbar).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Bold" })).toBeInTheDocument();
-    fireEvent.mouseLeave(shell!);
+    fireEvent.mouseLeave(controls!);
     expect(screen.queryByRole("toolbar", { name: "Note formatting" })).not.toBeInTheDocument();
 
     fireEvent.focus(editor);
-    expect(screen.getByRole("toolbar", { name: "Note formatting" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Open insert and formatting menu" }));
-    fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.queryByRole("menu", { name: "Insert and formatting" })).not.toBeInTheDocument();
-    fireEvent.pointerDown(screen.getByRole("textbox", { name: "Page title" }));
     expect(screen.queryByRole("toolbar", { name: "Note formatting" })).not.toBeInTheDocument();
   });
 
@@ -253,11 +267,17 @@ describe("Notes workspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create Page page for row 1" }));
     expect(screen.getByRole("dialog", { name: "Task details linked page" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Linked page title" })).toHaveValue("Task details");
-    fireEvent.click(screen.getByRole("button", { name: "Minimize linked page" }));
+    expect(screen.queryByRole("button", { name: "Task details" })).not.toBeInTheDocument();
+    const embeddedEditor = screen.getByRole("textbox", { name: "Task details content" });
+    embeddedEditor.innerHTML = "<p>Saved in the cell</p>";
+    fireEvent.input(embeddedEditor);
+    fireEvent.mouseDown(document.querySelector(".notes-linked-page-backdrop")!);
     expect(screen.getByRole("textbox", { name: "Page title" })).toHaveValue("Untitled collection");
+    expect(screen.queryByRole("dialog", { name: "Task details linked page" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Open Page page for row 1" }));
     expect(screen.getByRole("dialog", { name: "Task details linked page" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Linked page title" })).toHaveValue("Task details");
+    expect(screen.getByRole("textbox", { name: "Task details content" })).toHaveTextContent("Saved in the cell");
   });
 
   it("drags a page into another section and offers keyboard move actions", () => {
@@ -400,6 +420,33 @@ describe("Notes workspace", () => {
     expect(menu).toHaveTextContent("Delete row");
     fireEvent.click(screen.getByRole("menuitem", { name: "Highlight row 1 Purple" }));
     expect(screen.getByRole("textbox", { name: "Name for row 1" }).closest("tr")).toHaveAttribute("data-row-highlight", "purple");
+  });
+
+  it("edits, sorts, and navigates the expanded table property types", () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Add row" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Add row" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Column actions for Name" }));
+    const menu = screen.getByRole("menu", { name: "Actions for Name column" });
+    expect(menu).toHaveTextContent("Edit column");
+    expect(menu).toHaveTextContent("Sort ascending");
+    expect(menu).toHaveTextContent("Sort descending");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Edit column" }));
+    expect(screen.getByRole("region", { name: "Edit Name column" })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("combobox", { name: "Edit Name type" }), { target: { value: "currency" } });
+    expect(screen.getByRole("spinbutton", { name: "Name for row 1" })).toHaveAttribute("step", "0.01");
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Name for row 1" }), { target: { value: "25" } });
+    fireEvent.keyDown(screen.getByRole("spinbutton", { name: "Name for row 1" }), { key: "Enter" });
+    expect(screen.getByRole("spinbutton", { name: "Name for row 2" })).toHaveFocus();
+
+    fireEvent.click(screen.getByRole("button", { name: "Column actions for Name" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Sort descending" }));
+    expect(screen.getByRole("button", { name: /Name ↓/ })).toBeInTheDocument();
+    expect(document.querySelectorAll(".notes-table thead th")).toHaveLength(1);
+    expect(document.querySelectorAll(".notes-table tbody tr:first-child td")).toHaveLength(1);
   });
 
   it("adds and removes status choices individually while preserving the cell dropdown", () => {

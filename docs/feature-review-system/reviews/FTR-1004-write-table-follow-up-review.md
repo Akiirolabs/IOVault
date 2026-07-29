@@ -15,17 +15,17 @@
 
 | Finding | Observed requirement | Status |
 |---|---|---|
-| `FTR-1004.1` | A linked Page column should open over the table and minimize back into its originating cell | Verified |
-| `FTR-1004.2` | Row menus should remain in the foreground without being clipped or hidden | Verified |
-| `FTR-1004.2.1` | Row creation should use a left-side `+` with an adjacent hover-revealed `•••` menu | Verified |
-| `FTR-1004.2.2` | Row color selection should remain inside the `•••` actions menu without a duplicate control | Verified |
-| `FTR-1004.2.3` | Row controls must not obstruct the open row menu | Verified |
-| `FTR-1004.3` | Table-column widths should be adjustable | Verified |
-| `FTR-1004.4` | Page icon selection should provide additional choices | Verified |
-| `FTR-1004.5` | Import should accept CSV and supported document files | Verified |
-| `FTR-1004.6` | Status options should be entered individually and committed with Enter instead of comma-separated input | Verified |
-| `FTR-1004.6.1` | Configured status options should remain selectable through a dropdown | Verified |
-| `FTR-1004.7` | All, Open, and Done controls should be smaller, borderless, and visually secondary | Verified |
+| &emsp;`FTR-1004.1` | A linked Page column should open over the table and minimize back into its originating cell | Verified |
+| &emsp;`FTR-1004.2` | Row menus should remain in the foreground without being clipped or hidden | Verified |
+| &emsp;&emsp;↳ `FTR-1004.2.1` | Row creation should use a left-side `+` with an adjacent hover-revealed `•••` menu | Verified |
+| &emsp;&emsp;↳ `FTR-1004.2.2` | Row color selection should remain inside the `•••` actions menu without a duplicate control | Verified |
+| &emsp;&emsp;↳ `FTR-1004.2.3` | Row controls must not obstruct the open row menu | Verified |
+| &emsp;`FTR-1004.3` | Table-column widths should be adjustable | Verified |
+| &emsp;`FTR-1004.4` | Page icon selection should provide additional choices | Verified |
+| &emsp;`FTR-1004.5` | Import should accept CSV and supported document files | Verified |
+| &emsp;`FTR-1004.6` | Status options should be entered individually and committed with Enter instead of comma-separated input | Verified |
+| &emsp;&emsp;↳ `FTR-1004.6.1` | Configured status options should remain selectable through a dropdown | Verified |
+| &emsp;`FTR-1004.7` | All, Open, and Done controls should be smaller, borderless, and visually secondary | Verified |
 
 ## Correction
 
