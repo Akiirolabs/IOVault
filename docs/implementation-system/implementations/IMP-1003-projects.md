@@ -1,41 +1,49 @@
 # IMP-1003 — Projects
 
-**State:** Partial · **Priority:** P2
+**State:** Implemented · **Priority:** P2
 
 ## Numbered implementation
 
-| Code | Outcome | Status |
-|---|---|---|
-| `IMP-1003.1` | Full-page editor | Implemented |
-| &emsp;↳ `IMP-1003.1.1` | Shared full-screen project overlay | Implemented |
-| &emsp;↳ `IMP-1003.1.2` | Independent rich-text and Markdown documents with preview | Implemented |
-| &emsp;↳ `IMP-1003.1.3` | Persist title, status, `docHtml`, and `docMarkdown` | Implemented |
-| `IMP-1003.2` | Typed table | Planned |
-| &emsp;↳ `IMP-1003.2.1` | Versioned text, number, date, checkbox, and select columns | Planned |
-| &emsp;↳ `IMP-1003.2.2` | Inline row/column editing, select options, deletion cleanup, and sync | Planned |
-| `IMP-1003.3` | Flowchart | Planned |
-| &emsp;↳ `IMP-1003.3.1` | Manual nodes, directed edges, labels, colors, zoom, and fit | Planned |
-| &emsp;↳ `IMP-1003.3.2` | Persist drag positions and remove orphaned edges | Planned |
-| `IMP-1003.4` | Object mindmap | Planned |
-| &emsp;↳ `IMP-1003.4.1` | Object, parent, relation, and key/value model | Planned |
-| &emsp;↳ `IMP-1003.4.2` | Derived edges, cycle validation, deterministic automatic layout, and fit | Planned |
+| Code | Outcome | Review evidence | Status |
+|---|---|---|---|
+| `IMP-1003.1` | Full-page editor | - | Implemented |
+| &emsp;↳ `IMP-1003.1.1` | Shared full-screen project overlay | - | Implemented |
+| &emsp;↳ `IMP-1003.1.2` | Independent rich-text and Markdown documents with preview | - | Implemented |
+| &emsp;↳ `IMP-1003.1.3` | Persist title, status, `docHtml`, and `docMarkdown` | - | Implemented |
+| `IMP-1003.2` | Typed table | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.2.1` | Versioned text, number, date, checkbox, and select columns | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.2.2` | Inline row/column editing, select options, deletion cleanup, and sync | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| `IMP-1003.3` | Flowchart | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.3.1` | Editable rectangular nodes, direct node-to-node arrow connections, colors, zoom, and fit | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.3.2` | Persist drag positions and remove orphaned edges | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| `IMP-1003.4` | Object mindmap | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.4.1` | Blank editable idea rectangles with direct node-to-node arrows and colors | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.4.2` | Persisted drag positioning, cycle prevention, and orphaned-reference cleanup | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| `IMP-1003.5` | Project portfolio controls | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.5.1` | Confirmed project deletion available from project and contextual actions | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.5.2` | Direct persisted project-card drag reordering | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.5.3` | Front-card project menu opening separately persisted full-page table and graph workspaces | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.5.4` | All, Active, In Progress, and Done project filters | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 
 | Capability | State |
 |---|---|
 | Project cards and status | Available |
 | Rich-text / Markdown full-page editor | Implemented |
-| Typed project table | Planned next |
-| Manual flowchart | Planned after table |
-| Automatic object mindmap | Planned after flowchart |
+| Typed project table | Implemented and verified |
+| Manual flowchart | Implemented and verified |
+| Visual object mindmap | Implemented and verified |
+| Portfolio deletion, ordering, mode menu, and status filters | Implemented and verified |
 
-## Steps
+## Delivery record
 
-1. Add versioned typed table data with safe migration and cleanup on column deletion.
-2. Reuse one project overlay contract for table, flowchart, and mindmap modes.
-3. Implement manual nodes/edges and persist positions on drag completion.
-4. Implement object relationships with derived edges and deterministic layout.
+1. Added normalized mode data while preserving legacy project cards and documents.
+2. Reused the project overlay for rich text, Markdown, table, flowchart, and mindmap workspaces.
+3. Added persisted typed cells and draggable rectangular Flowchart and Mindmap nodes with editable text, direct node-to-node arrows, colors, relationships, and cleanup.
+4. Added confirmed deletion, direct card dragging, a foreground card actions menu, and status filters.
 
 **Acceptance:** all project modes persist through account sync; existing projects load unchanged; keyboard and narrow-screen workflows work; graph deletion cannot leave orphaned references.
+
+**Verification:** 12 test files and 56 tests passed, the production build passed, and signed-in browser acceptance confirmed editable rectangular Flowchart/Mindmap nodes, direct two-node connections without Source/Target forms, saved Mindmap text and relationships after reload, and zero console errors on 2026-07-30.
 
 ## `IMP-1003.1` — Full-page editor
 
@@ -82,13 +90,13 @@ Store `table?: TableDoc` on `ProjectBlock`, normalize missing data, and remove d
 
 ## `IMP-1003.3` — Manual flowchart
 
-Users position nodes and explicitly draw connectors.
+Users type directly inside rectangular nodes, position them on a visual canvas, and explicitly draw directed connectors.
 
 | Area | v1 direction |
 |---|---|
 | Nodes | ID, x/y position, label, optional color |
 | Edges | ID, source, target, optional label; directed by default |
-| Editing | Add, drag, connect, rename, delete, zoom, fit |
+| Editing | Add, type, drag, click two nodes to connect, rename, delete, zoom, fit |
 | Persistence | Store nodes/edges; commit positions on drag end |
 
 ```mermaid
@@ -98,35 +106,43 @@ flowchart LR
   Connect --> Persist["Persist nodes + edges"]
 ```
 
-Use `@xyflow/react` unless dependency review rejects it. Deleting a node must remove its edges; keyboard deletion, focus, zoom, and narrow-screen behavior require acceptance coverage.
+The native React canvas keeps the workspace dependency-light. Deleting a node removes its connected edges; keyboard deletion, focus, zoom, and narrow-screen behavior remain acceptance requirements.
 
 ## `IMP-1003.4` — Object mindmap
 
-Users edit objects and relationships; the renderer derives edges and positions automatically.
+Users type ideas inside blank rectangular nodes, drag them into place, and click Connect on two rectangles to draw a visible arrow without Source/Target forms.
 
 | Area | v1 direction |
 |---|---|
-| Object | ID, title, optional parent, relation IDs, key/value fields |
-| Layout | Top-down default with re-layout and fit actions |
-| Rendering | React Flow plus Dagre for the first hierarchical version |
-| Persistence | Store blocks and relationships; recompute positions on open |
+| Object | ID, editable title, x/y position, color, optional legacy parent, and relation IDs |
+| Layout | User-positioned visual canvas with rectangular nodes |
+| Rendering | Native React node canvas with directed parent and relation arrows |
+| Persistence | Store nodes, positions, and relationships; preserve legacy fields without presenting unused field controls |
 | Validation | Prevent missing references and identify/reject parent cycles |
 
 ```mermaid
 flowchart LR
   Objects["Blocks + relationships"] --> Edges["Derive hierarchy and cross-links"]
-  Edges --> Layout["Automatic layout"]
-  Layout --> Render["Nodes + connectors"]
+  Edges --> Layout["Persisted user layout"]
+  Layout --> Render["Rectangles + arrows"]
 ```
 
 ```ts
 type MindmapDoc = {
-  blocks: Array<{ id: string; title: string; parentId?: string; linkIds?: string[]; fields?: Array<{ key: string; value: string }> }>;
-  rootId?: string;
+  objects: Array<{
+    id: string;
+    title: string;
+    x: number;
+    y: number;
+    color: string;
+    parentId?: string;
+    relationIds: string[];
+    fields: Array<{ id: string; key: string; value: string }>;
+  }>;
 };
 ```
 
-Relationship changes cannot leave orphaned references. Layout should remain deterministic enough to avoid disorienting movement, and saved object data must survive reload even when positions are recomputed.
+Relationship changes cannot leave orphaned references. Saved node text, positions, colors, and relationships must survive reload; legacy field data remains preserved for compatibility.
 
 ## Engineering dependencies
 

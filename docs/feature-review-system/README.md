@@ -13,6 +13,7 @@ Feature reviews capture manual page-level findings, their implemented correction
 | [FTR-1005 — Write plus menu review](reviews/FTR-1005-write-plus-menu-review.md) | [IMP-1001.1.2.1](../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) | Note insertion menu, contextual toolbar, linked-page availability, and menu placement | Partial — 3/4 verified |
 | [FTR-1006 — Write toolbar and table review](reviews/FTR-1006-write-toolbar-and-table-review.md) | [IMP-1001.1.2.1, 1001.1.3, and 1001.1.3.1](../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) | Hover-bound toolbar, normalized external paste, table keyboard flow, dismissible linked-page controls, embedded Page cells, clear Formula configuration, column actions, and advanced property types | Verified — 14/14 |
 | [FTR-1007 - Write table and navigation review](reviews/FTR-1007-write-table-and-navigation-review.md) | [IMP-1001.1.3.1.1, 1001.1.3.1.2, 1001.1.3.2, 1001.2.1, and 1001.2.5](../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) | Themed horizontal table navigation, record relations, advanced Formula configuration, explorer reordering, and refined creation controls | 7/7 verified |
+| [FTR-1008 - Projects page review](reviews/FTR-1008-projects-page-review.md) | [IMP-1003.2-1003.5](../implementation-system/implementations/IMP-1003-projects.md#numbered-implementation) | Project deletion, drag reordering, full-page mode creation, contextual deletion, and status filtering | 5/5 verified |
 
 ## Record ownership
 

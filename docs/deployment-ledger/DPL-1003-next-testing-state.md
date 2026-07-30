@@ -6,7 +6,6 @@
 |---|---|
 | Complete Write persistence, rich-text hardening, cross-area links, and the remaining FTR-1005 insertion catalog | IMP-1001.1.2.1 · IMP-1001.3.1–1001.3.2 · FTR-1005 · SYS DBG-1007/1008 · SEC DBG-1011 |
 | Refine the complete Code Vault repository-change workflow | IMP-1002.2.1–1002.2.5 · SYS DBG-1015 |
-| Deliver the typed Projects table before graph modes | IMP-1003.2.1–1003.2.2 |
 | Deliver Mentor Agent onboarding and controlled teaching workflow | IMP-1004.2.1–1004.2.5 |
 | Deliver Career Agent intake, ranking, Review mode, and one supported connector | IMP-1005.1.2 · IMP-1005.2.1–1005.2.6 |
 | Resolve security and system blockers selected for this testing state | SEC-1.0 · SYS-1.0 |

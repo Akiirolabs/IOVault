@@ -2544,6 +2544,20 @@ textarea {
   flex-wrap: wrap;
 }
 
+.project-toolbar .project-filters button {
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  border-radius: 999px;
+  padding: 0.5rem 0.7rem;
+  color: #9fc9dc;
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.project-toolbar .project-filters button.active {
+  border-color: rgba(125, 211, 252, 0.5);
+  color: #f4fbff;
+  background: rgba(56, 189, 248, 0.18);
+}
+
 .project-toolbar span {
   border: 1px solid rgba(125, 211, 252, 0.16);
   border-radius: 999px;
@@ -2565,6 +2579,9 @@ textarea {
   min-height: 22rem;
   padding: 0.9rem;
 }
+
+.project-block[draggable="true"] { cursor: grab; }
+.project-block.dragging { opacity: 0.5; }
 
 .project-block-head {
   display: flex;
@@ -2606,6 +2623,19 @@ textarea {
   width: 1.1rem;
   height: 1.1rem;
 }
+
+.project-card-action {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  padding: 0;
+  color: #8fbfd4;
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.project-delete { color: #fda4af; }
 
 /* --- Project full-page document overlay (rich text + markdown) --- */
 .project-page-overlay {
@@ -2666,6 +2696,14 @@ textarea {
   width: auto;
   min-width: 9rem;
 }
+
+.project-actions-wrap { position: relative; }
+.project-actions-menu { position: absolute; z-index: 80; top: calc(100% + 0.4rem); right: 0; display: grid; width: 12rem; padding: 0.4rem; border: 1px solid rgba(125, 211, 252, 0.18); border-radius: 0.75rem; background: rgba(5, 15, 31, 0.98); box-shadow: 0 18px 45px rgba(0, 0, 0, 0.42); }
+.project-actions-menu button { width: 100%; border: 0; padding: 0.55rem 0.65rem; color: #fff; background: transparent; text-align: left; }
+.project-actions-menu button:hover { background: rgba(56, 189, 248, 0.1); }
+.project-actions-menu .project-delete { color: #fda4af; }
+.theme-light .project-actions-menu button { color: #142337; }
+.theme-light .project-actions-menu .project-delete { color: #be123c; }
 
 .project-page-toolbar {
   display: flex;
@@ -2749,6 +2787,71 @@ textarea {
   border-radius: 1rem;
   overflow: hidden;
 }
+
+.project-mode-surface {
+  display: grid;
+  gap: 0.8rem;
+  min-height: 0;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.project-mode-surface > header,
+.project-mode-surface > header > div,
+.project-table-column-form,
+.project-edge-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.project-mode-surface > header { justify-content: space-between; }
+.project-mode-surface h3 { margin: 0; }
+.project-mode-surface button { padding: 0.45rem 0.65rem; color: #a9dff4; background: rgba(56, 189, 248, 0.08); }
+
+.project-table-scroll { min-height: 0; overflow: auto; }
+.project-table-mode table { width: 100%; min-width: 48rem; border-collapse: collapse; }
+.project-table-mode th, .project-table-mode td { padding: 0.45rem; border: 1px solid rgba(125, 211, 252, 0.1); }
+.project-table-mode th { background: rgba(12, 28, 49, 0.94); }
+.project-table-mode th > input { width: calc(100% - 2rem); border: 0; background: transparent; }
+.project-table-mode th > button { float: right; padding: 0.25rem 0.4rem; }
+.project-table-mode td input:not([type="checkbox"]), .project-table-mode td select { width: 100%; border: 0; background: transparent; }
+
+.project-flow-canvas {
+  position: relative;
+  min-height: 30rem;
+  overflow: auto;
+  border: 1px solid rgba(125, 211, 252, 0.12);
+  border-radius: 0.8rem;
+  background-image: radial-gradient(rgba(125, 211, 252, 0.13) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.project-flow-canvas > div { position: relative; width: 100%; min-width: 50rem; height: 32rem; transform-origin: top left; }
+.project-flow-node { position: absolute; z-index: 2; display: grid; grid-template-columns: 1fr auto auto auto; gap: 0.35rem; width: 15rem; padding: 0.55rem; border: 2px solid; border-radius: 0.75rem; background: rgba(7, 18, 38, 0.96); cursor: grab; }
+.project-flow-node.connecting { box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.28), 0 0 2rem rgba(56, 189, 248, 0.22); }
+.project-node-connect { padding: 0.25rem 0.4rem !important; font-size: 0.7rem; }
+.project-flow-node input[type="text"] { min-width: 0; border: 0; background: transparent; }
+.project-flow-node input[type="color"] { width: 1.7rem; padding: 0; }
+.project-flow-edge { position: absolute; z-index: 1; height: 2px; padding: 0; border: 0; transform-origin: left center; background: #4d8cab; }
+.project-flow-edge::after { position: absolute; right: -1px; top: -4px; content: ""; border-left: 7px solid #4d8cab; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+
+.project-map-hint { margin: 0; color: #7895aa; font-size: 0.85rem; }
+.project-mindmap-canvas > div { min-width: 60rem; height: 40rem; }
+.project-mindmap-node { display: grid; grid-template-columns: 1fr; width: 15rem; min-height: 5.5rem; cursor: grab; }
+.project-mindmap-node-head,
+.project-mindmap-node label,
+.project-mindmap-links { display: flex; align-items: center; gap: 0.35rem; }
+.project-mindmap-node-head > input[type="text"] { flex: 1; min-width: 0; border: 0; color: #f8fdff; background: transparent; font-weight: 800; }
+.project-mindmap-node-head > input[type="color"] { width: 1.7rem; padding: 0; }
+.project-mindmap-node label { justify-content: space-between; color: #8fa9bd; font-size: 0.75rem; }
+.project-mindmap-node select { min-width: 0; max-width: 9rem; }
+.project-mindmap-links { flex-wrap: wrap; }
+.project-mindmap-links button { padding: 0.2rem 0.35rem; font-size: 0.7rem; }
+.project-mindmap-edge.relation { background: #a78bfa; }
+.project-mindmap-edge.relation::after { border-left-color: #a78bfa; }
+.theme-light .project-mindmap-node-head > input[type="text"] { color: #142337; }
 
 .project-page-editor {
   min-height: 0;

@@ -8,7 +8,7 @@ IMP owns page-level product outcomes moving the current testing state toward [DP
 |---|---|---|---|
 | [IMP-1001](implementations/IMP-1001-write.md) | Write | Workspace and hierarchy implemented; FTR-1001–1004 and FTR-1006–1007 verified; FTR-1005 partial | `IMP-1001.3` cross-area links and the remaining `IMP-1001.1.2.1` insertion catalog |
 | [IMP-1002](implementations/IMP-1002-code-vault.md) | Code Vault | `IMP-1002.1` mini IDE implemented | `IMP-1002.2` repository workflow refinement |
-| [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1` full-page editor implemented | `IMP-1003.2` typed table |
+| [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1-1003.5` and [FTR-1008](../feature-review-system/reviews/FTR-1008-projects-page-review.md) implemented and verified | Future Projects work remains unassigned until planned |
 | [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | `IMP-1004.1` current workspace partial | `IMP-1004.2` controlled Mentor Agent |
 | [IMP-1005](implementations/IMP-1005-career.md) | Career | `IMP-1005.1` current workspace partial | `IMP-1005.2` Career Agent Review mode |
 | [IMP-1006](implementations/IMP-1006-settings.md) | Settings | `IMP-1006.1` Theme Mode implemented | Future settings remain unassigned until planned |
@@ -52,6 +52,7 @@ See [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) and [SYS-1.0](../aud
 | Date | Work | Evidence |
 |---|---|---|
 | 2026-07-29 | IMP-1006.1 · Settings Theme Mode | 50 tests, production build, signed-in live/persist/restore acceptance, retained `rotateGlow` motion, and zero console errors |
+| 2026-07-30 | IMP-1003.2-1003.5 · FTR-1008 | 56 tests, production build, signed-in table/flowchart/mindmap/filter/persistence acceptance, and zero console errors |
 | 2026-07-29 | FTR-1006 · IMP-1001.1.2.1/1001.1.3/1001.1.3.1 | 50 tests, production build, corrected signed-in acceptance, guided Formula setup, and zero console errors |
 | 2026-07-28 | FTR-1004 · IMP-1001.1.3/1001.2.2/1001.2.4 | 48 tests, production build, signed-in control rendering, and clean browser console |
 | 2026-07-27 | FTR-1005 · IMP-1001.1.2.1 | 46 tests, production build, linked-page coverage, and signed-in menu/toolbar acceptance |

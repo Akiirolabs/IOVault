@@ -42,11 +42,12 @@ import CodeVaultWorkspace from "./codeVault/CodeVaultWorkspace";
 import type { CodeSnippet } from "./codeVault/types";
 import NotesWorkspace from "./notes/NotesWorkspace";
 import { activeNoteContext, createInitialWriteState, normalizeWriteState, type WriteState } from "./notes/model";
+import { ProjectFlowchartEditor, ProjectMindmapEditor, ProjectTableEditor } from "./projects/ProjectModes";
+import { createProjectFlowchart, createProjectMindmap, createProjectTable, filterProjects, normalizeProjectBlock, reorderProjects, type ProjectBlock, type ProjectFilter, type ProjectStatus } from "./projects/model";
 
 // --- Types: shape of each workspace page and full saved state ---
 
 type PageKey = "code" | "write" | "learning" | "career" | "projects" | "settings";
-type Status = "Planned" | "In progress" | "Done";
 
 type IconId =
   | "code"
@@ -121,17 +122,6 @@ type LearningConnection = {
   name: string;
   status: string;
   progress: number;
-};
-
-type ProjectBlock = {
-  id: string;
-  title: string;
-  status: Status;
-  body: string;
-  /** Full-page rich-text document (HTML), edited in the project page overlay */
-  docHtml?: string;
-  /** Full-page Markdown document, edited + previewed in the project page overlay */
-  docMarkdown?: string;
 };
 
 /** Result of a GitHub Actions test-status lookup (UI-only, not persisted) */
@@ -312,7 +302,7 @@ const defaultVaultState: VaultState = {
       {
         id: "project-2",
         title: "Research Log",
-        status: "Planned",
+        status: "Active",
         body: "Collect sources, observations, experiment notes, and decisions.",
       },
     ],
@@ -374,7 +364,7 @@ function normalizeVaultState(raw: unknown): VaultState {
     },
     projects: {
       blocks: Array.isArray(parsed.projects?.blocks)
-        ? parsed.projects.blocks
+        ? parsed.projects.blocks.map(normalizeProjectBlock).filter((block): block is ProjectBlock => block !== null)
         : defaultVaultState.projects.blocks,
     },
   };
@@ -710,7 +700,10 @@ function App() {
   const [githubStatus, setGithubStatus] = useState<GithubTestStatus | null>(null);
   const [isGithubLoading, setIsGithubLoading] = useState(false);
   const [openProjectId, setOpenProjectId] = useState<string | null>(null);
-  const [projectDocMode, setProjectDocMode] = useState<"rich" | "markdown">("rich");
+  const [projectDocMode, setProjectDocMode] = useState<"rich" | "markdown" | "table" | "flowchart" | "mindmap">("rich");
+  const [projectFilter, setProjectFilter] = useState<ProjectFilter>("all");
+  const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
+  const [projectMenuId, setProjectMenuId] = useState<string | null>(null);
   const [isMarkdownPreview, setIsMarkdownPreview] = useState(false);
   const markdownRef = useRef<HTMLTextAreaElement>(null);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
@@ -730,10 +723,12 @@ function App() {
     "--theme-depth": `${vaultState.settings.theme.depth}%`,
   } as CSSProperties;
   const projectStats = useMemo(() => {
-    const active = vaultState.projects.blocks.filter((block) => block.status === "In progress").length;
+    const active = vaultState.projects.blocks.filter((block) => block.status === "Active").length;
+    const progress = vaultState.projects.blocks.filter((block) => block.status === "In progress").length;
     const done = vaultState.projects.blocks.filter((block) => block.status === "Done").length;
-    return { active, done, total: vaultState.projects.blocks.length };
+    return { active, progress, done, total: vaultState.projects.blocks.length };
   }, [vaultState.projects.blocks]);
+  const filteredProjects = filterProjects(vaultState.projects.blocks, projectFilter);
 
   // --- State updaters: every change writes through to localStorage ---
 
@@ -986,6 +981,28 @@ function App() {
     }));
   }
 
+  function deleteProject(id: string) {
+    const project = vaultState.projects.blocks.find((block) => block.id === id);
+    if (!project || !window.confirm(`Delete “${project.title}”? This cannot be undone.`)) return;
+    saveVaultState((prev) => ({ ...prev, projects: { ...prev.projects, blocks: prev.projects.blocks.filter((block) => block.id !== id) } }));
+    if (openProjectId === id) setOpenProjectId(null);
+  }
+
+  function reorderProject(projectId: string, targetId: string) {
+    if (projectId === targetId) return;
+    saveVaultState((prev) => ({ ...prev, projects: { ...prev.projects, blocks: reorderProjects(prev.projects.blocks, projectId, targetId) } }));
+    setDraggedProjectId(null);
+  }
+
+  function openProjectMode(project: ProjectBlock, mode: "table" | "flowchart" | "mindmap") {
+    if (mode === "table" && !project.table) updateProject(project.id, { table: createProjectTable() });
+    if (mode === "flowchart" && !project.flowchart) updateProject(project.id, { flowchart: createProjectFlowchart() });
+    if (mode === "mindmap" && !project.mindmap) updateProject(project.id, { mindmap: createProjectMindmap() });
+    setProjectDocMode(mode);
+    setOpenProjectId(project.id);
+    setProjectMenuId(null);
+  }
+
   function addSnippet() {
     const id = crypto.randomUUID();
 
@@ -1024,7 +1041,7 @@ function App() {
     const block: ProjectBlock = {
       id: crypto.randomUUID(),
       title: "Untitled Project",
-      status: "Planned",
+      status: "Active",
       body: "Write project context, notes, links, and next steps.",
     };
 
@@ -1401,17 +1418,18 @@ function App() {
           {activePage === "projects" && (
             <div className="projects-workspace">
               <div className="project-toolbar">
-                <div>
-                  <span>{projectStats.active} active</span>
-                  <span>{projectStats.done} done</span>
-                  <span>{projectStats.total} total</span>
+                <div className="project-filters" role="group" aria-label="Filter projects">
+                  <button type="button" className={projectFilter === "all" ? "active" : ""} onClick={() => setProjectFilter("all")}>All {projectStats.total}</button>
+                  <button type="button" className={projectFilter === "active" ? "active" : ""} onClick={() => setProjectFilter("active")}>Active {projectStats.active}</button>
+                  <button type="button" className={projectFilter === "progress" ? "active" : ""} onClick={() => setProjectFilter("progress")}>In Progress {projectStats.progress}</button>
+                  <button type="button" className={projectFilter === "done" ? "active" : ""} onClick={() => setProjectFilter("done")}>Done {projectStats.done}</button>
                 </div>
-                <button type="button" onClick={addProjectBlock}>New Block</button>
+                <button type="button" onClick={addProjectBlock}>New Project</button>
               </div>
 
               <section className="project-board">
-                {vaultState.projects.blocks.map((block) => (
-                  <article className="project-block" key={block.id}>
+                {filteredProjects.map((block) => (
+                  <article className={`project-block ${draggedProjectId === block.id ? "dragging" : ""}`} key={block.id} draggable onDragStart={() => setDraggedProjectId(block.id)} onDragEnd={() => setDraggedProjectId(null)} onDragOver={(event) => { if (draggedProjectId && draggedProjectId !== block.id) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); if (draggedProjectId) reorderProject(draggedProjectId, block.id); }}>
                     <div className="project-block-head">
                       <input
                         value={block.title}
@@ -1431,13 +1449,14 @@ function App() {
                       >
                         <HiOutlineArrowsPointingOut aria-hidden="true" />
                       </button>
+                      <div className="project-actions-wrap" onPointerDown={(event) => event.stopPropagation()}><button type="button" className="project-card-action" aria-label={`Project actions for ${block.title}`} aria-haspopup="menu" aria-expanded={projectMenuId === block.id} onClick={() => setProjectMenuId((current) => current === block.id ? null : block.id)}>•••</button>{projectMenuId === block.id && <div className="project-actions-menu" role="menu" aria-label={`Actions for ${block.title}`}><button type="button" role="menuitem" onClick={() => openProjectMode(block, "table")}>{block.table ? "Open table" : "Add table"}</button><button type="button" role="menuitem" onClick={() => openProjectMode(block, "flowchart")}>{block.flowchart ? "Open flowchart" : "Add flowchart"}</button><button type="button" role="menuitem" onClick={() => openProjectMode(block, "mindmap")}>{block.mindmap ? "Open object mindmap" : "Add object mindmap"}</button><button type="button" role="menuitem" className="project-delete" onClick={() => { setProjectMenuId(null); deleteProject(block.id); }}>Delete project</button></div>}</div>
                     </div>
                     <select
                       value={block.status}
-                      onChange={(event) => updateProject(block.id, { status: event.target.value as Status })}
+                      onChange={(event) => updateProject(block.id, { status: event.target.value as ProjectStatus })}
                       aria-label={`${block.title} status`}
                     >
-                      <option value="Planned">Planned</option>
+                      <option value="Active">Active</option>
                       <option value="In progress">In progress</option>
                       <option value="Done">Done</option>
                     </select>
@@ -1475,11 +1494,11 @@ function App() {
                       <select
                         value={openProject.status}
                         onChange={(event) =>
-                          updateProject(openProject.id, { status: event.target.value as Status })
+                          updateProject(openProject.id, { status: event.target.value as ProjectStatus })
                         }
                         aria-label="Project status"
                       >
-                        <option value="Planned">Planned</option>
+                        <option value="Active">Active</option>
                         <option value="In progress">In progress</option>
                         <option value="Done">Done</option>
                       </select>
@@ -1509,6 +1528,9 @@ function App() {
                         >
                           Markdown
                         </button>
+                        {openProject.table && <button type="button" aria-pressed={projectDocMode === "table"} className={projectDocMode === "table" ? "active" : ""} onClick={() => setProjectDocMode("table")}>Table</button>}
+                        {openProject.flowchart && <button type="button" aria-pressed={projectDocMode === "flowchart"} className={projectDocMode === "flowchart" ? "active" : ""} onClick={() => setProjectDocMode("flowchart")}>Flowchart</button>}
+                        {openProject.mindmap && <button type="button" aria-pressed={projectDocMode === "mindmap"} className={projectDocMode === "mindmap" ? "active" : ""} onClick={() => setProjectDocMode("mindmap")}>Mindmap</button>}
                       </div>
 
                       <span className="project-page-toolbar-divider" aria-hidden="true" />
@@ -1517,7 +1539,7 @@ function App() {
                         <div className="project-page-format">
                           <TextFormatMenu onCommand={applyWriteFormat} />
                         </div>
-                      ) : (
+                      ) : projectDocMode === "markdown" ? (
                         <>
                           <div className="project-page-format">
                             <button type="button" disabled={isMarkdownPreview} onClick={() => wrapProjectMarkdown("**", "**")} aria-label="Bold">B</button>
@@ -1535,7 +1557,7 @@ function App() {
                             {isMarkdownPreview ? "Edit" : "Preview"}
                           </button>
                         </>
-                      )}
+                      ) : null}
                     </div>
 
                     <div className="project-page-body">
@@ -1549,7 +1571,7 @@ function App() {
                           ariaMultiline
                           ariaLabel="Project rich text document"
                         />
-                      ) : isMarkdownPreview ? (
+                      ) : projectDocMode === "markdown" && isMarkdownPreview ? (
                         <div className="project-md-preview" aria-label="Markdown preview">
                           {openProject.docMarkdown?.trim() ? (
                             <ReactMarkdown>{openProject.docMarkdown}</ReactMarkdown>
@@ -1557,7 +1579,7 @@ function App() {
                             <p className="project-md-empty">Nothing to preview yet — switch to Edit and start writing.</p>
                           )}
                         </div>
-                      ) : (
+                      ) : projectDocMode === "markdown" ? (
                         <textarea
                           ref={markdownRef}
                           className="project-md-input"
@@ -1567,7 +1589,7 @@ function App() {
                           aria-label="Project markdown"
                           spellCheck={false}
                         />
-                      )}
+                      ) : projectDocMode === "table" && openProject.table ? <ProjectTableEditor table={openProject.table} onChange={(table) => updateProject(openProject.id, { table })} /> : projectDocMode === "flowchart" && openProject.flowchart ? <ProjectFlowchartEditor flowchart={openProject.flowchart} onChange={(flowchart) => updateProject(openProject.id, { flowchart })} /> : projectDocMode === "mindmap" && openProject.mindmap ? <ProjectMindmapEditor mindmap={openProject.mindmap} onChange={(mindmap) => updateProject(openProject.id, { mindmap })} /> : null}
                     </div>
                   </div>
                 </div>

@@ -33,7 +33,7 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 |---|---|---|
 | [IMP-1001 — Write](../implementation-system/implementations/IMP-1001-write.md) | Hierarchical pages, rich editing, advanced typed collections, embedded Page cells, Formula and Relation contracts, explicit column editing/sorting, keyboard traversal, dismissible linked-page overlays, templates, archive recovery, and explicit assistant context | Implemented v1 |
 | [IMP-1002 — Code Vault](../implementation-system/implementations/IMP-1002-code-vault.md) | Monaco editing, scratch files, reusable snippets, selected-file AI context, reviewed patches, undo, and GitHub draft-pull-request publishing | Implemented v1 |
-| [IMP-1003 — Projects](../implementation-system/implementations/IMP-1003-projects.md) | Project cards and the full-page Rich Text and Markdown editor | Partial; typed table and graph modes remain planned |
+| [IMP-1003 — Projects](../implementation-system/implementations/IMP-1003-projects.md) | Project cards, status filters, confirmed deletion, persisted ordering, full-page Rich Text and Markdown, typed tables, and visual Flowchart/Mindmap canvases with editable rectangular nodes and directed arrows | Implemented and verified |
 | [IMP-1004 — Learning / Mentor](../implementation-system/implementations/IMP-1004-learning-mentor.md) | Learning notes, connections, and weekly-focus workspace | Partial; Mentor Agent remains planned |
 | [IMP-1005 — Career](../implementation-system/implementations/IMP-1005-career.md) | Resume editing and AI-assisted drafting | Partial; Career Agent and platform integrations remain planned |
 | [IMP-1006 — Settings](../implementation-system/implementations/IMP-1006-settings.md) | Theme Mode with persisted tinted, Night, and Light contracts, shade/glow/depth controls, presets, live preview, and default restoration | Implemented v1 |
@@ -49,6 +49,7 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 | [FTR-1005 — Write plus menu review](../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) | Functional `+` formatting menu, toolbar-area hover activation, embedded-page availability, and foreground anchoring | Partial — 3/4 verified; advanced insertion blocks remain open |
 | [FTR-1006 — Write toolbar and table review](../feature-review-system/reviews/FTR-1006-write-toolbar-and-table-review.md) | Hover-bound toolbar, normalized external paste, table keyboard behavior, dismissible sticky linked-page controls, embedded Page cells, guided Formula configuration, explicit column actions, and advanced property types | Verified — 14/14 |
 | [FTR-1007 - Write table and navigation review](../feature-review-system/reviews/FTR-1007-write-table-and-navigation-review.md) | Themed wide-table navigation, stable record-based Relation behavior, guided Formula functions, direct explorer drag reordering, and compact glass creation controls | Verified — 7/7 |
+| [FTR-1008 - Projects page review](../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Front-card mode and deletion menus, persisted direct drag ordering, separately saved full-page workspaces, and functional status filters | Verified — 5/5 |
 | [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) | Authenticated AI access, bounded explicit context, and HttpOnly cookie sessions through DBG-1002–1004 | Three verified; five security findings remain open |
 | [SYS-1.0](../audit-system/SYS-1.0-system-baseline.md) | Responsive workspace behavior and reliable typed table-column controls through DBG-1001 and DBG-1017 | Two verified; seven system findings remain open |
 
@@ -56,7 +57,7 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 
 | Gate | Result |
 |---|---|
-| Tests | `npm test`: 10 files and 50 tests passed on 2026-07-30 |
+| Tests | `npm test`: 12 files and 56 tests passed on 2026-07-30 |
 | Production build | `npm run build`: TypeScript and Vite production build passed on 2026-07-30 |
 | Database | SQLite schema auto-initializes; whole-workspace JSON and conflict handling remain known limitations |
 | Environment/secrets | Local environment supported; production JWT fail-closed validation remains open in DBG-1005 |
