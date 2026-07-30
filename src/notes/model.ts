@@ -6,6 +6,7 @@ export type NoteColumn = {
   type: NoteColumnType;
   options?: string[];
   formula?: string;
+  relationPageId?: string;
   width?: number;
 };
 
@@ -126,6 +127,7 @@ function normalizeCollection(raw: unknown): NoteCollection | undefined {
       type: candidate.type as NoteColumnType,
       ...(candidate.type === "select" ? { options: Array.isArray(candidate.options) ? candidate.options.filter((option): option is string => typeof option === "string") : [] } : {}),
       ...(candidate.type === "formula" && typeof candidate.formula === "string" ? { formula: candidate.formula.slice(0, 500) } : {}),
+      ...(candidate.type === "relation" && typeof candidate.relationPageId === "string" ? { relationPageId: candidate.relationPageId } : {}),
       ...(typeof candidate.width === "number" && candidate.width >= 120 && candidate.width <= 720 ? { width: candidate.width } : {}),
     }];
   });

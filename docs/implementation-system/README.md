@@ -6,7 +6,7 @@ IMP owns page-level product outcomes moving the current testing state toward [DP
 
 | Parent | Page | Current state | Next numbered outcome |
 |---|---|---|---|
-| [IMP-1001](implementations/IMP-1001-write.md) | Write | Workspace and hierarchy implemented; FTR-1001–1004 verified; FTR-1005 partial | `IMP-1001.1.3.1` advanced property workflow, `IMP-1001.3` cross-area links, and open FTR-1005/1006 scope |
+| [IMP-1001](implementations/IMP-1001-write.md) | Write | Workspace and hierarchy implemented; FTR-1001–1004 and FTR-1006–1007 verified; FTR-1005 partial | `IMP-1001.3` cross-area links and the remaining `IMP-1001.1.2.1` insertion catalog |
 | [IMP-1002](implementations/IMP-1002-code-vault.md) | Code Vault | `IMP-1002.1` mini IDE implemented | `IMP-1002.2` repository workflow refinement |
 | [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1` full-page editor implemented | `IMP-1003.2` typed table |
 | [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | `IMP-1004.1` current workspace partial | `IMP-1004.2` controlled Mentor Agent |

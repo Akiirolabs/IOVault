@@ -242,7 +242,7 @@ function compareCells(a: string | boolean | undefined, b: string | boolean | und
   return String(a ?? "").localeCompare(String(b ?? ""), undefined, { numeric: column.type === "date" });
 }
 
-function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpenPage }: { collection: NoteCollection; pages: NotePage[]; onChange: (collection: NoteCollection) => void; onCreatePageCell: (rowId: string, columnId: string) => void; onOpenPage: (rowId: string, columnId: string) => void }) {
+function CollectionEditor({ collection, currentPageId, pages, onChange, onCreatePageCell, onOpenPage }: { collection: NoteCollection; currentPageId: string; pages: NotePage[]; onChange: (collection: NoteCollection) => void; onCreatePageCell: (rowId: string, columnId: string) => void; onOpenPage: (rowId: string, columnId: string) => void }) {
   const [showColumns, setShowColumns] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [newColumnType, setNewColumnType] = useState<NoteColumnType>("text");
@@ -252,18 +252,21 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
   const [renamingColumnId, setRenamingColumnId] = useState<string | null>(null);
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [rowMenu, setRowMenu] = useState<{ id: string; top: number; left: number } | null>(null);
+  const [relationMenu, setRelationMenu] = useState<{ rowId: string; columnId: string; top: number; left: number } | null>(null);
   const rowRefs = useRef(new Map<string, HTMLTableRowElement>());
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target?.closest(".notes-column-header, .notes-row-actions, .notes-inline-row-actions, .notes-context-menu")) return;
+      if (target?.closest(".notes-column-header, .notes-row-actions, .notes-inline-row-actions, .notes-context-menu, .notes-relation-trigger, .notes-relation-menu")) return;
       setColumnMenuId(null);
       setRowMenu(null);
+      setRelationMenu(null);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       setColumnMenuId(null);
       setRowMenu(null);
+      setRelationMenu(null);
     };
     document.addEventListener("pointerdown", closeMenus);
     document.addEventListener("keydown", closeOnEscape);
@@ -345,7 +348,8 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
     const next = { ...previous, ...updates };
     if (next.type !== "select") delete next.options;
     if (next.type !== "formula") delete next.formula;
-    const typeChanged = next.type !== previous.type || (next.type === "select" && updates.options !== undefined);
+    if (next.type !== "relation") delete next.relationPageId;
+    const typeChanged = next.type !== previous.type || (next.type === "select" && updates.options !== undefined) || (next.type === "relation" && updates.relationPageId !== undefined);
     onChange({
       ...collection,
       columns: collection.columns.map((column) => column.id === columnId ? next : column),
@@ -399,23 +403,51 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
       const value = source ? Number(row.cells[source.id]) : 0;
       return Number.isFinite(value) ? String(value) : "0";
     });
-    if (!expression.trim() || !/^[\d\s+\-*/().%]+$/.test(expression)) return "—";
+    if (!expression.trim() || !/^[\d\s+\-*/().,%A-Za-z]+$/.test(expression)) return "—";
     try {
-      const tokens = expression.match(/\d+(?:\.\d+)?|[()+\-*/%]/g) ?? [];
+      const tokens = expression.match(/\d+(?:\.\d+)?|[A-Za-z]+|[(),+\-*/%]/g) ?? [];
       let index = 0;
-      const primary = (): number => {
+      function primary(): number {
         const token = tokens[index++];
         if (token === "(") { const value = sum(); if (tokens[index++] !== ")") throw new Error(); return value; }
         if (token === "-") return -primary();
+        if (token && /^[A-Za-z]+$/.test(token) && tokens[index] === "(") {
+          index += 1;
+          const args: number[] = [];
+          if (tokens[index] !== ")") {
+            do { args.push(sum()); } while (tokens[index] === "," && ++index);
+          }
+          if (tokens[index++] !== ")" || args.length === 0) throw new Error();
+          switch (token.toUpperCase()) {
+            case "SUM": return args.reduce((total, value) => total + value, 0);
+            case "AVERAGE": case "AVG": return args.reduce((total, value) => total + value, 0) / args.length;
+            case "MIN": return Math.min(...args);
+            case "MAX": return Math.max(...args);
+            case "ROUND": return Number(args[0].toFixed(Math.max(0, Math.min(6, Math.trunc(args[1] ?? 0)))));
+            case "ABS": return Math.abs(args[0]);
+            default: throw new Error();
+          }
+        }
         const value = Number(token);
         if (!Number.isFinite(value)) throw new Error();
         return value;
-      };
-      const product = (): number => { let value = primary(); while (["*", "/", "%"].includes(tokens[index])) { const operator = tokens[index++]; const right = primary(); value = operator === "*" ? value * right : operator === "/" ? value / right : value % right; } return value; };
-      const sum = (): number => { let value = product(); while (["+", "-"].includes(tokens[index])) { const operator = tokens[index++]; const right = product(); value = operator === "+" ? value + right : value - right; } return value; };
+      }
+      function product(): number { let value = primary(); while (["*", "/", "%"].includes(tokens[index])) { const operator = tokens[index++]; const right = primary(); value = operator === "*" ? value * right : operator === "/" ? value / right : value % right; } return value; }
+      function sum(): number { let value = product(); while (["+", "-"].includes(tokens[index])) { const operator = tokens[index++]; const right = product(); value = operator === "+" ? value + right : value - right; } return value; }
       const result = sum();
       return index === tokens.length && Number.isFinite(result) ? String(Number(result.toFixed(6))) : "—";
     } catch { return "—"; }
+  }
+
+  function appendFormula(column: NoteColumn, token: string) {
+    const current = column.formula ?? "";
+    const separator = current && !/[\s(]$/.test(current) && !/^[),]$/.test(token) ? " " : "";
+    updateColumn(column.id, { formula: `${current}${separator}${token}` });
+  }
+
+  function openRelationMenu(event: React.MouseEvent<HTMLButtonElement>, rowId: string, columnId: string) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setRelationMenu({ rowId, columnId, top: Math.min(window.innerHeight - 260, rect.bottom + 6), left: Math.max(8, Math.min(window.innerWidth - 250, rect.left)) });
   }
 
   function addRow(parentRowId?: string) {
@@ -503,6 +535,7 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
               {COLUMN_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
             {column.type === "select" && <div className="notes-status-options"><div>{column.options?.map((option) => <span key={option}>{option}<button type="button" aria-label={`Remove ${option} from ${column.name}`} onClick={() => updateColumn(column.id, { options: column.options?.filter((item) => item !== option) })}>×</button></span>)}</div><input aria-label={`Add option to ${column.name} column`} placeholder="Type an option and press Enter" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); commitOption(event.currentTarget.value, column.options ?? [], (options) => updateColumn(column.id, { options })); event.currentTarget.value = ""; } }} /></div>}
+            {column.type === "relation" && <select aria-label={`Source table for ${column.name}`} value={column.relationPageId ?? ""} onChange={(event) => updateColumn(column.id, { relationPageId: event.target.value })}><option value="">Choose source table…</option>{pages.filter((page) => !page.archived && page.kind === "collection").map((page) => <option key={page.id} value={page.id}>{page.id === currentPageId ? `${page.title} (this table)` : page.title}</option>)}</select>}
           </div>)}
         </div>
         <form className="notes-column-create" onSubmit={addColumn}>
@@ -519,7 +552,8 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
         <input aria-label={`Edit ${column.name} name`} value={column.name} onChange={(event) => updateColumn(column.id, { name: event.target.value })} />
         <select aria-label={`Edit ${column.name} type`} value={column.type} onChange={(event) => updateColumn(column.id, { type: event.target.value as NoteColumnType })}>{COLUMN_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>
         {column.type === "select" && <div className="notes-status-options"><div>{column.options?.map((option) => <span key={option}>{option}<button type="button" aria-label={`Remove ${option} from ${column.name}`} onClick={() => updateColumn(column.id, { options: column.options?.filter((item) => item !== option) })}>×</button></span>)}</div><input aria-label={`Add option to ${column.name} column`} placeholder="Type an option and press Enter" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); commitOption(event.currentTarget.value, column.options ?? [], (options) => updateColumn(column.id, { options })); event.currentTarget.value = ""; } }} /></div>}
-        {column.type === "formula" && <div className="notes-formula-config"><input aria-label={`Formula for ${column.name}`} value={column.formula ?? ""} placeholder="Example: {Price} * {Quantity}" onChange={(event) => updateColumn(column.id, { formula: event.target.value })} /><small>Use numeric column names inside braces. Available: {collection.columns.filter((item) => item.id !== column.id && ["number", "currency", "percent"].includes(item.type)).map((item) => `{${item.name}}`).join(", ") || "add a numeric column first"}.</small></div>}
+        {column.type === "relation" && <div className="notes-relation-config"><label>Source table<select aria-label={`Edit source table for ${column.name}`} value={column.relationPageId ?? ""} onChange={(event) => updateColumn(column.id, { relationPageId: event.target.value })}><option value="">Choose a table…</option>{pages.filter((page) => !page.archived && page.kind === "collection").map((page) => <option key={page.id} value={page.id}>{page.id === currentPageId ? `${page.title} (this table)` : page.title}</option>)}</select></label><small>Each cell will link to a record from this table.</small></div>}
+        {column.type === "formula" && <div className="notes-formula-config"><input aria-label={`Formula for ${column.name}`} value={column.formula ?? ""} placeholder="Example: ROUND({Price} * {Quantity}, 2)" onChange={(event) => updateColumn(column.id, { formula: event.target.value })} /><div className="notes-formula-tokens" aria-label="Formula builder"><div>{collection.columns.filter((item) => item.id !== column.id && ["number", "currency", "percent"].includes(item.type)).map((item) => <button type="button" key={item.id} onClick={() => appendFormula(column, `{${item.name}}`)}>{item.name}</button>)}</div><div>{["+", "-", "*", "/", "(", ")"].map((operator) => <button type="button" key={operator} onClick={() => appendFormula(column, operator)}>{operator}</button>)}</div><div>{["SUM", "AVERAGE", "MIN", "MAX", "ROUND", "ABS"].map((name) => <button type="button" key={name} onClick={() => appendFormula(column, `${name}(`)}>{name}</button>)}</div></div><small>Use the builder or type column names in braces. Functions support comma-separated values.</small></div>}
       </section>)(collection.columns.find((column) => column.id === editingColumnId)!)}
       <div className="notes-table-scroll">
         <table className="notes-table">
@@ -566,7 +600,7 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
           ) : column.type === "select" ? (
             <select data-column-id={column.id} aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onKeyDown={(event) => moveToNextRow(event, rowIndex, column.id)} onChange={(event) => updateCell(row.id, column.id, event.target.value)}><option value="">Select…</option>{column.options?.map((option) => <option key={option} value={option}>{option}</option>)}</select>
           ) : column.type === "relation" ? (
-            <select data-column-id={column.id} aria-label={`${column.name} for row ${rowIndex + 1}`} value={String(row.cells[column.id] ?? "")} onKeyDown={(event) => moveToNextRow(event, rowIndex, column.id)} onChange={(event) => updateCell(row.id, column.id, event.target.value)}><option value="">Link page…</option>{pages.filter((page) => !page.archived).map((page) => <option key={page.id} value={page.id}>{page.title}</option>)}</select>
+            (() => { const source = pages.find((page) => page.id === column.relationPageId && page.kind === "collection" && !page.archived); const selectedId = String(row.cells[column.id] ?? ""); const selectedIndex = source?.collection?.rows.findIndex((item) => item.id === selectedId) ?? -1; const selected = selectedIndex >= 0 ? source?.collection?.rows[selectedIndex] : undefined; const firstColumn = source?.collection?.columns[0]; const label = selected && firstColumn ? String(selected.cells[firstColumn.id] ?? "") || `Row ${selectedIndex + 1}` : ""; return <button type="button" data-column-id={column.id} className="notes-relation-trigger" aria-label={`${column.name} for row ${rowIndex + 1}`} onKeyDown={(event) => moveToNextRow(event, rowIndex, column.id)} onClick={(event) => source ? openRelationMenu(event, row.id, column.id) : setEditingColumnId(column.id)}>{label || (source ? "Choose record…" : "Choose source table")}</button>; })()
           ) : column.type === "formula" ? (
             <div className="notes-formula-property"><output className="notes-formula-cell" aria-label={`${column.name} for row ${rowIndex + 1}`}>{formulaValue(row, column)}</output>{formulaValue(row, column) === "—" && <button type="button" onClick={() => setEditingColumnId(column.id)}>Configure formula</button>}</div>
           ) : column.type === "currency" || column.type === "percent" ? (
@@ -582,6 +616,7 @@ function CollectionEditor({ collection, pages, onChange, onCreatePageCell, onOpe
         <div className="notes-highlight-options" role="group" aria-label="Row colors">{ROW_HIGHLIGHT_OPTIONS.map((option) => <button type="button" role="menuitem" key={option.value} data-color={option.value} aria-label={`Highlight row ${visibleRows.findIndex(({ row }) => row.id === menuRow.id) + 1} ${option.label}`} onClick={() => updateRowHighlight(menuRow.id, option.value)}><span className="notes-color-swatch" aria-hidden="true" />{option.label}</button>)}{menuRow.highlightColor && <button type="button" role="menuitem" onClick={() => updateRowHighlight(menuRow.id)}>Clear highlight</button>}</div>
         <button type="button" role="menuitem" className="danger" onClick={() => { removeRow(menuRow.id); setRowMenu(null); }}>Delete row</button>
       </div>, document.body)}
+      {relationMenu && (() => { const column = collection.columns.find((item) => item.id === relationMenu.columnId); const source = pages.find((page) => page.id === column?.relationPageId && page.kind === "collection" && !page.archived); const firstColumn = source?.collection?.columns[0]; return createPortal(<div className="notes-context-menu notes-relation-menu" role="listbox" aria-label={`Choose ${column?.name ?? "relation"} record`} style={{ top: relationMenu.top, left: relationMenu.left }}><button type="button" role="option" aria-selected={!collection.rows.find((item) => item.id === relationMenu.rowId)?.cells[relationMenu.columnId]} onClick={() => { updateCell(relationMenu.rowId, relationMenu.columnId, ""); setRelationMenu(null); }}>No relation</button>{source?.collection?.rows.map((sourceRow, index) => <button type="button" role="option" aria-selected={collection.rows.find((item) => item.id === relationMenu.rowId)?.cells[relationMenu.columnId] === sourceRow.id} key={sourceRow.id} onClick={() => { updateCell(relationMenu.rowId, relationMenu.columnId, sourceRow.id); setRelationMenu(null); }}>{firstColumn ? String(sourceRow.cells[firstColumn.id] ?? "") || `Row ${index + 1}` : `Row ${index + 1}`}</button>)}</div>, document.body); })()}
     </div>
   );
 }
@@ -775,6 +810,19 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
     setMenuPageId(null);
   }
 
+  function reorderPage(pageId: string, targetId: string) {
+    if (pageId === targetId) return;
+    const target = write.pages.find((page) => page.id === targetId);
+    if (!target) return;
+    const moved = write.pages.find((page) => page.id === pageId);
+    if (!moved || descendantsOf(pageId).has(targetId)) return;
+    const without = write.pages.filter((page) => page.id !== pageId);
+    const targetIndex = without.findIndex((page) => page.id === targetId);
+    without.splice(targetIndex + 1, 0, { ...moved, parentId: target.parentId, updatedAt: now() });
+    commit(without, write.activePageId, showArchived);
+    setDraggedPageId(null);
+  }
+
   function movePageSibling(pageId: string, direction: -1 | 1) {
     const page = write.pages.find((item) => item.id === pageId);
     if (!page) return;
@@ -871,7 +919,7 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
       const collapsed = write.collapsedPageIds?.includes(page.id) === true;
       return (
       <div key={page.id}>
-        <div className={`notes-tree-row ${draggedPageId === page.id ? "dragging" : ""}`} draggable={!showArchived} onDragStart={() => setDraggedPageId(page.id)} onDragEnd={() => setDraggedPageId(null)} onDragOver={(event) => { if (draggedPageId && draggedPageId !== page.id) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); if (draggedPageId) movePage(draggedPageId, page.id); }} style={{ paddingLeft: `${depth * 0.85}rem` }}>
+        <div className={`notes-tree-row ${draggedPageId === page.id ? "dragging" : ""}`} draggable={!showArchived} onDragStart={() => setDraggedPageId(page.id)} onDragEnd={() => setDraggedPageId(null)} onDragOver={(event) => { if (draggedPageId && draggedPageId !== page.id) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); if (draggedPageId) reorderPage(draggedPageId, page.id); }} style={{ paddingLeft: `${depth * 0.85}rem` }}>
           {hasChildren ? <button type="button" className="notes-page-toggle" aria-label={`${collapsed ? "Expand" : "Collapse"} page ${page.title || "Untitled"}`} aria-expanded={!collapsed} onClick={() => togglePage(page.id)}>{collapsed ? "▸" : "▾"}</button> : <span className="notes-page-toggle-spacer" />}
           {renamingPageId === page.id ? <input autoFocus className="notes-tree-rename" aria-label={`Rename ${page.title || "Untitled"}`} value={renameDraft} onChange={(event) => setRenameDraft(event.target.value)} onBlur={() => finishRename(page.id)} onKeyDown={(event) => { if (event.key === "Enter") finishRename(page.id); if (event.key === "Escape") setRenamingPageId(null); }} /> : <button type="button" className={`notes-tree-item ${page.id === active?.id ? "active" : ""}`} onClick={() => commit(write.pages, page.id, showArchived)}>
             <span aria-hidden="true">{pageIcon(page)}</span><span>{page.title || "Untitled"}</span>
@@ -912,7 +960,7 @@ export default function NotesWorkspace({ write, onChange, includeAssistantContex
             {active.archived && <button type="button" onClick={() => restorePage(active.id)}>Restore subtree</button>}
           </div>
         </header>
-        {active.kind === "note" ? <RichNoteEditor key={active.id} page={active} onChange={(docHtml) => updateActive({ docHtml })} /> : <CollectionEditor collection={active.collection ?? { columns: [], rows: [], view: "all" }} pages={write.pages} onChange={(collection) => updateActive({ collection })} onCreatePageCell={createPageCell} onOpenPage={(rowId, columnId) => setOverlayCell({ rowId, columnId })} />}
+        {active.kind === "note" ? <RichNoteEditor key={active.id} page={active} onChange={(docHtml) => updateActive({ docHtml })} /> : <CollectionEditor collection={active.collection ?? { columns: [], rows: [], view: "all" }} currentPageId={active.id} pages={write.pages} onChange={(collection) => updateActive({ collection })} onCreatePageCell={createPageCell} onOpenPage={(rowId, columnId) => setOverlayCell({ rowId, columnId })} />}
       </section>
       {overlayCell && active.kind === "collection" && (() => { const key = `${overlayCell.rowId}:${overlayCell.columnId}`; const embedded = active.collection?.pageCells?.[key]; if (!embedded) return null; const overlayPage: NotePage = { id: `embedded-${key}`, parentId: null, title: embedded.title, kind: "note", docHtml: embedded.docHtml, archived: false, createdAt: embedded.updatedAt, updatedAt: embedded.updatedAt }; return createPortal(<div className="notes-linked-page-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOverlayCell(null); }}><section className="notes-linked-page" role="dialog" aria-modal="true" aria-label={`${embedded.title} linked page`}><header><span>▤</span><input aria-label="Linked page title" value={embedded.title} onChange={(event) => updateEmbeddedPage({ title: event.target.value })} /><button type="button" onClick={() => setOverlayCell(null)} aria-label="Minimize linked page">—</button></header><RichNoteEditor key={overlayPage.id} page={overlayPage} onChange={(docHtml) => updateEmbeddedPage({ docHtml })} /></section></div>, document.body); })()}
       {pendingTemplate && createPortal(<div className="notes-dialog-backdrop" role="presentation"><section className="notes-template-dialog" role="dialog" aria-modal="true" aria-labelledby="template-choice-title"><h3 id="template-choice-title">Use “{pendingTemplate.title}” template?</h3><p>Add it as a new top-level page or replace the current page's content.</p><div><button type="button" onClick={() => createFromTemplate(pendingTemplate)}>Add new page</button><button type="button" onClick={() => replaceFromTemplate(pendingTemplate)}>Replace current page</button><button type="button" onClick={() => setPendingTemplate(null)}>Cancel</button></div></section></div>, document.body)}

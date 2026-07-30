@@ -27,6 +27,7 @@ flowchart LR
 | 2026-07-27–28 | [FTR-1004](../feature-review-system/reviews/FTR-1004-write-table-follow-up-review.md) / [FTR-1005](../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) | Table follow-up completed with linked-page overlays, foreground row controls, persisted resizing, expanded icons/imports, individual status options, and compact filters; note insertion remains partial | DPL-1002 active state; remaining FTR-1005 scope flows to DPL-1003 |
 | 2026-07-29 | [FTR-1006](../feature-review-system/reviews/FTR-1006-write-toolbar-and-table-review.md) | Corrected toolbar activation, external paste normalization, linked-page dismissal, embedded Page ownership, table behavior, and advanced property workflows completed | DPL-1002 current testing state |
 | 2026-07-29 | [IMP-1006](../implementation-system/implementations/IMP-1006-settings.md) | Settings page and persisted Theme Mode implemented without replacing IO Vault’s animated visual system | DPL-1002 current testing state |
+| 2026-07-30 | [FTR-1007](../feature-review-system/reviews/FTR-1007-write-table-and-navigation-review.md) | Themed table navigation, stable record relations, guided Formula functions, direct explorer reordering, and compact creation controls verified with 50 tests, the production build, and signed-in browser acceptance | DPL-1002 current testing state |
 | — | [DPL-1003](DPL-1003-next-testing-state.md) | Planned next complete testing state | Not deployed |
 
 Open SEC/SYS findings are accepted testing limitations, not production-readiness evidence.

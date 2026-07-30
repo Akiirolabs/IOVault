@@ -3,7 +3,7 @@
 | Field | Current state |
 |---|---|
 | Status | Deployed for testing |
-| Date | 2026-07-29 |
+| Date | 2026-07-30 |
 | Commit | `73d45ac` baseline; current verified changes pending commit |
 | Version | **1.0 — Current** |
 | Environment | Repository-backed local testing state; no external production claim |
@@ -19,7 +19,7 @@
 | Authentication | JWT-backed HttpOnly SameSite cookie with CSRF protection; bearer compatibility for non-browser clients |
 | Data | SQLite user/workspace/code records, `localStorage` workspace cache, and bounded IndexedDB Code Vault cache |
 | Code Vault | Monaco, scratch and repository files, selected context, structured patch review/undo, and draft PR publication |
-| Write | Structured hierarchy, advanced typed collections, embedded Page cells, explicit column editing/sorting, keyboard traversal, normalized external paste, dismissible linked-page overlays, persisted column sizing, foreground row controls, compact filters, a toolbar-area hover control, recovery, rich editing, and explicit AI context |
+| Write | Structured hierarchy with direct drag reordering, advanced typed collections, record-based Relation pickers, guided Formula functions, themed wide-table navigation, embedded Page cells, explicit column editing/sorting, keyboard traversal, normalized external paste, dismissible linked-page overlays, compact glass creation controls, recovery, rich editing, and explicit AI context |
 | Settings | Persisted Theme Mode with tinted color tuning, subdued Dark, true-black Night, white Light, additional curated colors, live preview, and a Default control while preserving the animated visual system |
 | AI | Authenticated, rate-limited requests with bounded explicit context and content-free usage auditing |
 
@@ -48,6 +48,7 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 | [FTR-1004 — Write table follow-up review](../feature-review-system/reviews/FTR-1004-write-table-follow-up-review.md) | Linked-page overlays, consolidated foreground row actions, persisted column sizing, expanded icons/imports, individual status options, and compact filters | 11/11 verified |
 | [FTR-1005 — Write plus menu review](../feature-review-system/reviews/FTR-1005-write-plus-menu-review.md) | Functional `+` formatting menu, toolbar-area hover activation, embedded-page availability, and foreground anchoring | Partial — 3/4 verified; advanced insertion blocks remain open |
 | [FTR-1006 — Write toolbar and table review](../feature-review-system/reviews/FTR-1006-write-toolbar-and-table-review.md) | Hover-bound toolbar, normalized external paste, table keyboard behavior, dismissible sticky linked-page controls, embedded Page cells, guided Formula configuration, explicit column actions, and advanced property types | Verified — 14/14 |
+| [FTR-1007 - Write table and navigation review](../feature-review-system/reviews/FTR-1007-write-table-and-navigation-review.md) | Themed wide-table navigation, stable record-based Relation behavior, guided Formula functions, direct explorer drag reordering, and compact glass creation controls | Verified — 7/7 |
 | [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) | Authenticated AI access, bounded explicit context, and HttpOnly cookie sessions through DBG-1002–1004 | Three verified; five security findings remain open |
 | [SYS-1.0](../audit-system/SYS-1.0-system-baseline.md) | Responsive workspace behavior and reliable typed table-column controls through DBG-1001 and DBG-1017 | Two verified; seven system findings remain open |
 
@@ -55,8 +56,8 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 
 | Gate | Result |
 |---|---|
-| Tests | `npm test`: 10 files and 50 tests passed on 2026-07-29 |
-| Production build | `npm run build`: TypeScript and Vite production build passed on 2026-07-29 |
+| Tests | `npm test`: 10 files and 50 tests passed on 2026-07-30 |
+| Production build | `npm run build`: TypeScript and Vite production build passed on 2026-07-30 |
 | Database | SQLite schema auto-initializes; whole-workspace JSON and conflict handling remain known limitations |
 | Environment/secrets | Local environment supported; production JWT fail-closed validation remains open in DBG-1005 |
 | Monitoring | Application-level production monitoring is not established |

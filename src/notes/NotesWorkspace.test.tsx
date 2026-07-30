@@ -182,8 +182,8 @@ describe("Notes workspace", () => {
     expect(screen.getByRole("button", { name: "Create Details page for row 1" })).toBeInTheDocument();
     expect(screen.getByRole("status", { name: "Total for row 1" })).toHaveTextContent("—");
     fireEvent.click(screen.getByRole("button", { name: "Configure formula" }));
-    expect(screen.getByRole("region", { name: "Edit Total column" })).toHaveTextContent("{Estimate}");
-    expect(screen.getByRole("combobox", { name: "Related for row 1" })).toHaveTextContent("Imported writing");
+    expect(screen.getByRole("region", { name: "Edit Total column" })).toHaveTextContent("Estimate");
+    expect(screen.getByRole("button", { name: "Related for row 1" })).toHaveTextContent("Choose source table");
 
     fireEvent.change(screen.getByRole("textbox", { name: "Name for row 1" }), { target: { value: "Typed row" } });
     fireEvent.change(screen.getByRole("spinbutton", { name: "Estimate for row 1" }), { target: { value: "12.5" } });
@@ -198,8 +198,17 @@ describe("Notes workspace", () => {
     expect(screen.getByRole("combobox", { name: "Status for row 1" })).toHaveValue("Done");
     expect(screen.getByRole("textbox", { name: "Reference for row 1" })).toHaveValue("https://example.com");
 
-    fireEvent.change(screen.getByRole("textbox", { name: "Formula for Total" }), { target: { value: "{Estimate} * 2" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Formula for Total" }), { target: { value: "ROUND({Estimate} * 2, 0)" } });
     expect(screen.getByRole("status", { name: "Total for row 1" })).toHaveTextContent("25");
+
+    fireEvent.click(screen.getByRole("button", { name: "Related for row 1" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Edit source table for Related" }), { target: { value: (screen.getByRole("combobox", { name: "Edit source table for Related" }) as HTMLSelectElement).options[1].value } });
+    fireEvent.click(screen.getByRole("button", { name: "Related for row 1" }));
+    expect(screen.getByRole("listbox", { name: "Choose Related record" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: "Typed row" }));
+    expect(screen.getByRole("button", { name: "Related for row 1" })).toHaveTextContent("Typed row");
+    expect(document.querySelector(".notes-table-scroll")).toBeInTheDocument();
+    expect(screen.queryByRole("slider", { name: "Move table left and right" })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByRole("combobox", { name: "Type for Name column" }), { target: { value: "number" } });
     expect(screen.getByRole("spinbutton", { name: "Name for row 1" })).toBeInTheDocument();
@@ -294,7 +303,7 @@ describe("Notes workspace", () => {
     expect(screen.getByRole("textbox", { name: "Task details content" })).toHaveTextContent("Saved in the cell");
   });
 
-  it("drags a page into another section and offers keyboard move actions", () => {
+  it("reorders pages by dragging and retains explicit hierarchy actions", () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole("button", { name: "Note" }));
     const dragged = screen.getByRole("button", { name: "Untitled note" }).closest(".notes-tree-row") as HTMLElement;
@@ -303,12 +312,11 @@ describe("Notes workspace", () => {
     fireEvent.dragStart(dragged);
     fireEvent.dragOver(target);
     fireEvent.drop(target);
-    expect(screen.getByRole("combobox", { name: "Parent page" })).not.toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Parent page" })).toHaveValue("");
     fireEvent.click(screen.getByRole("button", { name: "Page actions for Untitled note" }));
     expect(screen.getByRole("menuitem", { name: "Move up" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Move down" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Move to top level" }));
-    expect(screen.getByRole("combobox", { name: "Parent page" })).toHaveValue("");
+    expect(screen.queryByRole("menuitem", { name: "Move to top level" })).not.toBeInTheDocument();
   });
 
   it("restores an archived parent with all descendants", () => {

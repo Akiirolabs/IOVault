@@ -51,7 +51,7 @@ describe("Notes model", () => {
           { id: "percent", name: "Percent", type: "percent" },
           { id: "email", name: "Email", type: "email" },
           { id: "formula", name: "Formula", type: "formula", formula: "{Number} * 2" },
-          { id: "relation", name: "Relation", type: "relation" },
+          { id: "relation", name: "Relation", type: "relation", relationPageId: "typed-table" },
         ],
         rows: [{ id: "row", cells: { text: "A", number: "2", date: "2026-07-23", check: true, status: "Done", url: "https://example.com" } }],
         view: "done",
@@ -67,6 +67,7 @@ describe("Notes model", () => {
     expect(normalized.pages[0].collection?.rows[0].cells.status).toBe("Done");
     expect(normalized.pages[0].collection?.sortColumnId).toBe("number");
     expect(normalized.pages[0].collection?.columns[9].formula).toBe("{Number} * 2");
+    expect(normalized.pages[0].collection?.columns[10].relationPageId).toBe("typed-table");
   });
 
   it("preserves supported row highlight colors and removes invalid values", () => {
