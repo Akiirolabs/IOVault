@@ -14,10 +14,10 @@
 | &emsp;↳ `IMP-1003.2.1` | Versioned text, number, date, checkbox, and select columns | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | &emsp;↳ `IMP-1003.2.2` | Inline row/column editing, select options, deletion cleanup, and sync | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | `IMP-1003.3` | Flowchart | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
-| &emsp;↳ `IMP-1003.3.1` | Editable rectangular nodes, direct node-to-node arrow connections, colors, zoom, and fit | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.3.1` | Spacious editable rectangular nodes, direct arrow connections, and corner menus for Connect, color, and delete | [FTR-1008.3.3](../../feature-review-system/reviews/FTR-1008-projects-page-review.md#findings) | Implemented and verified |
 | &emsp;↳ `IMP-1003.3.2` | Persist drag positions and remove orphaned edges | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | `IMP-1003.4` | Object mindmap | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
-| &emsp;↳ `IMP-1003.4.1` | Blank editable idea rectangles with direct node-to-node arrows and colors | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.4.1` | Blank spacious idea rectangles, direct arrows, and corner menus for Connect, color, and delete | [FTR-1008.3.3](../../feature-review-system/reviews/FTR-1008-projects-page-review.md#findings) | Implemented and verified |
 | &emsp;↳ `IMP-1003.4.2` | Persisted drag positioning, cycle prevention, and orphaned-reference cleanup | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | `IMP-1003.5` | Project portfolio controls | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | &emsp;↳ `IMP-1003.5.1` | Confirmed project deletion available from project and contextual actions | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
@@ -43,7 +43,7 @@
 
 **Acceptance:** all project modes persist through account sync; existing projects load unchanged; keyboard and narrow-screen workflows work; graph deletion cannot leave orphaned references.
 
-**Verification:** 12 test files and 56 tests passed, the production build passed, and signed-in browser acceptance confirmed editable rectangular Flowchart/Mindmap nodes, direct two-node connections without Source/Target forms, saved Mindmap text and relationships after reload, and zero console errors on 2026-07-30.
+**Verification:** 12 test files and 56 tests passed, the production build passed, and signed-in browser acceptance confirmed enlarged writing areas, working node corner menus, direct two-node connections without Source/Target forms, saved Mindmap relationships, and zero console errors on 2026-07-30.
 
 ## `IMP-1003.1` — Full-page editor
 

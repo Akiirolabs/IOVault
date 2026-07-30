@@ -30,11 +30,14 @@ describe("project workspace modes", () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole("button", { name: "+ Node" }));
     fireEvent.click(screen.getByRole("button", { name: "+ Node" }));
-    fireEvent.click(screen.getByRole("button", { name: "Connect Node 1" }));
-    fireEvent.click(screen.getByRole("button", { name: "Connect Node 2" }));
+    fireEvent.click(screen.getByLabelText("Options for Node 1"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Connect Node 1" }));
+    fireEvent.click(screen.getByLabelText("Options for Node 2"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Connect Node 2" }));
     expect(screen.getByRole("button", { name: "Delete connection Node 1 to Node 2" })).toBeInTheDocument();
     fireEvent.dragEnd(screen.getByRole("textbox", { name: "Node 1 label" }).closest("article")!, { clientX: 300, clientY: 220 });
-    fireEvent.click(screen.getByRole("button", { name: "Delete Node 1" }));
+    fireEvent.click(screen.getByLabelText("Options for Node 1"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete Node 1" }));
     expect(screen.queryByRole("button", { name: "Delete connection Node 1 to Node 2" })).not.toBeInTheDocument();
   });
 
@@ -44,8 +47,10 @@ describe("project workspace modes", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Idea" }));
     fireEvent.click(screen.getByRole("button", { name: "+ Idea" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Idea 1 title" }), { target: { value: "Root" } });
-    fireEvent.click(screen.getByRole("button", { name: "Connect Root" }));
-    fireEvent.click(screen.getByRole("button", { name: "Connect Idea 2" }));
+    fireEvent.click(screen.getByLabelText("Options for Root"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Connect Root" }));
+    fireEvent.click(screen.getByLabelText("Options for Idea 2"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Connect Idea 2" }));
     expect(screen.getByLabelText("Relation arrow Root to Idea 2")).toBeInTheDocument();
     fireEvent.dragEnd(screen.getByRole("textbox", { name: "Root title" }).closest("article")!, { clientX: 360, clientY: 240 });
     expect(screen.queryByRole("button", { name: "+ Field" })).not.toBeInTheDocument();
