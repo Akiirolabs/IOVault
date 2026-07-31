@@ -54,6 +54,8 @@ import {
   validRepositoryPath,
 } from "./github.js";
 import { createAiRateLimiter, validateAgentRequest } from "./ai-security.js";
+import agentRoutes from "./agent-routes.js";
+import { startAgentWorker } from "./agent-runtime.js";
 
 const app = express();
 const port = Number(process.env.API_PORT || 8787);
@@ -169,6 +171,11 @@ app.put("/api/vault", requireAuth, requireCsrf, (request, response) => {
 app.locals.aiConfigured = Boolean(apiKey && apiKey !== "your_key_here");
 app.locals.aiClient = app.locals.aiConfigured ? new OpenAI({ apiKey, timeout: 30_000, maxRetries: 1 }) : null;
 app.locals.aiRateLimiter = aiRateLimiter;
+app.locals.agentClient = app.locals.aiClient;
+
+app.use("/api", agentRoutes);
+const stopAgentWorker = process.env.NODE_ENV === "test" ? () => {} : startAgentWorker(() => app.locals.agentClient);
+app.locals.stopAgentWorker = stopAgentWorker;
 
 app.post("/api/agent", requireAuth, requireCsrf, aiRateLimiter.middleware, async (request, response) => {
   const validation = validateAgentRequest(request.body);

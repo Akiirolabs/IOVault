@@ -33,7 +33,7 @@ Every evidence-driven DBG belongs to exactly one baseline and keeps its problem,
 
 | DBG | Evidence |
 |---|---|
-| DBG-1001 | Production build and 1280×800/390×844 browser checks |
+| DBG-1001 | Production builds and 1280×800/390×844 browser checks; Agent Workspace viewport correction reverified 2026-07-31 |
 | DBG-1002 | 15 tests and production build |
 | DBG-1003 | 17 tests and production build |
 | DBG-1004 | 20 tests and production build |

@@ -4,7 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProjectFlowchartEditor, ProjectMindmapEditor, ProjectTableEditor } from "./ProjectModes";
 import { createProjectFlowchart, createProjectMindmap, createProjectTable, type ProjectFlowchart, type ProjectMindmap, type ProjectTable } from "./model";
 
-beforeEach(() => vi.restoreAllMocks());
+beforeEach(() => {
+  vi.restoreAllMocks();
+  vi.stubGlobal("PointerEvent", MouseEvent);
+  Object.defineProperty(HTMLElement.prototype, "setPointerCapture", { configurable: true, value: vi.fn() });
+});
 
 describe("project workspace modes", () => {
   it("creates typed table columns and cleans deleted rows and columns", () => {
@@ -35,7 +39,17 @@ describe("project workspace modes", () => {
     fireEvent.click(screen.getByLabelText("Options for Node 2"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Connect Node 2" }));
     expect(screen.getByRole("button", { name: "Delete connection Node 1 to Node 2" })).toBeInTheDocument();
-    fireEvent.dragEnd(screen.getByRole("textbox", { name: "Node 1 label" }).closest("article")!, { clientX: 300, clientY: 220 });
+    const firstNode = screen.getByRole("textbox", { name: "Node 1 label" }).closest("article")!;
+    const moveNode = screen.getByRole("button", { name: "Move Node 1" });
+    fireEvent.pointerDown(moveNode, { pointerId: 1, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(moveNode, { pointerId: 1, clientX: 220, clientY: 190 });
+    fireEvent.pointerUp(moveNode, { pointerId: 1, clientX: 220, clientY: 190 });
+    expect(firstNode).toHaveStyle({ left: "160px", top: "140px" });
+    const resize = screen.getByRole("button", { name: "Resize Node 1" });
+    fireEvent.pointerDown(resize, { pointerId: 2, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(resize, { pointerId: 2, clientX: 180, clientY: 150 });
+    fireEvent.pointerUp(resize, { pointerId: 2, clientX: 180, clientY: 150 });
+    expect(firstNode).toHaveStyle({ width: "384px", height: "162px" });
     fireEvent.click(screen.getByLabelText("Options for Node 1"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Delete Node 1" }));
     expect(screen.queryByRole("button", { name: "Delete connection Node 1 to Node 2" })).not.toBeInTheDocument();
@@ -52,7 +66,12 @@ describe("project workspace modes", () => {
     fireEvent.click(screen.getByLabelText("Options for Idea 2"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Connect Idea 2" }));
     expect(screen.getByLabelText("Relation arrow Root to Idea 2")).toBeInTheDocument();
-    fireEvent.dragEnd(screen.getByRole("textbox", { name: "Root title" }).closest("article")!, { clientX: 360, clientY: 240 });
+    const rootNode = screen.getByRole("textbox", { name: "Root title" }).closest("article")!;
+    const moveRoot = screen.getByRole("button", { name: "Move Root" });
+    fireEvent.pointerDown(moveRoot, { pointerId: 3, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(moveRoot, { pointerId: 3, clientX: 250, clientY: 210 });
+    fireEvent.pointerUp(moveRoot, { pointerId: 3, clientX: 250, clientY: 210 });
+    expect(rootNode).toHaveStyle({ left: "210px", top: "170px" });
     expect(screen.queryByRole("button", { name: "+ Field" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Open Root page" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Root page content" }), { target: { value: "Detailed idea notes" } });

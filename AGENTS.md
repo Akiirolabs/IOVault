@@ -10,7 +10,7 @@ Personal productivity dashboard: a Vite + React + TypeScript SPA with a required
 
 ### Auth + database
 - SQL store: SQLite via `better-sqlite3`, file at `server/data/iovault.db` (git-ignored, auto-created on first run; `server/db.js` runs `CREATE TABLE IF NOT EXISTS`). No manual DB setup needed. Override path with `DATABASE_FILE`.
-- Tables include `users`, `workspaces`, AI usage metadata, and user-scoped Code Vault records. See `docs/deployment-ledger/DPL-1002-current-testing-state.md`.
+- Tables include `users`, `workspaces`, AI usage metadata, user-scoped Code Vault records, and dedicated Learning/Career agent profiles, conversations, tasks, runs, approvals, connector actions, and domain records. See `docs/deployment-ledger/DPL-1002-current-testing-state.md`.
 - Auth: `server/auth.js` — bcrypt hashing plus a JWT-backed `HttpOnly`, `SameSite=Lax` cookie (`Secure` in production). Unsafe cookie-authenticated requests require `X-IOVault-CSRF: 1`. The SPA never receives or stores the JWT; bearer auth remains available for non-browser API clients. `JWT_SECRET` is optional locally but required for a secure production deployment.
 - To reset all accounts/data locally, delete `server/data/` and restart the API.
 
@@ -20,7 +20,8 @@ Personal productivity dashboard: a Vite + React + TypeScript SPA with a required
 
 ### AI / secrets (optional)
 - The API reads `OPENAI_API_KEY` from `.env.local` (preferred) or `.env` — both git-ignored. `server/index.js` loads `.env.local` with override, then `.env`. A `process.env.OPENAI_API_KEY` (e.g. a Cursor Secret) also works with no file. Without a key, `POST /api/agent` returns HTTP 400 `"Missing OPENAI_API_KEY in .env.local."` — expected, not a bug. The frontend has an offline fallback for greetings/time/date/simple math.
-- Model is hardcoded to `gpt-4o-mini`.
+- The general assistant model is hardcoded to `gpt-4o-mini`.
+- Learning and Career use the Responses API with `OPENAI_AGENT_MODEL` (default `gpt-5.6-terra`). Google OAuth requires `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, and a production `CONNECTOR_ENCRYPTION_KEY`; restart the API after changing them.
 - GOTCHA: the Express API reads the key once at startup (`const apiKey = process.env.OPENAI_API_KEY`) and does NOT watch env files. Under `npm run dev`, editing `.env`/`.env.local` triggers a **Vite** restart but NOT a restart of the `node server/index.js` process — so the new key is ignored until you restart the whole `npm run dev` command (or the API process). After adding a key, restart dev and confirm the log shows `injected env (1) from .env` (count > 0).
 
 ### Lint / typecheck / build

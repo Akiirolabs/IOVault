@@ -1,0 +1,9 @@
+export type AgentKind = "learning" | "career";
+export type AgentStatus = "idle" | "listening" | "thinking" | "working" | "approval" | "complete" | "error";
+export type AgentMessage = { id:string; role:"user"|"assistant"; content:string; createdAt?:string };
+export type AgentConversation = { id:string; agent:AgentKind; title:string; messages?:AgentMessage[] };
+export type AgentTask = { id:string; runId:string; title:string; state:string; createdAt:string; updatedAt:string };
+export type AgentApproval = { id:string; runId:string; actionType:string; summary:string; status:string; action:Record<string,unknown>; createdAt:string };
+export type AgentRecord = { id:string; recordType:string; title:string; status:string; data:Record<string,unknown>; sourceUrl?:string; updatedAt:string };
+export type Connector = { provider:string; accountLabel:string; scopes:string[]; expiresAt?:string };
+export type AgentSnapshot = { agent:AgentKind; profile:Record<string,unknown>; policy:Record<string,unknown>; connected:Connector[]; tasks:AgentTask[]; approvals:AgentApproval[]; records:AgentRecord[] };

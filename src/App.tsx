@@ -37,13 +37,15 @@ import {
   HiOutlineUserGroup,
 } from "react-icons/hi2";
 import { SiCoursera, SiGithub, SiNotion } from "react-icons/si";
-import { AI_MODEL } from "./aiConfig";
 import CodeVaultWorkspace from "./codeVault/CodeVaultWorkspace";
 import type { CodeSnippet } from "./codeVault/types";
 import NotesWorkspace from "./notes/NotesWorkspace";
 import { activeNoteContext, createInitialWriteState, normalizeWriteState, type WriteState } from "./notes/model";
 import { ProjectFlowchartEditor, ProjectMindmapEditor, ProjectTableEditor } from "./projects/ProjectModes";
 import { createProjectFlowchart, createProjectMindmap, createProjectTable, filterProjects, normalizeProjectBlock, reorderProjects, type ProjectBlock, type ProjectFilter, type ProjectStatus } from "./projects/model";
+import AgentWorkspace from "./agents/AgentWorkspace";
+import { apiFetch } from "./api";
+export { apiFetch } from "./api";
 
 // --- Types: shape of each workspace page and full saved state ---
 
@@ -171,9 +173,27 @@ export type VaultState = {
       depth: number;
     };
   };
+  assistant: {
+    conversations: AgentConversation[];
+    activeConversationId: string;
+  };
 };
 
-export type AgentContext = { scope: PageKey; data: unknown };
+export type AgentContext = { scope: PageKey | "selected"; data: unknown };
+
+type AgentMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+};
+
+type AgentConversation = {
+  id: string;
+  title: string;
+  messages: AgentMessage[];
+  updatedAt: string;
+};
 
 function truncateAgentText(value: string, limit: number) {
   return value.length > limit ? `${value.slice(0, limit)}\n[truncated]` : value;
@@ -217,6 +237,38 @@ export function buildAgentContext(page: PageKey, state: VaultState): AgentContex
     ...noteContext,
     ...("document" in noteContext && typeof noteContext.document === "string" ? { document: truncateAgentText(agentPlainText(noteContext.document), 30_000) } : {}),
   } };
+}
+
+export function buildSelectedAgentContext(pages: PageKey[], state: VaultState, projectIds: string[] = []): AgentContext | undefined {
+  const selected = [
+    ...[...new Set(pages)].map((page) => buildAgentContext(page, state)),
+    ...[...new Set(projectIds)].flatMap((projectId) => {
+      const project = state.projects.blocks.find((block) => block.id === projectId);
+      return project ? [{ scope: "projects" as const, data: { project: {
+        id: project.id,
+        title: project.title,
+        status: project.status,
+        body: truncateAgentText(project.body, 8_000),
+        document: truncateAgentText(agentPlainText(project.docHtml || ""), 12_000),
+        markdown: truncateAgentText(project.docMarkdown || "", 12_000),
+      } } }] : [];
+    }),
+  ];
+  if (selected.length === 0) return undefined;
+  if (selected.length === 1) return selected[0];
+  return { scope: "selected", data: { pages: selected } };
+}
+
+export function buildAgentConversationPrompt(messages: AgentMessage[], nextMessage: string) {
+  const prefix = "Continue this conversation:\n\n";
+  const suffix = `\n\nUser: ${nextMessage}`;
+  const historyBudget = Math.max(0, 8_000 - prefix.length - suffix.length);
+  const history = messages
+    .slice(-8)
+    .map((message) => `${message.role === "user" ? "User" : "Assistant"}: ${message.content}`)
+    .join("\n\n")
+    .slice(-historyBudget);
+  return history ? `${prefix}${history}${suffix}` : nextMessage.slice(0, 8_000);
 }
 
 type NavItem = {
@@ -307,6 +359,24 @@ const defaultVaultState: VaultState = {
       },
     ],
   },
+  assistant: {
+    activeConversationId: "assistant-welcome",
+    conversations: [
+      {
+        id: "assistant-welcome",
+        title: "New conversation",
+        updatedAt: new Date(0).toISOString(),
+        messages: [
+          {
+            id: "assistant-welcome-message",
+            role: "assistant",
+            content: "Ask the agent anything or have it search this workspace.",
+            createdAt: new Date(0).toISOString(),
+          },
+        ],
+      },
+    ],
+  },
 };
 
 // --- Persistence: read/write localStorage safely ---
@@ -316,6 +386,23 @@ function normalizeVaultState(raw: unknown): VaultState {
   if (!raw || typeof raw !== "object") return defaultVaultState;
 
   const parsed = raw as Partial<VaultState>;
+  const conversations = Array.isArray(parsed.assistant?.conversations)
+    ? parsed.assistant.conversations.filter((conversation): conversation is AgentConversation =>
+        Boolean(conversation && typeof conversation.id === "string" && typeof conversation.title === "string" && Array.isArray(conversation.messages)),
+      ).slice(0, 8).map((conversation) => ({
+        ...conversation,
+        title: conversation.title.slice(0, 60),
+        messages: conversation.messages.filter((message) => message
+          && typeof message.id === "string"
+          && (message.role === "user" || message.role === "assistant")
+          && typeof message.content === "string")
+          .slice(-16)
+          .map((message) => ({ ...message, content: message.content.slice(0, 8_000) })),
+      }))
+    : defaultVaultState.assistant.conversations;
+  const activeConversationId = conversations.some((conversation) => conversation.id === parsed.assistant?.activeConversationId)
+    ? String(parsed.assistant?.activeConversationId)
+    : conversations[0]?.id || defaultVaultState.assistant.activeConversationId;
 
   return {
     code: {
@@ -367,6 +454,7 @@ function normalizeVaultState(raw: unknown): VaultState {
         ? parsed.projects.blocks.map(normalizeProjectBlock).filter((block): block is ProjectBlock => block !== null)
         : defaultVaultState.projects.blocks,
     },
+    assistant: { conversations, activeConversationId },
   };
 }
 
@@ -488,17 +576,6 @@ function RichTextEditor({ html, onChange, className, role, ariaLabel, ariaMultil
 // --- Auth: HttpOnly cookie session + sign-in screen ---
 
 type AuthUser = { id: string; email: string };
-
-/** Same-origin API wrapper; unsafe methods include the cookie-session CSRF header. */
-export async function apiFetch(path: string, options: RequestInit = {}) {
-  const method = (options.method || "GET").toUpperCase();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string> | undefined),
-  };
-  if (!["GET", "HEAD", "OPTIONS"].includes(method)) headers["X-IOVault-CSRF"] = "1";
-  return fetch(path, { ...options, credentials: "same-origin", headers });
-}
 
 function AuthScreen({ onAuthed }: { onAuthed: (user: AuthUser, isSignup: boolean) => void }) {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -688,14 +765,14 @@ function App() {
   const [activePage, setActivePage] = useState<PageKey>("code");
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isAgentOpen, setIsAgentOpen] = useState(false);
-  const [isLearningPanelOpen, setIsLearningPanelOpen] = useState(false);
   const [activeSnippetId, setActiveSnippetId] = useState<string | null>("snippet-1");
   const [vaultState, setVaultState] = useState<VaultState>(getSavedVaultState);
   const [assistantQuestion, setAssistantQuestion] = useState("");
-  const [includeAgentContext, setIncludeAgentContext] = useState(false);
-  const [assistantAnswer, setAssistantAnswer] = useState("Ask the agent anything or have it search this workspace.");
+  const [selectedAgentContexts, setSelectedAgentContexts] = useState<PageKey[]>([]);
+  const [selectedProjectContexts, setSelectedProjectContexts] = useState<string[]>([]);
+  const [isAgentContextOpen, setIsAgentContextOpen] = useState(false);
+  const [isAgentHistoryOpen, setIsAgentHistoryOpen] = useState(false);
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
-  const [isResumeLoading, setIsResumeLoading] = useState(false);
   const [isGithubOpen, setIsGithubOpen] = useState(false);
   const [githubStatus, setGithubStatus] = useState<GithubTestStatus | null>(null);
   const [isGithubLoading, setIsGithubLoading] = useState(false);
@@ -704,16 +781,21 @@ function App() {
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>("all");
   const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
   const [projectMenuId, setProjectMenuId] = useState<string | null>(null);
+  const [isProjectBoardMenuOpen, setIsProjectBoardMenuOpen] = useState(false);
+  const [projectDropTarget, setProjectDropTarget] = useState<{ id: string; position: "before" | "after" } | null>(null);
   const [isMarkdownPreview, setIsMarkdownPreview] = useState(false);
   const markdownRef = useRef<HTMLTextAreaElement>(null);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [syncState, setSyncState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const syncTimer = useRef<number | null>(null);
+  const agentMessagesRef = useRef<HTMLDivElement>(null);
 
   // --- Derived values for the active page / snippet / project counts ---
   const activeSnippet = vaultState.code.snippets.find((snippet) => snippet.id === activeSnippetId);
   const activeNavItem = navItems.find((item) => item.key === activePage) || navItems[0];
+  const activeConversation = vaultState.assistant.conversations.find((conversation) => conversation.id === vaultState.assistant.activeConversationId)
+    || vaultState.assistant.conversations[0];
   const activeNavIconId = vaultState.settings.navIcons[activeNavItem.key];
   const ActivePageIcon = (activeNavIconId && ICONS_BY_ID[activeNavIconId]) || activeNavItem.defaultIcon;
   const openProject = vaultState.projects.blocks.find((block) => block.id === openProjectId) || null;
@@ -728,6 +810,10 @@ function App() {
     const done = vaultState.projects.blocks.filter((block) => block.status === "Done").length;
     return { active, progress, done, total: vaultState.projects.blocks.length };
   }, [vaultState.projects.blocks]);
+
+  useEffect(() => {
+    agentMessagesRef.current?.scrollTo({ top: agentMessagesRef.current.scrollHeight, behavior: "smooth" });
+  }, [activeConversation?.messages.length, isAssistantLoading]);
   const filteredProjects = filterProjects(vaultState.projects.blocks, projectFilter);
 
   // --- State updaters: every change writes through to localStorage ---
@@ -845,32 +931,12 @@ function App() {
     saveVaultState((prev) => ({ ...prev, code: { ...prev.code, ...updates } }));
   }
 
-  function updateLearning(updates: Partial<VaultState["learning"]>) {
-    saveVaultState((prev) => ({ ...prev, learning: { ...prev.learning, ...updates } }));
-  }
-
   function updateWrite(updates: Partial<VaultState["write"]>) {
     saveVaultState((prev) => ({ ...prev, write: { ...prev.write, ...updates } }));
   }
 
   function updateGithub(updates: Partial<VaultState["github"]>) {
     saveVaultState((prev) => ({ ...prev, github: { ...prev.github, ...updates } }));
-  }
-
-  function updateCalendarFocus(index: number) {
-    const current = vaultState.learning.calendarFocus[index] ?? "";
-    const next = window.prompt(`Focus for Day ${index + 1}`, current);
-
-    if (next === null) return;
-
-    const trimmed = next.trim();
-    if (!trimmed) return;
-
-    updateLearning({
-      calendarFocus: vaultState.learning.calendarFocus.map((value, position) =>
-        position === index ? trimmed : value,
-      ),
-    });
   }
 
   // --- GitHub: latest Actions test status via the public GitHub API ---
@@ -965,8 +1031,41 @@ function App() {
     document.execCommand(command, false, value);
   }
 
-  function updateCareer(updates: Partial<VaultState["career"]>) {
-    saveVaultState((prev) => ({ ...prev, career: { ...prev.career, ...updates } }));
+  function updateAssistant(reducer: (assistant: VaultState["assistant"]) => VaultState["assistant"]) {
+    saveVaultState((prev) => ({ ...prev, assistant: reducer(prev.assistant) }));
+  }
+
+  function appendAssistantMessage(conversationId: string, message: AgentMessage) {
+    updateAssistant((assistant) => ({
+      ...assistant,
+      conversations: assistant.conversations.map((conversation) => conversation.id === conversationId
+        ? { ...conversation, messages: [...conversation.messages, { ...message, content: message.content.slice(0, 8_000) }].slice(-16), updatedAt: message.createdAt }
+        : conversation),
+    }));
+  }
+
+  function startAssistantConversation() {
+    const now = new Date().toISOString();
+    const id = crypto.randomUUID();
+    updateAssistant((assistant) => ({
+      activeConversationId: id,
+      conversations: [
+        {
+          id,
+          title: "New conversation",
+          updatedAt: now,
+          messages: [],
+        },
+        ...assistant.conversations,
+      ].slice(0, 8),
+    }));
+    setAssistantQuestion("");
+    setIsAgentHistoryOpen(false);
+  }
+
+  function selectAssistantConversation(id: string) {
+    updateAssistant((assistant) => ({ ...assistant, activeConversationId: id }));
+    setIsAgentHistoryOpen(false);
   }
 
   function updateProject(id: string, updates: Partial<ProjectBlock>) {
@@ -986,12 +1085,29 @@ function App() {
     if (!project || !window.confirm(`Delete “${project.title}”? This cannot be undone.`)) return;
     saveVaultState((prev) => ({ ...prev, projects: { ...prev.projects, blocks: prev.projects.blocks.filter((block) => block.id !== id) } }));
     if (openProjectId === id) setOpenProjectId(null);
+    setSelectedProjectContexts((ids) => ids.filter((projectId) => projectId !== id));
   }
 
-  function reorderProject(projectId: string, targetId: string) {
+  function reorderProject(projectId: string, targetId: string, position: "before" | "after") {
     if (projectId === targetId) return;
-    saveVaultState((prev) => ({ ...prev, projects: { ...prev.projects, blocks: reorderProjects(prev.projects.blocks, projectId, targetId) } }));
+    saveVaultState((prev) => ({ ...prev, projects: { ...prev.projects, blocks: reorderProjects(prev.projects.blocks, projectId, targetId, position) } }));
     setDraggedProjectId(null);
+    setProjectDropTarget(null);
+  }
+
+  function sortProjects(mode: "title" | "status") {
+    const statusRank: Record<ProjectStatus, number> = { Active: 0, "In progress": 1, Done: 2 };
+    saveVaultState((prev) => ({ ...prev, projects: { ...prev.projects, blocks: [...prev.projects.blocks].sort((left, right) => mode === "title"
+      ? left.title.localeCompare(right.title)
+      : statusRank[left.status] - statusRank[right.status] || left.title.localeCompare(right.title)) } }));
+    setIsProjectBoardMenuOpen(false);
+  }
+
+  function sendProjectToAssistant(project: ProjectBlock) {
+    setSelectedProjectContexts((ids) => [...new Set([...ids, project.id])]);
+    setProjectMenuId(null);
+    setIsAgentOpen(true);
+    setIsAgentContextOpen(true);
   }
 
   function openProjectMode(project: ProjectBlock, mode: "table" | "flowchart" | "mindmap") {
@@ -1037,18 +1153,26 @@ function App() {
     });
   }
 
-  function addProjectBlock() {
+  function addProjectBlock(template: "blank" | "research" | "launch" = "blank") {
+    const templates = {
+      blank: { title: "Untitled Project", body: "Write project context, notes, links, and next steps.", docHtml: "" },
+      research: { title: "Research Project", body: "Define the question, sources, observations, and next decision.", docHtml: "<h2>Research question</h2><p></p><h2>Sources and evidence</h2><p></p><h2>Findings</h2><p></p>" },
+      launch: { title: "Launch Plan", body: "Track scope, milestones, risks, owners, and release readiness.", docHtml: "<h2>Outcome</h2><p></p><h2>Milestones</h2><ul><li></li></ul><h2>Risks</h2><p></p>" },
+    } as const;
+    const selectedTemplate = templates[template];
     const block: ProjectBlock = {
       id: crypto.randomUUID(),
-      title: "Untitled Project",
+      title: selectedTemplate.title,
       status: "Active",
-      body: "Write project context, notes, links, and next steps.",
+      body: selectedTemplate.body,
+      docHtml: selectedTemplate.docHtml,
     };
 
     saveVaultState((prev) => ({
       ...prev,
       projects: { ...prev.projects, blocks: [block, ...prev.projects.blocks] },
     }));
+    setIsProjectBoardMenuOpen(false);
   }
 
   // --- AI: shared fetch to /api/agent (proxied to Express in dev) ---
@@ -1069,38 +1193,41 @@ function App() {
     const prompt = assistantQuestion.trim();
 
     if (!prompt) {
-      setAssistantAnswer("Ask a question, request a summary, or search the workspace.");
       return;
     }
+
+    const conversation = activeConversation;
+    if (!conversation) return;
+
+    const now = new Date().toISOString();
+    const userMessage: AgentMessage = { id: crypto.randomUUID(), role: "user", content: prompt, createdAt: now };
+    const requestPrompt = buildAgentConversationPrompt(conversation.messages, prompt);
+    appendAssistantMessage(conversation.id, userMessage);
+    if (conversation.title === "New conversation") {
+      updateAssistant((assistant) => ({
+        ...assistant,
+        conversations: assistant.conversations.map((item) => item.id === conversation.id
+          ? { ...item, title: prompt.slice(0, 44) || "New conversation" }
+          : item),
+      }));
+    }
+    setAssistantQuestion("");
 
     setIsAssistantLoading(true);
 
     try {
-      setAssistantAnswer(await requestAgent(prompt, includeAgentContext ? buildAgentContext(activePage, vaultState) : undefined));
+      const answer = await requestAgent(requestPrompt, buildSelectedAgentContext(selectedAgentContexts, vaultState, selectedProjectContexts));
+      appendAssistantMessage(conversation.id, { id: crypto.randomUUID(), role: "assistant", content: answer, createdAt: new Date().toISOString() });
     } catch (error) {
       const fallback = answerBasicQuestion(prompt.toLowerCase());
-      setAssistantAnswer(
-        fallback || `${error instanceof Error ? error.message : "AI request failed."} Local fallback did not find an answer.`,
-      );
-    } finally {
-      setIsAssistantLoading(false);
-    }
-  }
-
-  async function reviseResume() {
-    setIsResumeLoading(true);
-
-    try {
-      const answer = await requestAgent(
-        `Revise this resume for clarity, impact, ATS readability, and strong bullets. Return only the improved resume text:\n\n${vaultState.career.resume}`,
-      );
-      updateCareer({ aiDraft: answer });
-    } catch (error) {
-      updateCareer({
-        aiDraft: error instanceof Error ? error.message : "Could not revise the resume right now.",
+      appendAssistantMessage(conversation.id, {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: fallback || `${error instanceof Error ? error.message : "AI request failed."} Local fallback did not find an answer.`,
+        createdAt: new Date().toISOString(),
       });
     } finally {
-      setIsResumeLoading(false);
+      setIsAssistantLoading(false);
     }
   }
 
@@ -1124,33 +1251,101 @@ function App() {
             <p className="kicker">AI Agent</p>
             <h2>IO Assistant</h2>
           </div>
-          <button type="button" onClick={() => setIsAgentOpen(false)} aria-label="Close agent">
-            Close
-          </button>
+          <div className="agent-head-actions">
+            <button
+              type="button"
+              className="agent-menu-trigger"
+              onClick={() => setIsAgentHistoryOpen((open) => !open)}
+              aria-label="Open chat history"
+              aria-expanded={isAgentHistoryOpen}
+            >
+              ⋯
+            </button>
+            <button type="button" onClick={() => setIsAgentOpen(false)} aria-label="Close agent">Close</button>
+          </div>
+          {isAgentHistoryOpen && (
+            <div className="agent-history-menu" role="menu" aria-label="Chat history">
+              <button type="button" className="agent-new-chat" onClick={startAssistantConversation}>+ New chat</button>
+              <div className="agent-history-list">
+                {vaultState.assistant.conversations.map((conversation) => (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className={conversation.id === activeConversation?.id ? "active" : ""}
+                    key={conversation.id}
+                    onClick={() => selectAssistantConversation(conversation.id)}
+                  >
+                    <strong>{conversation.title}</strong>
+                    <small>{new Date(conversation.updatedAt).toLocaleDateString()}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <p className="agent-status">{AI_MODEL}</p>
-
-        <form className="agent-form" onSubmit={askAssistant}>
-          <textarea
-            value={assistantQuestion}
-            onChange={(event) => setAssistantQuestion(event.target.value)}
-            placeholder="Ask the agent to write, explain, revise, plan, or find..."
-          />
-          <label className="context-toggle">
-            <input type="checkbox" checked={includeAgentContext} onChange={(event) => setIncludeAgentContext(event.target.checked)} />
-            Include {activeNavItem.label} context
-          </label>
-          <button type="submit" disabled={isAssistantLoading}>
-            {isAssistantLoading ? "Thinking..." : "Ask AI"}
-          </button>
-        </form>
-
-        <div className="agent-response">
-          <ReactMarkdown>{assistantAnswer}</ReactMarkdown>
+        <div className="agent-conversation" ref={agentMessagesRef} aria-live="polite">
+          {activeConversation?.messages.length ? activeConversation.messages.map((message) => (
+            <article className={`agent-message ${message.role}`} key={message.id}>
+              <span>{message.role === "user" ? "You" : "IO"}</span>
+              <div className="agent-response"><ReactMarkdown>{message.content}</ReactMarkdown></div>
+            </article>
+          )) : (
+            <div className="agent-empty">
+              <h3>Start a conversation</h3>
+              <p>Ask a question, plan work, or explicitly add workspace context.</p>
+            </div>
+          )}
+          {isAssistantLoading && <div className="agent-thinking">Thinking…</div>}
         </div>
-        <div className="agent-key-note">
-          Model: <code>{AI_MODEL}</code>
+
+        <div className="agent-composer-wrap">
+          {isAgentContextOpen && (
+            <div className="agent-context-panel">
+              <div className="agent-context-heading"><strong>Context</strong><small>Only selected pages are submitted</small></div>
+              {selectedAgentContexts.length > 0 ? selectedAgentContexts.map((page) => {
+                const item = navItems.find((navItem) => navItem.key === page);
+                return (
+                  <div className="agent-context-item" key={page}>
+                    <span>{item?.label || page}</span>
+                    <button type="button" aria-label={`Remove ${item?.label || page} context`} onClick={() => setSelectedAgentContexts((items) => items.filter((itemPage) => itemPage !== page))}>×</button>
+                  </div>
+                );
+              }) : null}
+              {selectedProjectContexts.map((projectId) => {
+                const project = vaultState.projects.blocks.find((block) => block.id === projectId);
+                if (!project) return null;
+                return <div className="agent-context-item" key={`project-${projectId}`}><span>Project: {project.title}</span><button type="button" aria-label={`Remove ${project.title} project context`} onClick={() => setSelectedProjectContexts((ids) => ids.filter((id) => id !== projectId))}>×</button></div>;
+              })}
+              {selectedAgentContexts.length === 0 && selectedProjectContexts.length === 0 && <p className="agent-context-empty">No workspace context selected.</p>}
+              {!selectedAgentContexts.includes(activePage) && (
+                <button type="button" className="agent-add-context" onClick={() => setSelectedAgentContexts((items) => [...items, activePage])}>+ Add {activeNavItem.label}</button>
+              )}
+            </div>
+          )}
+          <form className="agent-form" onSubmit={askAssistant}>
+            <button
+              type="button"
+              className={`agent-context-trigger ${selectedAgentContexts.length + selectedProjectContexts.length ? "active" : ""}`}
+              onClick={() => setIsAgentContextOpen((open) => !open)}
+              aria-expanded={isAgentContextOpen}
+            >
+              Context{selectedAgentContexts.length + selectedProjectContexts.length ? ` ${selectedAgentContexts.length + selectedProjectContexts.length}` : ""}
+            </button>
+            <textarea
+              value={assistantQuestion}
+              onChange={(event) => setAssistantQuestion(event.target.value)}
+              placeholder="Message IO Assistant..."
+              rows={1}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  event.currentTarget.form?.requestSubmit();
+                }
+              }}
+            />
+            <button className="agent-send" type="submit" disabled={isAssistantLoading || !assistantQuestion.trim()} aria-label="Send message">↑</button>
+          </form>
         </div>
       </aside>
     </>
@@ -1295,8 +1490,10 @@ function App() {
             <NotesWorkspace
               write={vaultState.write}
               onChange={(write) => updateWrite(write)}
-              includeAssistantContext={includeAgentContext}
-              onAssistantContextChange={setIncludeAgentContext}
+              includeAssistantContext={selectedAgentContexts.includes("write")}
+              onAssistantContextChange={(included) => setSelectedAgentContexts((items) => included
+                ? [...new Set([...items, "write" as PageKey])]
+                : items.filter((page) => page !== "write"))}
             />
           )}
 
@@ -1329,89 +1526,14 @@ function App() {
             </section>
           )}
 
-          {/* Page: Learning — docs, course connections drawer, focus calendar */}
+          {/* Page: Learning — durable Mentor agent */}
           {activePage === "learning" && (
-            <div className="learning-workspace page-grid">
-              <button
-                className="learning-pull-button"
-                type="button"
-                onClick={() => setIsLearningPanelOpen((value) => !value)}
-              >
-                Learning APIs
-              </button>
-
-              <aside className={`learning-drawer ${isLearningPanelOpen ? "open" : ""}`}>
-                <p className="kicker">Connections</p>
-                {vaultState.learning.connections.map((connection) => (
-                  <div className="connection-card" key={connection.name}>
-                    <strong>{connection.name}</strong>
-                    <span>{connection.status}</span>
-                    <div><i style={{ width: `${connection.progress}%` }} /></div>
-                  </div>
-                ))}
-              </aside>
-
-              <section className="editor-panel documentation-panel">
-                <div className="panel-label">Documentation Notes</div>
-                <RichTextEditor
-                  className="rich-editor document-space"
-                  html={vaultState.learning.docHtml}
-                  onChange={(docHtml) => updateLearning({ docHtml })}
-                />
-              </section>
-
-              <section className="editor-panel calendar-panel">
-                <div className="panel-label">Mini Calendar</div>
-                <div className="calendar-grid">
-                  {vaultState.learning.calendarFocus.map((day, index) => (
-                    <button
-                      key={`${day}-${index}`}
-                      type="button"
-                      onClick={() => updateCalendarFocus(index)}
-                      title="Click to edit this day's focus"
-                    >
-                      <span>Day {index + 1}</span>
-                      <strong>{day}</strong>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            </div>
+            <AgentWorkspace agent="learning" legacyData={vaultState.learning} onLegacyMigrated={() => saveVaultState((previous) => ({...previous,learning:{docHtml:"",connections:[],calendarFocus:[]}}))}/>
           )}
 
-          {/* Page: Career — resume editor + AI revision draft */}
+          {/* Page: Career — durable Career agent */}
           {activePage === "career" && (
-            <div className="career-workspace page-grid two-column">
-              <section className="editor-panel resume-panel">
-                <div className="panel-toolbar">
-                  <span>Resume Editor</span>
-                  <button type="button" onClick={reviseResume} disabled={isResumeLoading}>
-                    {isResumeLoading ? "Revising..." : "AI Revise"}
-                  </button>
-                </div>
-                <textarea
-                  className="resume-editor"
-                  value={vaultState.career.resume}
-                  onChange={(event) => updateCareer({ resume: event.target.value })}
-                  aria-label="Resume editor"
-                />
-              </section>
-
-              <section className="editor-panel resume-panel">
-                <div className="panel-toolbar">
-                  <span>AI Draft</span>
-                  <button type="button" onClick={() => updateCareer({ resume: vaultState.career.aiDraft })}>
-                    Apply
-                  </button>
-                </div>
-                <textarea
-                  className="resume-editor"
-                  value={vaultState.career.aiDraft}
-                  onChange={(event) => updateCareer({ aiDraft: event.target.value })}
-                  aria-label="AI resume draft"
-                />
-              </section>
-            </div>
+            <AgentWorkspace agent="career" legacyData={vaultState.career} onLegacyMigrated={() => saveVaultState((previous) => ({...previous,career:{resume:"",aiDraft:""}}))}/>
           )}
 
           {/* Page: Projects — kanban-style blocks with status and notes */}
@@ -1424,12 +1546,23 @@ function App() {
                   <button type="button" className={projectFilter === "progress" ? "active" : ""} onClick={() => setProjectFilter("progress")}>In Progress {projectStats.progress}</button>
                   <button type="button" className={projectFilter === "done" ? "active" : ""} onClick={() => setProjectFilter("done")}>Done {projectStats.done}</button>
                 </div>
-                <button type="button" onClick={addProjectBlock}>New Project</button>
+                <div className="project-create-wrap">
+                  <button type="button" onClick={() => addProjectBlock()}>New Project</button>
+                  <button type="button" className="project-board-menu-trigger" aria-label="Project organization and templates" aria-expanded={isProjectBoardMenuOpen} onClick={() => setIsProjectBoardMenuOpen((open) => !open)}>⌄</button>
+                  {isProjectBoardMenuOpen && <div className="project-board-menu" role="menu" aria-label="Project organization and templates">
+                    <strong>Organize</strong>
+                    <button type="button" role="menuitem" onClick={() => sortProjects("title")}>Sort A–Z</button>
+                    <button type="button" role="menuitem" onClick={() => sortProjects("status")}>Group by status</button>
+                    <strong>Templates</strong>
+                    <button type="button" role="menuitem" onClick={() => addProjectBlock("research")}>Research project</button>
+                    <button type="button" role="menuitem" onClick={() => addProjectBlock("launch")}>Launch plan</button>
+                  </div>}
+                </div>
               </div>
 
               <section className="project-board">
                 {filteredProjects.map((block) => (
-                  <article className={`project-block ${draggedProjectId === block.id ? "dragging" : ""}`} key={block.id} draggable onDragStart={() => setDraggedProjectId(block.id)} onDragEnd={() => setDraggedProjectId(null)} onDragOver={(event) => { if (draggedProjectId && draggedProjectId !== block.id) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); if (draggedProjectId) reorderProject(draggedProjectId, block.id); }}>
+                  <article className={`project-block ${draggedProjectId === block.id ? "dragging" : ""} ${projectDropTarget?.id === block.id ? `drop-${projectDropTarget.position}` : ""}`} key={block.id} draggable onDragStart={() => setDraggedProjectId(block.id)} onDragEnd={() => { setDraggedProjectId(null); setProjectDropTarget(null); }} onDragOver={(event) => { if (!draggedProjectId || draggedProjectId === block.id) return; event.preventDefault(); const bounds = event.currentTarget.getBoundingClientRect(); setProjectDropTarget({ id: block.id, position: event.clientY < bounds.top + bounds.height / 2 ? "before" : "after" }); }} onDrop={(event) => { event.preventDefault(); if (draggedProjectId) reorderProject(draggedProjectId, block.id, projectDropTarget?.id === block.id ? projectDropTarget.position : "after"); }}>
                     <div className="project-block-head">
                       <input
                         value={block.title}
@@ -1449,7 +1582,7 @@ function App() {
                       >
                         <HiOutlineArrowsPointingOut aria-hidden="true" />
                       </button>
-                      <div className="project-actions-wrap" onPointerDown={(event) => event.stopPropagation()}><button type="button" className="project-card-action" aria-label={`Project actions for ${block.title}`} aria-haspopup="menu" aria-expanded={projectMenuId === block.id} onClick={() => setProjectMenuId((current) => current === block.id ? null : block.id)}>•••</button>{projectMenuId === block.id && <div className="project-actions-menu" role="menu" aria-label={`Actions for ${block.title}`}><button type="button" role="menuitem" onClick={() => openProjectMode(block, "table")}>{block.table ? "Open table" : "Add table"}</button><button type="button" role="menuitem" onClick={() => openProjectMode(block, "flowchart")}>{block.flowchart ? "Open flowchart" : "Add flowchart"}</button><button type="button" role="menuitem" onClick={() => openProjectMode(block, "mindmap")}>{block.mindmap ? "Open object mindmap" : "Add object mindmap"}</button><button type="button" role="menuitem" className="project-delete" onClick={() => { setProjectMenuId(null); deleteProject(block.id); }}>Delete project</button></div>}</div>
+                      <div className="project-actions-wrap" onPointerDown={(event) => event.stopPropagation()}><button type="button" className="project-card-action" aria-label={`Project actions for ${block.title}`} aria-haspopup="menu" aria-expanded={projectMenuId === block.id} onClick={() => setProjectMenuId((current) => current === block.id ? null : block.id)}>•••</button>{projectMenuId === block.id && <div className="project-actions-menu" role="menu" aria-label={`Actions for ${block.title}`}><button type="button" role="menuitem" onClick={() => sendProjectToAssistant(block)}>Send to AI</button><button type="button" role="menuitem" onClick={() => openProjectMode(block, "table")}>{block.table ? "Open table" : "Add table"}</button><button type="button" role="menuitem" onClick={() => openProjectMode(block, "flowchart")}>{block.flowchart ? "Open flowchart" : "Add flowchart"}</button><button type="button" role="menuitem" onClick={() => openProjectMode(block, "mindmap")}>{block.mindmap ? "Open object mindmap" : "Add object mindmap"}</button><button type="button" role="menuitem" className="project-delete" onClick={() => { setProjectMenuId(null); deleteProject(block.id); }}>Delete project</button></div>}</div>
                     </div>
                     <select
                       value={block.status}
@@ -1475,8 +1608,9 @@ function App() {
                   role="dialog"
                   aria-modal="true"
                   aria-label={`${openProject.title} page`}
+                  onPointerDown={(event) => { if (event.target === event.currentTarget) setOpenProjectId(null); }}
                 >
-                  <div className="project-page">
+                  <div className="project-page" onPointerDown={(event) => event.stopPropagation()}>
                     <header className="project-page-head">
                       <button
                         className="project-page-back"

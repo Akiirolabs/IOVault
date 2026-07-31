@@ -126,3 +126,32 @@ describe("AI agent security", () => {
     expect(failure.body.error).not.toContain("provider secret");
   });
 });
+
+describe("Learning and Career agent API", () => {
+  it("requires authentication and CSRF before creating durable agent work", async () => {
+    await request(app).get("/api/agents/learning").expect(401);
+    await request(app).post("/api/agents/career/conversations").send({}).expect(401);
+    const user = { id: `agent-api-${Date.now()}`, email: `agent-api-${Date.now()}@example.com` };
+    createUser({ ...user, passwordHash: "unused" });
+    const cookie = `${SESSION_COOKIE_NAME}=${signToken(user)}`;
+    await request(app).post("/api/agents/learning/conversations").set("Cookie", cookie).send({}).expect(403);
+    const conversation = await request(app).post("/api/agents/learning/conversations").set("Cookie", cookie).set("X-IOVault-CSRF", "1").send({}).expect(201);
+    await request(app).post("/api/agents/learning/messages").set("Cookie", cookie).set("X-IOVault-CSRF", "1").send({ conversationId: conversation.body.conversation.id, message: "" }).expect(400);
+    const run = await request(app).post("/api/agents/learning/messages").set("Cookie", cookie).set("X-IOVault-CSRF", "1").send({ conversationId: conversation.body.conversation.id, message: "Build a study plan" }).expect(202);
+    expect(run.body.runId).toBeTruthy();
+  });
+
+  it("keeps conversations and migrated profiles isolated by user", async () => {
+    const first = { id: `agent-owner-a-${Date.now()}`, email: `agent-owner-a-${Date.now()}@example.com` };
+    const second = { id: `agent-owner-b-${Date.now()}`, email: `agent-owner-b-${Date.now()}@example.com` };
+    createUser({ ...first, passwordHash: "unused" }); createUser({ ...second, passwordHash: "unused" });
+    const firstAuth = `Bearer ${signToken(first)}`, secondAuth = `Bearer ${signToken(second)}`;
+    await request(app).post("/api/agents/career/migrate").set("Authorization", firstAuth).send({ legacy: { resume: "PRIVATE CAREER PROFILE" } }).expect(200);
+    const firstSnapshot = await request(app).get("/api/agents/career").set("Authorization", firstAuth).expect(200);
+    const secondSnapshot = await request(app).get("/api/agents/career").set("Authorization", secondAuth).expect(200);
+    expect(firstSnapshot.body.profile.resume).toBe("PRIVATE CAREER PROFILE");
+    expect(JSON.stringify(secondSnapshot.body)).not.toContain("PRIVATE CAREER PROFILE");
+    const conversation = await request(app).post("/api/agents/career/conversations").set("Authorization", firstAuth).send({}).expect(201);
+    await request(app).get(`/api/agents/career/conversations/${conversation.body.conversation.id}`).set("Authorization", secondAuth).expect(404);
+  });
+});

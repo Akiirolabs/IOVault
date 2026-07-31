@@ -9,8 +9,8 @@ IMP owns page-level product outcomes moving the current testing state toward [DP
 | [IMP-1001](implementations/IMP-1001-write.md) | Write | Workspace and hierarchy implemented; FTR-1001–1004 and FTR-1006–1007 verified; FTR-1005 partial | `IMP-1001.3` cross-area links and the remaining `IMP-1001.1.2.1` insertion catalog |
 | [IMP-1002](implementations/IMP-1002-code-vault.md) | Code Vault | `IMP-1002.1` mini IDE implemented | `IMP-1002.2` repository workflow refinement |
 | [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1-1003.5` and [FTR-1008](../feature-review-system/reviews/FTR-1008-projects-page-review.md) implemented and verified | [FTR-1009](../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md): `IMP-1003.3.3`, `1003.4.4`, `1003.5.5`, and `1003.6` |
-| [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | `IMP-1004.1` current workspace partial | `IMP-1004.2` controlled Mentor Agent |
-| [IMP-1005](implementations/IMP-1005-career.md) | Career | `IMP-1005.1` current workspace partial | `IMP-1005.2` Career Agent Review mode |
+| [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | Legacy migration, shared Agent Workspace, durable runs, approval controls, history, and Google Calendar adapter implemented; teaching workflow remains partial | Complete `IMP-1004.2.1–1004.2.4`, notifications, resource intake, and externally verify `IMP-1004.2.6.1` |
+| [IMP-1005](implementations/IMP-1005-career.md) | Career | Legacy migration, shared Agent Workspace, durable runs, Review mode, career records, and Google adapter implemented; career workflow remains partial | Complete `IMP-1005.1.2`, `1005.2.1–1005.2.3`, source/inbox adapters, and externally verify `1005.2.5.2/1005.2.6` |
 | [IMP-1006](implementations/IMP-1006-settings.md) | Settings | `IMP-1006.1` Theme Mode implemented | Future settings remain unassigned until planned |
 
 Each page owns its hierarchy: `IMP-1001.*` never describes Code Vault, and `IMP-1002.*` never describes another page. A rollout uses `.1`; a distinct capability inside that rollout uses `.1.1`; a separately scoped nested capability may use `.1.1.1`. Rollout rows such as `.1` and `.2` remain unindented and use no arrow. Every deeper numeric segment adds one visible indentation level and a `↳` marker. When a parent outcome is decomposed, matched numbered markers identify the parent phrase owned by each deeper row without relying on color.
@@ -51,6 +51,7 @@ See [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) and [SYS-1.0](../aud
 
 | Date | Work | Evidence |
 |---|---|---|
+| 2026-07-31 | IMP-1004.1/1004.2 · IMP-1005.1/1005.2 | 63 tests, production build, durable-runtime, connector idempotency, and exact-approval coverage, signed-in live Career task, Learning/Career UI acceptance, persistent conversation recovery, and corrected 390×844 agent layout |
 | 2026-07-29 | IMP-1006.1 · Settings Theme Mode | 50 tests, production build, signed-in live/persist/restore acceptance, retained `rotateGlow` motion, and zero console errors |
 | 2026-07-30 | IMP-1003.2-1003.5 · FTR-1008 | 56 tests, production build, signed-in table/flowchart/mindmap/filter/persistence acceptance, and zero console errors |
 | 2026-07-29 | FTR-1006 · IMP-1001.1.2.1/1001.1.3/1001.1.3.1 | 50 tests, production build, corrected signed-in acceptance, guided Formula setup, and zero console errors |

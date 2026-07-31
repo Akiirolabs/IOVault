@@ -16,7 +16,7 @@ Evidence-driven architecture, reliability, performance, persistence, maintainabi
 
 ## DBG-1001 — Responsive shell gap
 
-**Verified · discovered/finished 2026-07-03.** Narrow screens lacked usable workspace parity. Production build and 1280×800/390×844 browser checks verified the corrected horizontally scrollable desktop structure.
+**Verified · discovered/finished 2026-07-03; extended 2026-07-31.** Narrow screens lacked usable workspace parity. The original correction preserved the horizontally scrollable desktop structure. Agent Workspace acceptance later exposed a 960-pixel shell minimum that overflowed the new focused interface; the mobile shell now uses the available viewport while complex desktop workspaces retain their own bounded scrolling. Production build and 390×844 browser checks verified the agent correction.
 
 ## DBG-1007 — Workspace stored as one JSON blob
 
