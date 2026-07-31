@@ -8,7 +8,7 @@ IMP owns page-level product outcomes moving the current testing state toward [DP
 |---|---|---|---|
 | [IMP-1001](implementations/IMP-1001-write.md) | Write | Workspace and hierarchy implemented; FTR-1001–1004 and FTR-1006–1007 verified; FTR-1005 partial | `IMP-1001.3` cross-area links and the remaining `IMP-1001.1.2.1` insertion catalog |
 | [IMP-1002](implementations/IMP-1002-code-vault.md) | Code Vault | `IMP-1002.1` mini IDE implemented | `IMP-1002.2` repository workflow refinement |
-| [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1-1003.5` and [FTR-1008](../feature-review-system/reviews/FTR-1008-projects-page-review.md) implemented and verified | Future Projects work remains unassigned until planned |
+| [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1-1003.5` and [FTR-1008](../feature-review-system/reviews/FTR-1008-projects-page-review.md) implemented and verified | [FTR-1009](../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md): `IMP-1003.3.3`, `1003.4.4`, `1003.5.5`, and `1003.6` |
 | [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | `IMP-1004.1` current workspace partial | `IMP-1004.2` controlled Mentor Agent |
 | [IMP-1005](implementations/IMP-1005-career.md) | Career | `IMP-1005.1` current workspace partial | `IMP-1005.2` Career Agent Review mode |
 | [IMP-1006](implementations/IMP-1006-settings.md) | Settings | `IMP-1006.1` Theme Mode implemented | Future settings remain unassigned until planned |

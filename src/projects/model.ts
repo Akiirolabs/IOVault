@@ -13,7 +13,7 @@ export type ProjectFlowchart = {
 };
 
 export type ProjectMindmap = {
-  objects: Array<{ id: string; title: string; x: number; y: number; color: string; parentId?: string; relationIds: string[]; fields: Array<{ id: string; key: string; value: string }> }>;
+  objects: Array<{ id: string; title: string; x: number; y: number; color: string; pageText?: string; parentId?: string; relationIds: string[]; fields: Array<{ id: string; key: string; value: string }> }>;
 };
 
 export type ProjectBlock = {
@@ -74,7 +74,7 @@ export function normalizeProjectBlock(raw: unknown): ProjectBlock | null {
     zoom: Number.isFinite(value.flowchart.zoom) ? Math.max(0.5, Math.min(1.75, Number(value.flowchart.zoom))) : 1,
   } : undefined;
   const mindmap = value.mindmap && typeof value.mindmap === "object" && Array.isArray(value.mindmap.objects) ? {
-    objects: value.mindmap.objects.flatMap((object, index) => object && typeof object === "object" && typeof object.id === "string" && typeof object.title === "string" ? [{ id: object.id, title: object.title, x: Number.isFinite(object.x) ? Math.max(0, Number(object.x)) : 60 + (index % 3) * 250, y: Number.isFinite(object.y) ? Math.max(0, Number(object.y)) : 60 + Math.floor(index / 3) * 180, color: typeof object.color === "string" ? object.color : "#38bdf8", ...(typeof object.parentId === "string" ? { parentId: object.parentId } : {}), relationIds: Array.isArray(object.relationIds) ? object.relationIds.filter((id): id is string => typeof id === "string") : [], fields: Array.isArray(object.fields) ? object.fields.flatMap((field) => field && typeof field === "object" && typeof field.id === "string" ? [{ id: field.id, key: typeof field.key === "string" ? field.key : "", value: typeof field.value === "string" ? field.value : "" }] : []) : [] }] : []),
+    objects: value.mindmap.objects.flatMap((object, index) => object && typeof object === "object" && typeof object.id === "string" && typeof object.title === "string" ? [{ id: object.id, title: object.title, x: Number.isFinite(object.x) ? Math.max(0, Number(object.x)) : 60 + (index % 3) * 250, y: Number.isFinite(object.y) ? Math.max(0, Number(object.y)) : 60 + Math.floor(index / 3) * 180, color: typeof object.color === "string" ? object.color : "#38bdf8", ...(typeof object.pageText === "string" ? { pageText: object.pageText } : {}), ...(typeof object.parentId === "string" ? { parentId: object.parentId } : {}), relationIds: Array.isArray(object.relationIds) ? object.relationIds.filter((id): id is string => typeof id === "string") : [], fields: Array.isArray(object.fields) ? object.fields.flatMap((field) => field && typeof field === "object" && typeof field.id === "string" ? [{ id: field.id, key: typeof field.key === "string" ? field.key : "", value: typeof field.value === "string" ? field.value : "" }] : []) : [] }] : []),
   } : undefined;
   return { id: value.id, title: value.title, status, body: typeof value.body === "string" ? value.body : "", ...(typeof value.docHtml === "string" ? { docHtml: value.docHtml } : {}), ...(typeof value.docMarkdown === "string" ? { docMarkdown: value.docMarkdown } : {}), ...(table ? { table } : {}), ...(flowchart ? { flowchart } : {}), ...(mindmap ? { mindmap } : {}) };
 }

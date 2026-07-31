@@ -54,5 +54,10 @@ describe("project workspace modes", () => {
     expect(screen.getByLabelText("Relation arrow Root to Idea 2")).toBeInTheDocument();
     fireEvent.dragEnd(screen.getByRole("textbox", { name: "Root title" }).closest("article")!, { clientX: 360, clientY: 240 });
     expect(screen.queryByRole("button", { name: "+ Field" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open Root page" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Root page content" }), { target: { value: "Detailed idea notes" } });
+    fireEvent.click(screen.getByRole("button", { name: "Back to mindmap" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Root page" }));
+    expect(screen.getByRole("textbox", { name: "Root page content" })).toHaveValue("Detailed idea notes");
   });
 });

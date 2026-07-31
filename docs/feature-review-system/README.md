@@ -4,7 +4,7 @@ Feature reviews capture manual page-level findings, their implemented correction
 
 ## Review register
 
-| Review | Affected IMP work | Scope | Status |
+| Review | Affected work | Scope | Status |
 |---|---|---|---|
 | [FTR-1001 — Write manual review](reviews/FTR-1001-write-manual-review.md) | [IMP-1001.1.2, 1001.1.3, 1001.2.1–1001.2.3](../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) | Page hierarchy, editing, tables, organization, rename, and archive recovery | 8/8 verified |
 | [FTR-1002 — Write actions review](reviews/FTR-1002-write-actions-review.md) | [IMP-1001.1.4, 1001.2.2, and 1001.2.4](../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) | Context menu behavior, icons, imports, positioning, page selection, and templates | 6/6 verified |
@@ -13,7 +13,9 @@ Feature reviews capture manual page-level findings, their implemented correction
 | [FTR-1005 — Write plus menu review](reviews/FTR-1005-write-plus-menu-review.md) | [IMP-1001.1.2.1](../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) | Note insertion menu, contextual toolbar, linked-page availability, and menu placement | Partial — 3/4 verified |
 | [FTR-1006 — Write toolbar and table review](reviews/FTR-1006-write-toolbar-and-table-review.md) | [IMP-1001.1.2.1, 1001.1.3, and 1001.1.3.1](../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) | Hover-bound toolbar, normalized external paste, table keyboard flow, dismissible linked-page controls, embedded Page cells, clear Formula configuration, column actions, and advanced property types | Verified — 14/14 |
 | [FTR-1007 - Write table and navigation review](reviews/FTR-1007-write-table-and-navigation-review.md) | [IMP-1001.1.3.1.1, 1001.1.3.1.2, 1001.1.3.2, 1001.2.1, and 1001.2.5](../implementation-system/implementations/IMP-1001-write.md#numbered-implementation) | Themed horizontal table navigation, record relations, advanced Formula configuration, explorer reordering, and refined creation controls | 7/7 verified |
-| [FTR-1008 - Projects page review](reviews/FTR-1008-projects-page-review.md) | [IMP-1003.2-1003.5](../implementation-system/implementations/IMP-1003-projects.md#numbered-implementation) | Project controls, full-page modes, direct visual node mapping, contextual actions, and status filtering | 10/10 verified |
+| [FTR-1008 - Projects page review](reviews/FTR-1008-projects-page-review.md) | [IMP-1003.2-1003.5](../implementation-system/implementations/IMP-1003-projects.md#numbered-implementation) | Project controls, full-page modes, direct visual node mapping, independent Mindmap node pages, contextual actions, and status filtering | 11/11 verified |
+| [FTR-1009 - Projects follow-up review](reviews/FTR-1009-projects-follow-up-review.md) | [IMP-1003](../implementation-system/implementations/IMP-1003-projects.md#numbered-implementation) | Overlay dismissal, explicit AI context, live node dragging, node resizing, card ordering, sorting, and templates | Open - 0/6 verified |
+| [FTR-1010 - Global AI chat review](reviews/FTR-1010-global-ai-chat-review.md) | [DPL-1003 shared assistant outcome](../deployment-ledger/DPL-1003-next-testing-state.md) | Conversation history, bottom composer, compact sending, chat history, and visible context management | Open - 0/5 verified |
 
 ## Record ownership
 
