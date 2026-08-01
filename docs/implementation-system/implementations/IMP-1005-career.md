@@ -82,6 +82,8 @@ Store user-scoped career profiles, source evidence, resume versions, opportunity
 
 Storage, conflict-safe sync, agent quotas, credential encryption, connector isolation, validation, idempotency, audit history, file scanning, and frontend/server boundaries must pass the SEC/SYS dependencies in the consolidated [implementation index](../README.md) before application submission is enabled.
 
+Google credentials, consent, deployed callback configuration, hosted-worker requirements, and marketplace-access boundaries are maintained in [EDEP-1002](EDEP/EDEP-1002.md), which links back to this implementation as its owner.
+
 ## Verification
 
 **Partial implementation verified 2026-07-31.** Sixty-three automated tests and the production build passed. Signed-in browser acceptance completed a real Responses API Career task, restored its durable conversation, verified the glowing minimal interface and compact tracking drawers, and confirmed the corrected 390×844 layout. Google OAuth and exact-payload actions are implemented but not externally verified without connector credentials. Resume upload/parsing, confirmed-claim editing, source adapters, complete opportunity deduplication, inbox monitoring, and supported application submission remain planned or partial.

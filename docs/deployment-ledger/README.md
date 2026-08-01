@@ -32,6 +32,7 @@ flowchart LR
 | 2026-07-30 | [IMP-1003.2-1003.5](../implementation-system/implementations/IMP-1003-projects.md) / [FTR-1008](../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Typed tables, visual Flowchart/Mindmap canvases with direct arrows and independent ⚡ Mindmap node pages, front-card actions, persisted drag ordering, and status filters verified with 56 tests, the production build, and signed-in browser acceptance | DPL-1002 current testing state |
 | 2026-07-30 | [FTR-1009](../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md) / [FTR-1010](../feature-review-system/reviews/FTR-1010-global-ai-chat-review.md) | Projects gained dismissible full pages, project-only AI context, live movable and resizable nodes, position-aware ordering, sorting, and templates; the global assistant gained persistent conversations, history switching, compact sending, and explicit context management | Both reviews verified in DPL-1002 |
 | 2026-07-31 | [IMP-1004](../implementation-system/implementations/IMP-1004-learning-mentor.md) / [IMP-1005](../implementation-system/implementations/IMP-1005-career.md) | Shared durable agent runtime, migrated profiles, minimal text/voice orb workspaces, review-first approvals, internal learning/career records, encrypted Google adapter, and responsive agent layout implemented and verified locally | Partial agent foundation included in DPL-1002; remaining complete workflows and external connector acceptance flow to DPL-1003 |
+| 2026-08-01 | [DPL-1002](DPL-1002-current-testing-state.md) | Approved `app.akiiro.com` routing through Cloudflare to the existing Hetzner-hosted application architecture | Deployment checklist remains open; no production claim |
 | — | [DPL-1003](DPL-1003-next-testing-state.md) | Planned next complete testing state | Not deployed |
 
 Open SEC/SYS findings are accepted testing limitations, not production-readiness evidence.
@@ -50,11 +51,12 @@ A later testing DPL does not automatically change the Version. The package manif
 |---|---|
 | DPL | Historical, current, or planned complete testing state |
 | IMP | Page-level product outcomes flowing toward the next DPL |
+| EDEP | External services, credentials, consent, partnerships, or hosted-runtime prerequisites subordinate to one IMP |
 | FTR | Manual feature findings and their corrections |
 | SEC/SYS | Versioned security and system audit lanes |
 | DBG | Individual evidence, correction, status, and verification inside one audit lane |
 
-Only DPL and IMP describe future outcomes. Documentation-only maintenance receives no work code.
+Only DPL and IMP describe future product outcomes. EDEP records external prerequisites and verification gates without owning product scope. Documentation-only maintenance receives no work code.
 
 ## Historical aliases
 

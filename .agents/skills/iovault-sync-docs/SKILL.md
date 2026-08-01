@@ -12,6 +12,7 @@ Use the final diff and actual verification output; never infer completion.
 - chronology, Versions, aliases, or complete-state routing → `docs/deployment-ledger/README.md`;
 - historical/current/planned complete state → matching `docs/deployment-ledger/DPL-*.md`;
 - page outcome → matching `docs/implementation-system/implementations/IMP-*.md`;
+- external service, credential, consent, partnership, or hosted-runtime prerequisite → matching `docs/implementation-system/implementations/EDEP/EDEP-*.md`, linked to one owning IMP;
 - implementation register/dependencies/gates → `docs/implementation-system/README.md`;
 - feature-review workflow and register → `docs/feature-review-system/README.md`;
 - individual manual findings/corrections → dedicated `docs/feature-review-system/reviews/FTR-*.md` record;
@@ -36,5 +37,6 @@ Use the final diff and actual verification output; never infer completion.
 13. Update DPL-1002 architecture only when runtime boundaries change; never alter protected Mermaid blocks.
 14. Search for superseded paths, retired terminology, prompt/process language, screenshot framing, assistant voice, and unlinked aggregated work.
 15. Validate links, headings, tables, Mermaid fences, skill metadata, and `git diff --check`.
+16. Require every EDEP parent and child to use an explicit `Open`, `Done`, `Deferred`, or `Blocked` status; `Done` requires recorded external verification.
 
-Only DPL and IMP contain future outcomes. Every DBG belongs to one lane. Documentation-only maintenance receives no work code. Never record secrets, private content, invented evidence, or unrun results.
+Only DPL and IMP contain future product outcomes. EDEP contains external prerequisites and acceptance gates linked to one owning IMP. Every DBG belongs to one lane. Documentation-only maintenance receives no work code. Never record secrets, private content, invented evidence, or unrun results.

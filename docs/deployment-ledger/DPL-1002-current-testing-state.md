@@ -3,10 +3,10 @@
 | Field | Current state |
 |---|---|
 | Status | Deployed for testing |
-| Date | 2026-07-31 |
+| Date | 2026-08-01 |
 | Commit | `73d45ac` baseline; current verified changes pending commit |
 | Version | **1.0 — Current** |
-| Environment | Repository-backed local testing state; no external production claim |
+| Environment | Repository-backed local testing state; Cloudflare-to-Hetzner production routing approved but not deployed |
 | Previous state | [DPL-1001](DPL-1001-pre-monaco-state.md) |
 | Next state | [DPL-1003](DPL-1003-next-testing-state.md) |
 
@@ -232,3 +232,41 @@ sequenceDiagram
 - Agent V1 is review-first. External Calendar events and Gmail drafts require explicit approval; no generic send-email, universal application submission, CAPTCHA bypass, password automation, purchase, enrollment, or unsupported marketplace action is exposed.
 - Production readiness requires fail-closed secrets, persistent route quotas, optimistic workspace versions, selective normalization, a shared datastore before multiple API instances, monitoring, and a validated database rollback procedure.
 - Narrow screens preserve the desktop workspace and use horizontal scrolling rather than silently changing the information architecture.
+
+## Approved production routing
+
+The Version 1.0 production path keeps the existing Node, Express, SQLite, and durable-agent architecture on the Hetzner VPS while Cloudflare provides free DNS and reverse-proxy routing for `app.akiiro.com`. This is an approved deployment plan, not evidence that the public environment is active.
+
+```text
+app.akiiro.com
+  → Cloudflare DNS and HTTPS proxy
+  → Hetzner VPS
+      → Nginx or Caddy
+          → Vite production assets
+          → Express API on 127.0.0.1:8787
+              → persistent SQLite
+              → durable agent worker
+```
+
+| Component | Planned responsibility | Required configuration |
+|---|---|---|
+| Cloudflare | Free proxied `A` record for `app.akiiro.com`, edge HTTPS, DNS, and basic traffic protection | Point `app` to the Hetzner IPv4 address, enable the proxy, and use `Full (strict)` TLS |
+| Hetzner VPS | Run the complete application and retain server-side data | Persistent Node service, firewall, backups, monitoring, and durable storage |
+| Nginx or Caddy | Serve `dist/`, route `/api/*`, preserve React navigation, and support SSE | Proxy API traffic to port 8787 and disable buffering for agent event streams |
+| Express and worker | Authentication, vault storage, AI orchestration, approvals, connectors, and background work | Run as a systemd or PM2 service rather than a development process |
+| SQLite | Durable application and agent authority | Store `DATABASE_FILE` outside the release directory and back it up |
+| Google OAuth | Return connector authorization to the public application | Register `https://app.akiiro.com/api/connectors/google/callback` exactly |
+
+### Deployment checklist
+
+- [ ] Create the proxied Cloudflare `app` DNS record targeting the Hetzner VPS.
+- [ ] Install an origin certificate and set Cloudflare TLS to `Full (strict)`.
+- [ ] Build the Vite application and serve `dist/` through Nginx or Caddy.
+- [ ] Run Express and the agent worker as a persistent service.
+- [ ] Route `/api/*` to `127.0.0.1:8787` and disable SSE buffering.
+- [ ] Configure `APP_ORIGIN=https://app.akiiro.com` and the production Google callback.
+- [ ] Configure production JWT, OpenAI, connector-encryption, and Google secrets outside Git.
+- [ ] Place SQLite on persistent storage and verify backup and restore procedures.
+- [ ] Verify authentication, CSRF, vault persistence, agent recovery, approvals, and connector revocation through the public origin.
+
+External credentials and live-provider acceptance remain tracked in [EDEP-1001](../implementation-system/implementations/EDEP/EDEP-1001.md) and [EDEP-1002](../implementation-system/implementations/EDEP/EDEP-1002.md). Production is not complete until those records and the applicable DPL-1003 gates are satisfied.

@@ -14,7 +14,7 @@
 
 - Included IMP outcomes meet their acceptance criteria.
 - Included DBG corrections are verified in their originating SEC or SYS records.
-- Google OAuth is configured in the testing environment; Calendar event and Gmail draft approvals execute the exact reviewed payload and recover cleanly from revoked or expired access.
+- [EDEP-1001](../implementation-system/implementations/EDEP/EDEP-1001.md) and [EDEP-1002](../implementation-system/implementations/EDEP/EDEP-1002.md) are satisfied in the testing environment; Calendar event and Gmail draft approvals execute the exact reviewed payload and recover cleanly from revoked or expired access.
 - Mentor acceptance includes onboarding, one approved curriculum, one completed lesson/assignment/assessment cycle, visible evidence, and a scheduled next action.
 - Career acceptance includes resume upload and claim confirmation, one source-backed ranked opportunity, one truthful prepared package, approval-controlled external work, and tracked follow-up.
 - Agent restart recovery, per-agent event isolation, cancellation, approval rejection, connector revocation, voice fallback, and mobile accessibility pass end-to-end acceptance.

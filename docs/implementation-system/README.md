@@ -13,6 +13,8 @@ IMP owns page-level product outcomes moving the current testing state toward [DP
 | [IMP-1005](implementations/IMP-1005-career.md) | Career | Legacy migration, shared Agent Workspace, durable runs, Review mode, career records, and Google adapter implemented; career workflow remains partial | Complete `IMP-1005.1.2`, `1005.2.1–1005.2.3`, source/inbox adapters, and externally verify `1005.2.5.2/1005.2.6` |
 | [IMP-1006](implementations/IMP-1006-settings.md) | Settings | `IMP-1006.1` Theme Mode implemented | Future settings remain unassigned until planned |
 
+External requirements are organized in one EDEP register folder: [EDEP-1001](implementations/EDEP/EDEP-1001.md) tracks Mentor dependencies and links to IMP-1004, while [EDEP-1002](implementations/EDEP/EDEP-1002.md) tracks Career dependencies and links to IMP-1005.
+
 Each page owns its hierarchy: `IMP-1001.*` never describes Code Vault, and `IMP-1002.*` never describes another page. A rollout uses `.1`; a distinct capability inside that rollout uses `.1.1`; a separately scoped nested capability may use `.1.1.1`. Rollout rows such as `.1` and `.2` remain unindented and use no arrow. Every deeper numeric segment adds one visible indentation level and a `↳` marker. When a parent outcome is decomposed, matched numbered markers identify the parent phrase owned by each deeper row without relying on color.
 
 ## Lifecycle

@@ -1,6 +1,6 @@
 ---
 name: io
-description: Classify, route, and trace IO Vault work through its deployment lifecycle. Use when deciding whether proposed or completed work belongs to DPL, IMP, FTR, SEC, SYS, or a DBG; assigning or reviewing work codes; determining where corrections and verification belong; or preventing duplicate and unnecessary records.
+description: Classify, route, and trace IO Vault work through its deployment lifecycle. Use when deciding whether proposed or completed work belongs to DPL, IMP, EDEP, FTR, SEC, SYS, or a DBG; assigning or reviewing work codes; determining where corrections and verification belong; or preventing duplicate and unnecessary records.
 ---
 
 # IO Work System
@@ -21,12 +21,17 @@ Route work through:
 |---|---|
 | Complete application architecture state released for testing | `DPL` |
 | Planned consumer-facing page capability or rollout | Permanent page `IMP` |
+| Third-party service, credential, consent, partnership, or hosted-runtime requirement blocking an IMP | `EDEP` in the shared implementation-level EDEP folder, linked to one owning IMP |
 | Manual page-level feature review and its corrections | `FTR` |
 | Security, privacy, credentials, abuse, validation, or dependency-integrity evidence | `SEC` baseline with one owning `DBG` |
 | Reliability, persistence, performance, architecture, maintainability, testing infrastructure, UI systems, or operations evidence | `SYS` baseline with one owning `DBG` |
 | Documentation-only maintenance | No work code |
 
 Permanent implementations are Write `IMP-1001`, Code Vault `IMP-1002`, Projects `IMP-1003`, Learning/Mentor `IMP-1004`, Career `IMP-1005`, and Settings `IMP-1006`. Number their rollouts and changes beneath the matching parent.
+
+Assign EDEP its own sequential series beginning at `EDEP-1001`; its number does not mirror the owning IMP. Store every record in `implementations/EDEP/`, link exactly one owning IMP inside the EDEP file, and use decimal children for individual dependencies. Never combine dependencies from separate IMP owners into one EDEP record, even when they use the same provider.
+
+Give every EDEP parent and child an explicit `Open`, `Done`, `Deferred`, or `Blocked` status. Mark an item `Done` only after its external configuration and acceptance evidence are verified; explanatory prose never replaces the status.
 
 Link every FTR to the exact IMP child or sub-code whose behavior it reviews, not only to the page parent. Add the FTR as linked review evidence in that IMP rollout table. Reuse an existing sub-code when it already owns the behavior; create a deeper code such as `IMP-1002.1.1.1` only when the work is a distinct nested implementation outcome with its own scope and acceptance criteria. Code Vault may need this depth for repository, editor, assistant, patch-review, or publishing capabilities, but depth follows ownership rather than page preference.
 
@@ -47,6 +52,7 @@ When a comma- or semicolon-separated parent outcome is decomposed into deeper wo
 - Keep earlier, superseded DPL records immutable except when correcting inaccurate historical information.
 - Preserve retired identifiers only as migration aliases. Never reuse or silently renumber completed work.
 - Keep one detailed owner and concise linked summaries. Never duplicate the same evidence across records.
+- Keep EDEP subordinate to its owning IMP. EDEP records describe external prerequisites and verification gates; they do not own product behavior, discovered defects, or internal implementation work.
 
 ## Classify implementation work
 
