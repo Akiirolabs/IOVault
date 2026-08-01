@@ -814,6 +814,12 @@ function App() {
   useEffect(() => {
     agentMessagesRef.current?.scrollTo({ top: agentMessagesRef.current.scrollHeight, behavior: "smooth" });
   }, [activeConversation?.messages.length, isAssistantLoading]);
+  useEffect(() => {
+    if (!openProjectId) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [openProjectId]);
   const filteredProjects = filterProjects(vaultState.projects.blocks, projectFilter);
 
   // --- State updaters: every change writes through to localStorage ---
@@ -924,7 +930,7 @@ function App() {
       : syncState === "error"
         ? "Offline"
         : syncState === "saved"
-          ? "Saved"
+          ? "Saved to cloud"
           : "Synced";
 
   function updateCode(updates: Partial<VaultState["code"]>) {
@@ -1593,11 +1599,11 @@ function App() {
                       <option value="In progress">In progress</option>
                       <option value="Done">Done</option>
                     </select>
-                    <textarea
-                      value={block.body}
-                      onChange={(event) => updateProject(block.id, { body: event.target.value })}
-                      aria-label={`${block.title} notes`}
-                    />
+                    <div className="project-card-preview" aria-label={`${block.title} preview`}>
+                      {block.docHtml?.trim() && <div className="project-card-rich-preview">{agentPlainText(block.docHtml.replace(/<\/(p|div|h[1-6]|li|blockquote|pre)>/gi, "$&\n")).trim()}</div>}
+                      {block.docMarkdown?.trim() && <div className="project-card-markdown-preview"><ReactMarkdown>{block.docMarkdown}</ReactMarkdown></div>}
+                      {!block.docHtml?.trim() && !block.docMarkdown?.trim() && <p>{block.body || "Open this project to add content."}</p>}
+                    </div>
                   </article>
                 ))}
               </section>

@@ -7,7 +7,7 @@ export type ProjectTable = {
 };
 
 export type ProjectFlowchart = {
-  nodes: Array<{ id: string; label: string; x: number; y: number; width: number; height: number; color: string }>;
+  nodes: Array<{ id: string; label: string; x: number; y: number; width: number; height: number; color: string; pageText?: string }>;
   edges: Array<{ id: string; source: string; target: string; label: string }>;
   zoom: number;
 };
@@ -69,7 +69,7 @@ export function normalizeProjectBlock(raw: unknown): ProjectBlock | null {
     rows: value.table.rows.flatMap((row) => row && typeof row === "object" && typeof row.id === "string" && row.cells && typeof row.cells === "object" ? [{ id: row.id, cells: Object.fromEntries(Object.entries(row.cells).filter(([, cell]) => typeof cell === "string" || typeof cell === "boolean")) }] : []),
   } : undefined;
   const flowchart = value.flowchart && typeof value.flowchart === "object" && Array.isArray(value.flowchart.nodes) && Array.isArray(value.flowchart.edges) ? {
-    nodes: value.flowchart.nodes.flatMap((node) => node && typeof node === "object" && typeof node.id === "string" && typeof node.label === "string" ? [{ id: node.id, label: node.label, x: Number.isFinite(node.x) ? Math.max(0, Number(node.x)) : 40, y: Number.isFinite(node.y) ? Math.max(0, Number(node.y)) : 40, width: Number.isFinite(node.width) ? Math.max(180, Math.min(520, Number(node.width))) : 304, height: Number.isFinite(node.height) ? Math.max(100, Math.min(320, Number(node.height))) : 112, color: typeof node.color === "string" ? node.color : "#38bdf8" }] : []),
+    nodes: value.flowchart.nodes.flatMap((node) => node && typeof node === "object" && typeof node.id === "string" && typeof node.label === "string" ? [{ id: node.id, label: node.label, x: Number.isFinite(node.x) ? Math.max(0, Number(node.x)) : 40, y: Number.isFinite(node.y) ? Math.max(0, Number(node.y)) : 40, width: Number.isFinite(node.width) ? Math.max(180, Math.min(520, Number(node.width))) : 304, height: Number.isFinite(node.height) ? Math.max(100, Math.min(320, Number(node.height))) : 112, color: typeof node.color === "string" ? node.color : "#38bdf8", ...(typeof node.pageText === "string" ? { pageText: node.pageText } : {}) }] : []),
     edges: value.flowchart.edges.flatMap((edge) => edge && typeof edge === "object" && typeof edge.id === "string" && typeof edge.source === "string" && typeof edge.target === "string" ? [{ id: edge.id, source: edge.source, target: edge.target, label: typeof edge.label === "string" ? edge.label : "" }] : []),
     zoom: Number.isFinite(value.flowchart.zoom) ? Math.max(0.5, Math.min(1.75, Number(value.flowchart.zoom))) : 1,
   } : undefined;

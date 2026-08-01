@@ -3,10 +3,11 @@ import { filterProjects, normalizeProjectBlock, reorderProjects, type ProjectBlo
 
 describe("project model", () => {
   it("preserves valid mode data and normalizes legacy projects", () => {
-    const project = normalizeProjectBlock({ id: "one", title: "Project", status: "In progress", body: "Notes", table: { columns: [{ id: "name", name: "Name", type: "text" }], rows: [{ id: "row", cells: { name: "A" } }] }, flowchart: { nodes: [{ id: "a", label: "A", x: 10, y: 20, color: "#38bdf8" }], edges: [], zoom: 1 }, mindmap: { objects: [{ id: "root", title: "Root", pageText: "Page", relationIds: [], fields: [] }] } });
+    const project = normalizeProjectBlock({ id: "one", title: "Project", status: "In progress", body: "Notes", table: { columns: [{ id: "name", name: "Name", type: "text" }], rows: [{ id: "row", cells: { name: "A" } }] }, flowchart: { nodes: [{ id: "a", label: "A", x: 10, y: 20, color: "#38bdf8", pageText: "Flow page" }], edges: [], zoom: 1 }, mindmap: { objects: [{ id: "root", title: "Root", pageText: "Page", relationIds: [], fields: [] }] } });
     expect(project?.table?.rows[0].cells.name).toBe("A");
     expect(project?.flowchart?.nodes[0].x).toBe(10);
     expect(project?.flowchart?.nodes[0].width).toBe(304);
+    expect(project?.flowchart?.nodes[0].pageText).toBe("Flow page");
     expect(project?.mindmap?.objects[0].title).toBe("Root");
     expect(project?.mindmap?.objects[0].x).toBe(60);
     expect(project?.mindmap?.objects[0].height).toBe(112);

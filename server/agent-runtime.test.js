@@ -19,11 +19,14 @@ describe("durable agent runtime",()=>{
     const current=user("learning-runtime"),conversation=createConversation(current.id,"learning");
     addMessage(current.id,conversation.id,"user","Build a TypeScript study plan");
     const run=createTaskRun(current.id,"learning",conversation.id,"Build a plan",{conversationId:conversation.id,message:"Build a TypeScript study plan"});
-    const client={responses:{create:async()=>output("I created the first milestone.",[action("record.create","TypeScript foundations",{recordType:"milestone",status:"active",details:"Types, functions, and modules"})])}};
+    let request;
+    const client={responses:{create:async(input)=>{request=input;return output("I created the first milestone.",[action("record.create","TypeScript foundations",{recordType:"milestone",status:"active",details:"Types, functions, and modules"})]);}}};
     expect(await processOneAgentRun(client)).toBe(run.runId);
     expect(listDomainRecords(current.id,"learning")[0]).toMatchObject({recordType:"milestone",title:"TypeScript foundations"});
     expect(getConversation(current.id,conversation.id).messages.at(-1).content).toContain("first milestone");
     expect(listRunEvents(current.id).at(-1).type).toBe("completed");
+    expect(request.instructions).toContain("trusted, supportive friend");
+    expect(request.instructions).toContain("accuracy and policy boundaries");
   });
 
   it("holds external actions for exact-payload approval",async()=>{

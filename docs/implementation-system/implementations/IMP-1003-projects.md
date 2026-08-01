@@ -7,21 +7,26 @@
 | Code | Outcome | Review evidence | Status |
 |---|---|---|---|
 | `IMP-1003.1` | Full-page editor | - | Implemented |
-| &emsp;↳ `IMP-1003.1.1` | Shared full-screen project overlay with outside-click dismissal | [FTR-1009](../../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.1.1` | Shared full-screen project overlay with outside-click dismissal and contained scrolling | [FTR-1009](../../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md), [FTR-1012.1](../../feature-review-system/reviews/FTR-1012-projects-content-and-layout-review.md#findings) | Implemented and verified |
 | &emsp;↳ `IMP-1003.1.2` | Independent rich-text and Markdown documents with preview | - | Implemented |
 | &emsp;↳ `IMP-1003.1.3` | Persist title, status, `docHtml`, and `docMarkdown` | - | Implemented |
+| &emsp;↳ `IMP-1003.1.4` | **① Shared full-page/card content** and **② compact Markdown preview** | [FTR-1012](../../feature-review-system/reviews/FTR-1012-projects-content-and-layout-review.md) | Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1003.1.4.1` | **①** Derive the fixed-height, internally scrollable project-card mini view from the same persisted content as the full page | [FTR-1012.2](../../feature-review-system/reviews/FTR-1012-projects-content-and-layout-review.md#findings) | Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1003.1.4.2` | **②** Render safe Markdown naturally in the project-card mini view | [FTR-1012.3](../../feature-review-system/reviews/FTR-1012-projects-content-and-layout-review.md#findings) | Implemented and verified |
 | `IMP-1003.2` | Typed table | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | &emsp;↳ `IMP-1003.2.1` | Versioned text, number, date, checkbox, and select columns | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
-| &emsp;↳ `IMP-1003.2.2` | Inline row/column editing, select options, deletion cleanup, and sync | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.2.2` | Inline row/column editing, select options, deletion cleanup, sync, and compact control density | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md), [FTR-1012.4](../../feature-review-system/reviews/FTR-1012-projects-content-and-layout-review.md#findings) | Implemented and verified |
 | `IMP-1003.3` | Flowchart | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | &emsp;↳ `IMP-1003.3.1` | Spacious editable rectangular nodes, direct arrow connections, and corner menus for Connect, color, and delete | [FTR-1008.3.3](../../feature-review-system/reviews/FTR-1008-projects-page-review.md#findings) | Implemented and verified |
 | &emsp;↳ `IMP-1003.3.2` | Persist pointer-moved positions and remove orphaned edges | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md), [FTR-1009](../../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md) | Implemented and verified |
 | &emsp;↳ `IMP-1003.3.3` | Live pointer-bound node movement and bounded persisted node resizing | [FTR-1009](../../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.3.4` | Persisted Flowchart node descriptions with compact-editor and full-page entry paths | [FTR-1012.5](../../feature-review-system/reviews/FTR-1012-projects-content-and-layout-review.md#findings) | Implemented and verified |
 | `IMP-1003.4` | Object mindmap | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | &emsp;↳ `IMP-1003.4.1` | Blank spacious idea rectangles, direct arrows, and corner menus for Connect, color, and delete | [FTR-1008.3.3](../../feature-review-system/reviews/FTR-1008-projects-page-review.md#findings) | Implemented and verified |
 | &emsp;↳ `IMP-1003.4.2` | Persisted pointer positioning, cycle prevention, and orphaned-reference cleanup | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md), [FTR-1009](../../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md) | Implemented and verified |
 | &emsp;↳ `IMP-1003.4.3` | Separate ⚡ node-page action with independent title and page-content persistence | [FTR-1008.3.3.4](../../feature-review-system/reviews/FTR-1008-projects-page-review.md#findings) | Implemented and verified |
 | &emsp;↳ `IMP-1003.4.4` | Live pointer-bound idea movement and bounded persisted idea resizing | [FTR-1009](../../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.4.5` | Persisted Mindmap idea descriptions with compact-editor and full-page entry paths | [FTR-1012.5](../../feature-review-system/reviews/FTR-1012-projects-content-and-layout-review.md#findings) | Implemented and verified |
 | `IMP-1003.5` | Project portfolio controls | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | &emsp;↳ `IMP-1003.5.1` | Confirmed project deletion available from project and contextual actions | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | &emsp;↳ `IMP-1003.5.2` | Direct persisted project-card drag reordering with before/after placement | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md), [FTR-1009](../../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md) | Implemented and verified |
@@ -46,10 +51,11 @@
 3. Added persisted typed cells and draggable rectangular Flowchart and Mindmap nodes with editable text, direct node-to-node arrows, colors, relationships, cleanup, and independent Mindmap node pages.
 4. Added confirmed deletion, position-aware card dragging, sorting and template controls, a foreground card actions menu, and status filters.
 5. Added project-only assistant context and live move/resize handles with bounded persisted node dimensions.
+6. Unified card and full-page content, contained overlay scrolling, compacted table creation controls, and added shared compact/full-page descriptions to both graph modes.
 
 **Acceptance:** all project modes persist through account sync; existing projects load unchanged; keyboard and narrow-screen workflows work; graph deletion cannot leave orphaned references.
 
-**Verification:** 12 test files and 57 tests passed, the production build passed, and signed-in browser acceptance confirmed project templates, explicit project assistant context, outside-click page dismissal, node move/resize controls, enlarged writing areas, working corner menus, direct connections, and separate ⚡ node pages on 2026-07-30.
+**Verification:** 13 test files and 64 tests passed, the production build passed, and signed-in browser acceptance confirmed project templates, explicit project assistant context, contained full-page scrolling, shared Markdown card rendering, node move/resize controls, working corner menus, direct connections, shared graph descriptions, and separate node pages through 2026-08-01.
 
 ## `IMP-1003.1` — Full-page editor
 

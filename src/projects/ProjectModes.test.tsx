@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ProjectFlowchartEditor, ProjectMindmapEditor, ProjectTableEditor } from "./ProjectModes";
 import { createProjectFlowchart, createProjectMindmap, createProjectTable, type ProjectFlowchart, type ProjectMindmap, type ProjectTable } from "./model";
 
@@ -9,6 +9,7 @@ beforeEach(() => {
   vi.stubGlobal("PointerEvent", MouseEvent);
   Object.defineProperty(HTMLElement.prototype, "setPointerCapture", { configurable: true, value: vi.fn() });
 });
+afterEach(cleanup);
 
 describe("project workspace modes", () => {
   it("creates typed table columns and cleans deleted rows and columns", () => {
@@ -16,6 +17,8 @@ describe("project workspace modes", () => {
     function Harness() { const [table, setTable] = useState<ProjectTable>(createProjectTable()); return <ProjectTableEditor table={table} onChange={setTable} />; }
     render(<Harness />);
     fireEvent.click(screen.getByRole("button", { name: "+ Row" }));
+    expect(screen.queryByRole("textbox", { name: "New project column name" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "+ Column" }));
     fireEvent.change(screen.getByRole("textbox", { name: "New project column name" }), { target: { value: "Status" } });
     fireEvent.change(screen.getByRole("combobox", { name: "New project column type" }), { target: { value: "select" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Project select options" }), { target: { value: "Todo, Done" } });
@@ -55,6 +58,19 @@ describe("project workspace modes", () => {
     expect(screen.queryByRole("button", { name: "Delete connection Node 1 to Node 2" })).not.toBeInTheDocument();
   });
 
+  it("persists one flowchart node description across its compact and full-page editors", () => {
+    function Harness() { const [flowchart, setFlowchart] = useState<ProjectFlowchart>(createProjectFlowchart()); return <ProjectFlowchartEditor flowchart={flowchart} onChange={setFlowchart} />; }
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "+ Node" }));
+    fireEvent.click(screen.getByLabelText("Options for Node 1"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Description" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Node 1 description" }), { target: { value: "Shared node context" } });
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    fireEvent.click(screen.getByLabelText("Options for Node 1"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Open page" }));
+    expect(screen.getByRole("textbox", { name: "Node 1 page content" })).toHaveValue("Shared node context");
+  });
+
   it("builds an object mindmap with fields, relations, hierarchy, and cycle prevention", () => {
     function Harness() { const [mindmap, setMindmap] = useState<ProjectMindmap>(createProjectMindmap()); return <ProjectMindmapEditor mindmap={mindmap} onChange={setMindmap} />; }
     render(<Harness />);
@@ -78,5 +94,9 @@ describe("project workspace modes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Back to mindmap" }));
     fireEvent.click(screen.getByRole("button", { name: "Open Root page" }));
     expect(screen.getByRole("textbox", { name: "Root page content" })).toHaveValue("Detailed idea notes");
+    fireEvent.click(screen.getByRole("button", { name: "Back to mindmap" }));
+    fireEvent.click(screen.getByLabelText("Options for Root"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Description" }));
+    expect(screen.getByRole("textbox", { name: "Root description" })).toHaveValue("Detailed idea notes");
   });
 });

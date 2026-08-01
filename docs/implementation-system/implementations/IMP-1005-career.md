@@ -10,7 +10,11 @@
 | &emsp;↳ `IMP-1005.1.1` | Preserve the current resume and AI draft in a user-scoped career profile | Implemented |
 | &emsp;↳ `IMP-1005.1.2` | Upload and parse resumes into user-confirmed claims and skills | Planned |
 | `IMP-1005.2` | Career Agent | Partial |
-| &emsp;↳ `IMP-1005.2.1` | Conversational career profile, text and voice interaction, and evidence linking | Partial |
+| &emsp;↳ `IMP-1005.2.1` | Conversational career profile, text and voice interaction, and evidence linking | [FTR-1011](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md) · Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1005.2.1.1` | Continuous recoverable conversation transcript | [FTR-1011.1](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1005.2.1.2` | Softer human conversational tone within Career truthfulness and policy boundaries | [FTR-1011.2](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1005.2.1.3` | Left-side active transcript with responsive accessible fallback | [FTR-1011.3](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1005.2.1.4` | Non-looping voice lifecycle with explicit stop, mute, and cancel controls | [FTR-1011.5](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
 | &emsp;↳ `IMP-1005.2.2` | Web-assisted opportunity discovery, deduplication, scoring, and visible reasons | Partial |
 | &emsp;↳ `IMP-1005.2.3` | Truthful application materials and unanswered-question handling | Partial |
 | &emsp;↳ `IMP-1005.2.4` | Review mode with exact-payload approval before every external action | Implemented |
@@ -18,6 +22,7 @@
 | &emsp;&emsp;↳ `IMP-1005.2.5.1` | **①** User-scoped opportunities, applications, freelance leads, search policies, and career claims | Implemented |
 | &emsp;&emsp;↳ `IMP-1005.2.5.2` | **②** Interview and follow-up records with approval-gated Calendar actions | Implemented; external verification pending credentials |
 | &emsp;&emsp;↳ `IMP-1005.2.5.3` | **③** Persistent conversations, SQLite tasks/runs, restart recovery, cancellation, approvals, and activity views | Implemented |
+| &emsp;&emsp;&emsp;↳ `IMP-1005.2.5.3.1` | Confirmed **Saved to cloud** status with continuous persistence and meaningful validation feedback | [FTR-1011.4](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
 | &emsp;↳ `IMP-1005.2.6` | Google OAuth with Gmail draft and Calendar actions, idempotency, retries, and audit history | Implemented; external verification pending credentials |
 | &emsp;↳ `IMP-1005.2.7` | Connector-specific bounded autopilot after security and acceptance gates | Planned |
 
@@ -86,4 +91,4 @@ Google credentials, consent, deployed callback configuration, hosted-worker requ
 
 ## Verification
 
-**Partial implementation verified 2026-07-31.** Sixty-three automated tests and the production build passed. Signed-in browser acceptance completed a real Responses API Career task, restored its durable conversation, verified the glowing minimal interface and compact tracking drawers, and confirmed the corrected 390×844 layout. Google OAuth and exact-payload actions are implemented but not externally verified without connector credentials. Resume upload/parsing, confirmed-claim editing, source adapters, complete opportunity deduplication, inbox monitoring, and supported application submission remain planned or partial.
+**Partial implementation verified through 2026-08-01.** Sixty-six automated tests and the production build passed. Acceptance covers durable complete transcripts, cloud-save status, responsive conversation placement, cancellation-safe voice controls, a real Responses API Career task, compact tracking drawers, and the corrected mobile layout. Google OAuth and exact-payload actions are implemented but not externally verified without connector credentials. Resume upload/parsing, confirmed-claim editing, source adapters, complete opportunity deduplication, inbox monitoring, and supported application submission remain planned or partial.

@@ -10,7 +10,11 @@
 | &emsp;↳ `IMP-1004.1.1` | Preserve notes, connections, and weekly focus in the user-scoped Mentor profile | Implemented |
 | &emsp;↳ `IMP-1004.1.2` | Extract Learning into the shared Agent Workspace without data loss | Implemented |
 | `IMP-1004.2` | Mentor Agent | Partial |
-| &emsp;↳ `IMP-1004.2.1` | Conversational learning profile with text, push-to-talk, transcripts, and spoken replies | Partial |
+| &emsp;↳ `IMP-1004.2.1` | Conversational learning profile with text, push-to-talk, transcripts, and spoken replies | [FTR-1011](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md) · Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1004.2.1.1` | Continuous recoverable conversation transcript | [FTR-1011.1](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1004.2.1.2` | Softer human conversational tone within Mentor accuracy and policy boundaries | [FTR-1011.2](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1004.2.1.3` | Left-side active transcript with responsive accessible fallback | [FTR-1011.3](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1004.2.1.4` | Non-looping voice lifecycle with explicit stop, mute, and cancel controls | [FTR-1011.5](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
 | &emsp;↳ `IMP-1004.2.2` | Curriculum, milestones, sessions, assignments, and approved schedules | Partial |
 | &emsp;↳ `IMP-1004.2.3` | Lessons, exercises, quizzes, projects, resources, and selected Code Vault practice | Partial |
 | &emsp;↳ `IMP-1004.2.4` | Evidence-based assessment and adaptive skill confidence | Partial |
@@ -18,6 +22,7 @@
 | &emsp;&emsp;↳ `IMP-1004.2.5.1` | **①** SQLite-backed tasks, runs, leases, restart recovery, bounded retries, and SSE events | Implemented |
 | &emsp;&emsp;↳ `IMP-1004.2.5.2` | **②** Review-first action approvals, rejection, cancellation, exact-payload execution, and emergency-safe failures | Implemented |
 | &emsp;&emsp;↳ `IMP-1004.2.5.3` | **③** Persistent conversations, records, task state, approval state, and activity views | Implemented |
+| &emsp;&emsp;&emsp;↳ `IMP-1004.2.5.3.1` | Confirmed **Saved to cloud** status with continuous persistence and meaningful validation feedback | [FTR-1011.4](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
 | &emsp;↳ `IMP-1004.2.6` | Google Calendar plus approved course and content connectors | Partial |
 | &emsp;&emsp;↳ `IMP-1004.2.6.1` | Encrypted Google OAuth connection and approval-gated Calendar event creation | Implemented; external verification pending credentials |
 
@@ -66,4 +71,4 @@ Google credentials, consent, deployed callback configuration, hosted-worker requ
 
 ## Verification
 
-**Partial implementation verified 2026-07-31.** Sixty-three automated tests and the production build passed. Signed-in browser acceptance verified legacy migration, the continuously glowing Mentor interface, compact Tasks/Approvals/Activity/Integrations/Settings navigation, text and voice controls, reduced-width rendering, and honest Google configuration state. External Google event creation, scheduled notifications, complete onboarding, resource upload, Code Vault selection, and end-to-end assessment remain unverified or planned.
+**Partial implementation verified through 2026-08-01.** Sixty-six automated tests and the production build passed. Signed-in acceptance verified the continuous transcript, cloud-save status, responsive conversation layout, explicit voice controls, legacy migration, minimal Mentor interface, and honest Google configuration state. External Google event creation, scheduled notifications, complete onboarding, resource upload, Code Vault selection, and end-to-end assessment remain unverified or planned.

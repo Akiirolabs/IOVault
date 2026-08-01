@@ -8,9 +8,9 @@ IMP owns page-level product outcomes moving the current testing state toward [DP
 |---|---|---|---|
 | [IMP-1001](implementations/IMP-1001-write.md) | Write | Workspace and hierarchy implemented; FTR-1001–1004 and FTR-1006–1007 verified; FTR-1005 partial | `IMP-1001.3` cross-area links and the remaining `IMP-1001.1.2.1` insertion catalog |
 | [IMP-1002](implementations/IMP-1002-code-vault.md) | Code Vault | `IMP-1002.1` mini IDE implemented | `IMP-1002.2` repository workflow refinement |
-| [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1-1003.5` and [FTR-1008](../feature-review-system/reviews/FTR-1008-projects-page-review.md) implemented and verified | [FTR-1009](../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md): `IMP-1003.3.3`, `1003.4.4`, `1003.5.5`, and `1003.6` |
-| [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | Legacy migration, shared Agent Workspace, durable runs, approval controls, history, and Google Calendar adapter implemented; teaching workflow remains partial | Complete `IMP-1004.2.1–1004.2.4`, notifications, resource intake, and externally verify `IMP-1004.2.6.1` |
-| [IMP-1005](implementations/IMP-1005-career.md) | Career | Legacy migration, shared Agent Workspace, durable runs, Review mode, career records, and Google adapter implemented; career workflow remains partial | Complete `IMP-1005.1.2`, `1005.2.1–1005.2.3`, source/inbox adapters, and externally verify `1005.2.5.2/1005.2.6` |
+| [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1-1003.6` and [FTR-1008](../feature-review-system/reviews/FTR-1008-projects-page-review.md), [FTR-1009](../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md), and [FTR-1012](../feature-review-system/reviews/FTR-1012-projects-content-and-layout-review.md) implemented and verified | Future Projects work remains unassigned until planned |
+| [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | Legacy migration, verified conversation/voice workspace, durable runs, approval controls, history, and Google Calendar adapter implemented; teaching workflow remains partial | Complete `IMP-1004.2.2–1004.2.4`, notifications, resource intake, and externally verify `IMP-1004.2.6.1` |
+| [IMP-1005](implementations/IMP-1005-career.md) | Career | Legacy migration, verified conversation/voice workspace, durable runs, Review mode, career records, and Google adapter implemented; career workflow remains partial | Complete `IMP-1005.1.2`, `1005.2.2–1005.2.3`, source/inbox adapters, and externally verify `1005.2.5.2/1005.2.6` |
 | [IMP-1006](implementations/IMP-1006-settings.md) | Settings | `IMP-1006.1` Theme Mode implemented | Future settings remain unassigned until planned |
 
 External requirements are organized in one EDEP register folder: [EDEP-1001](implementations/EDEP/EDEP-1001.md) tracks Mentor dependencies and links to IMP-1004, while [EDEP-1002](implementations/EDEP/EDEP-1002.md) tracks Career dependencies and links to IMP-1005.
@@ -53,6 +53,8 @@ See [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) and [SYS-1.0](../aud
 
 | Date | Work | Evidence |
 |---|---|---|
+| 2026-08-01 | FTR-1011 · IMP-1004.2.1/1004.2.5.3.1 · IMP-1005.2.1/1005.2.5.3.1 | 66 tests, production build, complete-transcript and duplicate-event coverage, and signed-in conversation/cloud/voice-control acceptance |
+| 2026-08-01 | FTR-1012 · IMP-1003.1.1/1003.1.4/1003.2.2/1003.3.4/1003.4.5 | 64 tests, production build, focused graph/table coverage, contained-overlay browser acceptance, and shared Markdown card rendering |
 | 2026-07-31 | IMP-1004.1/1004.2 · IMP-1005.1/1005.2 | 63 tests, production build, durable-runtime, connector idempotency, and exact-approval coverage, signed-in live Career task, Learning/Career UI acceptance, persistent conversation recovery, and corrected 390×844 agent layout |
 | 2026-07-29 | IMP-1006.1 · Settings Theme Mode | 50 tests, production build, signed-in live/persist/restore acceptance, retained `rotateGlow` motion, and zero console errors |
 | 2026-07-30 | IMP-1003.2-1003.5 · FTR-1008 | 56 tests, production build, signed-in table/flowchart/mindmap/filter/persistence acceptance, and zero console errors |
