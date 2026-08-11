@@ -15,10 +15,10 @@ Every evidence-driven DBG belongs to exactly one baseline and keeps its problem,
 | DBG-1002 | SEC | ✅ Verified | Unauthenticated AI endpoint |
 | DBG-1003 | SEC | ✅ Verified | Entire vault sent to OpenAI |
 | DBG-1004 | SEC | ✅ Verified | JWT stored in localStorage |
-| DBG-1005 | SEC | Open | Production JWT-secret fallback |
+| DBG-1005 | SEC | ✅ Verified | Production JWT-secret fallback |
 | DBG-1006 | SEC | Open | Incomplete rate limiting |
-| DBG-1007 | SYS | Open | Workspace JSON blob |
-| DBG-1008 | SYS | Open | Conflict-unsafe synchronization |
+| DBG-1007 | SYS | Open · safeguarded | Workspace JSON blob |
+| DBG-1008 | SYS | Open · partially corrected | Conflict-unsafe synchronization |
 | DBG-1009 | SYS | Open | App component monolith |
 | DBG-1010 | SYS | Open | Server monolith |
 | DBG-1011 | SEC | Open | Rich-text sanitization |
@@ -37,6 +37,8 @@ Every evidence-driven DBG belongs to exactly one baseline and keeps its problem,
 | DBG-1002 | 15 tests and production build |
 | DBG-1003 | 17 tests and production build |
 | DBG-1004 | 20 tests and production build |
+| DBG-1005 | Production-secret, hostile-environment, isolated-suite, and production-build verification on 2026-08-11 |
+| DBG-1007/1008 | Projects payload boundaries, user-scoped recovery envelopes, ordered saves, protected sign-out, focused React tests, and production build on 2026-08-11; server-side versions remain open |
 | DBG-1017 | 30 tests, production build, signed-in browser workflow |
 
 ```mermaid

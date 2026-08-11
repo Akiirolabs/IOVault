@@ -5,8 +5,8 @@ Evidence-driven architecture, reliability, performance, persistence, maintainabi
 | DBG | Status | Finding | Impact |
 |---|---|---|---|
 | DBG-1001 | ✅ Verified | Responsive shell gap | Narrow-screen workspace parity |
-| DBG-1007 | Open | Workspace JSON blob | Storage, recovery, migration |
-| DBG-1008 | Open | Conflict-unsafe synchronization | Multi-client data integrity |
+| DBG-1007 | Open · safeguarded | Workspace JSON blob | Storage, recovery, migration |
+| DBG-1008 | Open · partially corrected | Conflict-unsafe synchronization | Multi-client data integrity |
 | DBG-1009 | Open | Frontend monolith | Regression and render surface |
 | DBG-1010 | Open | Server monolith | Security and test isolation |
 | DBG-1014 | Open | Package separation | Build and deployment boundaries |
@@ -20,11 +20,11 @@ Evidence-driven architecture, reliability, performance, persistence, maintainabi
 
 ## DBG-1007 — Workspace stored as one JSON blob
 
-**Open · High · discovered 2026-07-19.** `workspaces.data` rewrites the entire state, limiting queries, history, permissions, recovery, and migration. Incrementally normalize high-value entities with user IDs and versions only where justified. Require dual-write parity, backfill, rollback, migration, and performance tests.
+**Open · High · discovered 2026-07-19; safeguard verified 2026-08-11.** `workspaces.data` still rewrites the entire state, limiting queries, history, permissions, recovery, and migration. The client now measures the exact UTF-8 request body against a 1.8 MB budget, prevents oversized uploads, distinguishes local-only and cache-failure states, and preserves newer dirty or local-only work in a versioned user-scoped cache across reload. Clean cache remains subordinate to server state. Dedicated user-scoped Projects records remain the long-term correction and require dual-write parity, backfill, rollback, migration, and performance tests.
 
 ## DBG-1008 — Conflict-unsafe synchronization
 
-**Open · High · discovered 2026-07-19.** `/api/vault` overwrites by user ID without an expected version. Add integer versions, conditional updates, HTTP 409, and a clear merge/reload path. Verify two-client races and stale-version requests.
+**Open · High · discovered 2026-07-19; client ordering partially corrected 2026-08-11.** `/api/vault` still overwrites by user ID without a server-enforced expected version. Browser saves now use an ordered queue, revision-aware acknowledgments, protected sign-out, and dirty/local-only recovery metadata; stale client responses cannot mark newer revisions saved. Multi-device conflict detection remains open. Add server versions, conditional updates, HTTP 409, and an explicit compare/merge/reload path, then verify two-client races and stale-version requests.
 
 ## DBG-1009 — App component monolith
 

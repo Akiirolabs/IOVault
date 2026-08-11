@@ -3,7 +3,7 @@
 | Field | Current state |
 |---|---|
 | Status | Deployed for testing |
-| Date | 2026-08-01 |
+| Date | 2026-08-11 |
 | Commit | `73d45ac` baseline; current verified changes pending commit |
 | Version | **1.0 — Current** |
 | Environment | Repository-backed local testing state; Cloudflare-to-Hetzner production routing approved but not deployed |
@@ -17,10 +17,10 @@
 | Frontend | Vite + React + TypeScript application with authenticated workspace pages |
 | API | Express API for auth, vault sync, bounded AI, GitHub, scratch files, patches, and publishing |
 | Authentication | JWT-backed HttpOnly SameSite cookie with CSRF protection; bearer compatibility for non-browser clients |
-| Data | SQLite user/workspace/code records, `localStorage` workspace cache, and bounded IndexedDB Code Vault cache |
+| Data | SQLite user/workspace/code records, versioned user-scoped `localStorage` recovery envelopes, and bounded IndexedDB Code Vault cache |
 | Code Vault | Monaco, scratch and repository files, selected context, structured patch review/undo, and draft PR publication |
 | Write | Structured hierarchy with direct drag reordering, advanced typed collections, record-based Relation pickers, guided Formula functions, themed wide-table navigation, embedded Page cells, explicit column editing/sorting, keyboard traversal, normalized external paste, dismissible linked-page overlays, compact glass creation controls, recovery, rich editing, and explicit AI context |
-| Projects | Shared full-page/card content, natural Markdown card previews, internally scrollable fixed-height cards, complete expanded-page scrolling, compact typed-table controls, and persisted Flowchart/Mindmap node descriptions |
+| Projects | Shared full-page/card content, compact typed tables, persisted graph descriptions, bounded cloud payloads, ordered saves, truthful local-only states, protected sign-out, and reload-safe user-scoped recovery |
 | Settings | Persisted Theme Mode with tinted color tuning, subdued Dark, true-black Night, white Light, additional curated colors, live preview, and a Default control while preserving the animated visual system |
 | AI | Authenticated, rate-limited requests with persistent user-scoped conversations, bounded recent chat history, explicit page context, compact context management, and content-free usage auditing |
 | Agent platform | Shared Learning/Career Agent Workspace with durable full transcripts, left-side conversation layout, warm policy-bounded instructions, cloud-save feedback, duplicate-event suppression, explicit speech controls, Responses API orchestration, leased runs, approvals, and encrypted Google connector storage |
@@ -35,7 +35,7 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 |---|---|---|
 | [IMP-1001 — Write](../implementation-system/implementations/IMP-1001-write.md) | Hierarchical pages, rich editing, advanced typed collections, embedded Page cells, Formula and Relation contracts, explicit column editing/sorting, keyboard traversal, dismissible linked-page overlays, templates, archive recovery, and explicit assistant context | Implemented v1 |
 | [IMP-1002 — Code Vault](../implementation-system/implementations/IMP-1002-code-vault.md) | Monaco editing, scratch files, reusable snippets, selected-file AI context, reviewed patches, undo, and GitHub draft-pull-request publishing | Implemented v1 |
-| [IMP-1003 — Projects](../implementation-system/implementations/IMP-1003-projects.md) | Project cards, shared rich/Markdown mini views, contained full pages, compact typed tables, project-only AI context, and live movable/resizable Flowchart and Mindmap nodes with shared compact/full-page descriptions | Implemented and verified |
+| [IMP-1003 — Projects](../implementation-system/implementations/IMP-1003-projects.md) | Project cards, shared rich/Markdown views, contained full pages, typed tables, graph workspaces, explicit AI context, and fail-safe local/cloud persistence boundaries | Implemented and verified within repository gates |
 | [IMP-1004 — Learning / Mentor](../implementation-system/implementations/IMP-1004-learning-mentor.md) | Migrated Mentor profile, continuously glowing text/voice workspace, durable conversations/tasks/runs, internal learning records, approval controls, activity, and encrypted Google Calendar adapter | Partial; full onboarding, teaching/assessment cycle, notifications, resource intake, and external Calendar verification remain in DPL-1003 |
 | [IMP-1005 — Career](../implementation-system/implementations/IMP-1005-career.md) | Migrated career profile, continuously glowing text/voice workspace, durable conversations/tasks/runs, career records, Review mode, activity, and encrypted Gmail/Calendar adapter | Partial; resume parsing, confirmed-claim workflow, source/inbox adapters, full pipeline, and external Google verification remain in DPL-1003 |
 | [IMP-1006 — Settings](../implementation-system/implementations/IMP-1006-settings.md) | Theme Mode with persisted tinted, Night, and Light contracts, shade/glow/depth controls, presets, live preview, and default restoration | Implemented v1 |
@@ -56,18 +56,18 @@ Current runtime detail is consolidated below; Code Vault feature architecture is
 | [FTR-1010 - Global AI chat review](../feature-review-system/reviews/FTR-1010-global-ai-chat-review.md) | Persistent scrollable conversations, history switching, bottom arrow composer, removed model labeling, and explicit multi-page context management | Verified — 5/5 |
 | [FTR-1011 - Agent conversation and voice review](../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md) | Complete durable transcripts, warmer bounded tone, responsive left-side conversation, cloud-save status, and cancellation-safe voice controls | Verified — 5/5 |
 | [FTR-1012 - Projects content and layout review](../feature-review-system/reviews/FTR-1012-projects-content-and-layout-review.md) | Contained project scrolling, shared full-page/card content, rendered Markdown mini views, compact table controls, and persisted graph descriptions | Verified — 5/5 |
-| [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) | Authenticated AI access, bounded explicit context, and HttpOnly cookie sessions through DBG-1002–1004 | Three verified; five security findings remain open |
-| [SYS-1.0](../audit-system/SYS-1.0-system-baseline.md) | Responsive workspace behavior and reliable typed table-column controls through DBG-1001 and DBG-1017 | Two verified; seven system findings remain open |
+| [SEC-1.0](../audit-system/SEC-1.0-security-baseline.md) | Authenticated AI access, bounded explicit context, HttpOnly cookie sessions, and fail-closed production JWT configuration through DBG-1002–1005 | Four verified; four security findings remain open |
+| [SYS-1.0](../audit-system/SYS-1.0-system-baseline.md) | Responsive behavior, typed tables, bounded workspace payloads, ordered client saves, and user-scoped recovery through DBG-1001, DBG-1007/1008 safeguards, and DBG-1017 | DBG-1007/1008 remain open for normalization and server-side conflict control |
 
 ## Verification and readiness
 
 | Gate | Result |
 |---|---|
-| Tests | `npm test`: 14 files and 66 tests passed on 2026-08-01 |
-| Production build | `npm run build`: TypeScript and Vite production build passed on 2026-08-01 |
-| Browser acceptance | Signed-in Mentor rendering confirmed the active conversation, cloud-save label, responsive transcript fallback, and explicit voice controls; Projects containment and shared card rendering remain verified |
+| Tests | Final Projects-focused React tests passed 9/9 on 2026-08-11; serial isolated evidence reached 91 passing tests, while the default full gate remains non-hermetic because agent-runtime tests share persistent queue state |
+| Production build | `npm run build`: TypeScript and Vite production build passed on 2026-08-11 |
+| Browser acceptance | Earlier signed-in Projects and Mentor acceptance remains recorded; live oversized, quota, reload, multi-tab, and screen-reader scenarios were unavailable for this run |
 | Database | SQLite auto-initializes dedicated agent profiles, conversations, messages, tasks, runs, events, approvals, connector accounts/actions, and domain records; whole-workspace JSON remains for unrelated general workspace data |
-| Environment/secrets | Local environment supported; production JWT fail-closed validation remains open in DBG-1005 |
+| Environment/secrets | Production fails closed for missing or weak JWT secrets and local environment files cannot override deployment-provided production mode or secret; managed rotation and remaining provider readiness stay operational requirements |
 | Monitoring | Application-level production monitoring is not established |
 | Rollback | Git commit provides source rollback; database rollback procedure is not validated |
 

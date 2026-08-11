@@ -52,10 +52,11 @@
 4. Added confirmed deletion, position-aware card dragging, sorting and template controls, a foreground card actions menu, and status filters.
 5. Added project-only assistant context and live move/resize handles with bounded persisted node dimensions.
 6. Unified card and full-page content, contained overlay scrolling, compacted table creation controls, and added shared compact/full-page descriptions to both graph modes.
+7. Added fail-safe Projects persistence with UTF-8 upload budgeting, truthful local-only and browser-storage states, ordered acknowledgments, protected sign-out, and versioned user-scoped recovery across reload.
 
 **Acceptance:** all project modes persist through account sync; existing projects load unchanged; keyboard and narrow-screen workflows work; graph deletion cannot leave orphaned references.
 
-**Verification:** 13 test files and 64 tests passed, the production build passed, and signed-in browser acceptance confirmed project templates, explicit project assistant context, contained full-page scrolling, shared Markdown card rendering, node move/resize controls, working corner menus, direct connections, shared graph descriptions, and separate node pages through 2026-08-01.
+**Verification:** the original 64-test and signed-in Projects acceptance remains valid through 2026-08-01. On 2026-08-11, focused persistence and compound-failure tests passed, the serial isolated suite reached 91 passing tests before known shared agent-test database contamination, and the production build and diff check passed. DevMind approved the selected persistence correction; DevAudit approved it within repository evidence. Live quota exhaustion, multi-tab conflicts, and browser-process recovery remain unverified.
 
 ## `IMP-1003.1` — Full-page editor
 
@@ -158,4 +159,4 @@ Relationship changes cannot leave orphaned references. Saved node text, position
 
 ## Engineering dependencies
 
-Workspace growth, sync conflicts, rich-text safety, and dependency review are owned by the SEC/SYS records linked in the consolidated [implementation index](../README.md).
+Workspace growth and client recovery safeguards are verified under [SYS DBG-1007/1008](../../audit-system/SYS-1.0-system-baseline.md), while dedicated Projects persistence and server-enforced multi-device conflict handling remain open. Rich-text safety and dependency review remain owned by SEC.

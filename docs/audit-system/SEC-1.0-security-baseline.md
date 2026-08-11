@@ -7,7 +7,7 @@ Evidence-driven security, privacy, abuse, validation, and dependency-integrity f
 | DBG-1002 | ✅ Verified | Anonymous AI access | Authentication and AI cost |
 | DBG-1003 | ✅ Verified | Excessive private AI context | Privacy, cost, latency |
 | DBG-1004 | ✅ Verified | Browser-stored JWT | Browser sessions and private data |
-| DBG-1005 | Open | Production secret fallback | Session integrity |
+| DBG-1005 | ✅ Verified | Production secret fallback | Session integrity |
 | DBG-1006 | Open | Incomplete route limits | Abuse, cost, availability |
 | DBG-1011 | Open | Rich-text sanitization | Stored content and browser security |
 | DBG-1012 | Open | Inconsistent input validation | Every write/expensive route |
@@ -41,7 +41,7 @@ flowchart LR
 
 ## DBG-1005 — Production JWT-secret fallback
 
-**Open · Critical · discovered 2026-07-19.** `server/auth.js` falls back to `iovault-dev-secret-change-me` without a production guard. Fail production startup without `JWT_SECRET` and support managed rotation. Verify production failure when absent while retaining the intentional development fallback.
+**Verified · Critical · discovered 2026-07-19; corrected 2026-08-11.** Production now rejects missing, placeholder, short, and low-diversity JWT secrets before the API listens. Deployment-provided `NODE_ENV` and `JWT_SECRET` remain authoritative over local environment files, while the intentional fallback remains limited to development and test. Focused configuration tests, hostile-environment subprocess checks, the isolated application suite, and the production build passed. Managed secret rotation remains an operational deployment responsibility.
 
 ## DBG-1006 — Incomplete rate limiting
 

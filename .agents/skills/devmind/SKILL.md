@@ -35,7 +35,7 @@ Provide judgment only when the user requests an opinion or audit. When invoked a
 
 ## Dev Cycle audit mode
 
-1. Inspect repository instructions, relevant code, current diff, tests, logs, and raw gate output.
+1. Inspect repository instructions, relevant code, current diff, tests, logs, raw gate output, and any DevAudit artifacts without adopting their expected conclusion.
 2. Reproduce or substantiate each finding without relying on the expected conclusion.
 3. Prioritize confirmed findings as critical, high, medium, or low.
 4. Include exact evidence, reproduction, user impact, and measurable acceptance criteria for each finding.

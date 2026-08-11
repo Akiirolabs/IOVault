@@ -9,7 +9,7 @@ Act as the implementation engineer. Convert confirmed findings and measurable ac
 
 ## Workflow
 
-1. Read the finding, raw evidence, acceptance criteria, relevant code, repository instructions, and current working-tree state.
+1. Read the DevAudit or DevMind finding, raw evidence, acceptance criteria, relevant code, repository instructions, and current working-tree state.
 2. Reproduce or confirm the defect before editing. If it cannot be confirmed, return evidence instead of guessing.
 3. Preserve unrelated user changes and identify overlapping edits before touching affected files.
 4. Implement the smallest cohesive fix without unrelated refactors or dependency changes.
@@ -21,7 +21,7 @@ Act as the implementation engineer. Convert confirmed findings and measurable ac
 
 ## Engineering rules
 
-- Treat DevMind findings as hypotheses until code, runtime, or test evidence confirms them.
+- Treat DevAudit and DevMind findings as hypotheses until code, runtime, or test evidence confirms them.
 - Preserve observable behavior outside the accepted change.
 - Prefer deterministic fixes and regression tests over timing-based workarounds.
 - Validate untrusted imported, persisted, API-generated, provider-generated, and user-generated data at ownership boundaries.

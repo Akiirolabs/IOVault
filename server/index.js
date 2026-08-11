@@ -5,14 +5,15 @@
  * Loads secrets from .env.local, exposes POST /api/agent for the in-app AI assistant.
  */
 
-import dotenv from "dotenv";
 import express from "express";
 import OpenAI from "openai";
 import crypto from "node:crypto";
+import { assertJwtConfiguration } from "./auth-config.js";
+import { loadEnvironment } from "./environment.js";
 
-// Load API keys: .env.local overrides, then optional .env
-dotenv.config({ path: ".env.local", override: true });
-dotenv.config({ override: false });
+// Deployment environment wins; .env.local then .env provide only missing values.
+loadEnvironment();
+assertJwtConfiguration();
 
 import {
   createUser,

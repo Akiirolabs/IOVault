@@ -1,0 +1,4 @@
+interface:
+  display_name: "DevAudit"
+  short_description: "Plan rigorous product and feature audits"
+  default_prompt: "Use $dev-audit to review this IO Vault workflow and create an implementation-ready audit plan."

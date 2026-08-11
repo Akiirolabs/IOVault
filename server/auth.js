@@ -8,8 +8,8 @@
 import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { resolveJwtSecret } from "./auth-config.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "iovault-dev-secret-change-me";
 const TOKEN_TTL = "30d";
 export const SESSION_COOKIE_NAME = "iovault-session";
 const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
@@ -27,12 +27,12 @@ export async function verifyPassword(password, passwordHash) {
 }
 
 export function signToken(user) {
-  return jwt.sign({ sub: user.id, email: user.email }, JWT_SECRET, { expiresIn: TOKEN_TTL });
+  return jwt.sign({ sub: user.id, email: user.email }, resolveJwtSecret(), { expiresIn: TOKEN_TTL });
 }
 
 export function verifyToken(token) {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, resolveJwtSecret());
   } catch {
     return null;
   }

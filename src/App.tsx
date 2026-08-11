@@ -2,7 +2,7 @@
  * IO Vault — main application UI.
  *
  * Flow: unlock screen → dashboard with workspace pages (Code, Write, Learning, Career, Projects).
- * All workspace data persists to localStorage. AI features call POST /api/agent (see server/index.js).
+ * Workspace authority is server-side SQLite with a user-scoped offline cache.
  */
 import { FormEvent, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import ReactMarkdown from "react-markdown";
@@ -45,6 +45,8 @@ import { ProjectFlowchartEditor, ProjectMindmapEditor, ProjectTableEditor } from
 import { createProjectFlowchart, createProjectMindmap, createProjectTable, filterProjects, normalizeProjectBlock, reorderProjects, type ProjectBlock, type ProjectFilter, type ProjectStatus } from "./projects/model";
 import AgentWorkspace from "./agents/AgentWorkspace";
 import { apiFetch } from "./api";
+import { claimLegacyWorkspace, hasUnclaimedLegacyWorkspace, readUserWorkspaceCacheRecord, removeUserWorkspaceCache, writeUserWorkspaceCache, type WorkspaceCacheSync } from "./vaultCache";
+import { serializeWorkspaceUpload } from "./workspacePayload";
 export { apiFetch } from "./api";
 
 // --- Types: shape of each workspace page and full saved state ---
@@ -288,9 +290,6 @@ const navItems: NavItem[] = [
   { key: "settings", label: "Settings", defaultIcon: HiOutlineCog6Tooth },
 ];
 
-/** localStorage key — entire VaultState is JSON-serialized here on every edit */
-const storageKey = "io-vault-workspace";
-
 /** Shown on first visit and used to fill missing fields when loading old saves */
 const defaultVaultState: VaultState = {
   code: {
@@ -458,18 +457,9 @@ function normalizeVaultState(raw: unknown): VaultState {
   };
 }
 
-/** Loads workspace from localStorage, or returns defaults if empty / corrupt */
-function getSavedVaultState() {
-  const saved = localStorage.getItem(storageKey);
-
-  if (!saved) return defaultVaultState;
-
-  try {
-    return normalizeVaultState(JSON.parse(saved));
-  } catch {
-    localStorage.removeItem(storageKey);
-    return defaultVaultState;
-  }
+function getUserCachedVaultState(userId: string) {
+  const saved = readUserWorkspaceCacheRecord(userId);
+  return saved ? { state: normalizeVaultState(saved.state), sync: saved.sync } : null;
 }
 
 // --- Code preview: lightweight syntax highlighting (no external highlighter) ---
@@ -577,7 +567,7 @@ function RichTextEditor({ html, onChange, className, role, ariaLabel, ariaMultil
 
 type AuthUser = { id: string; email: string };
 
-function AuthScreen({ onAuthed }: { onAuthed: (user: AuthUser, isSignup: boolean) => void }) {
+function AuthScreen({ onAuthed }: { onAuthed: (user: AuthUser, isSignup: boolean) => Promise<void> }) {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -600,7 +590,7 @@ function AuthScreen({ onAuthed }: { onAuthed: (user: AuthUser, isSignup: boolean
         throw new Error(data.error || "Something went wrong.");
       }
 
-      onAuthed(data.user, mode === "signup");
+      await onAuthed(data.user, mode === "signup");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -766,7 +756,7 @@ function App() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isAgentOpen, setIsAgentOpen] = useState(false);
   const [activeSnippetId, setActiveSnippetId] = useState<string | null>("snippet-1");
-  const [vaultState, setVaultState] = useState<VaultState>(getSavedVaultState);
+  const [vaultState, setVaultState] = useState<VaultState>(defaultVaultState);
   const [assistantQuestion, setAssistantQuestion] = useState("");
   const [selectedAgentContexts, setSelectedAgentContexts] = useState<PageKey[]>([]);
   const [selectedProjectContexts, setSelectedProjectContexts] = useState<string[]>([]);
@@ -787,8 +777,17 @@ function App() {
   const markdownRef = useRef<HTMLTextAreaElement>(null);
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [syncState, setSyncState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [syncState, setSyncState] = useState<"idle" | "saving" | "saved" | "error" | "local-only" | "unsynced" | "cache-error">("idle");
+  const [isWorkspaceLoading, setIsWorkspaceLoading] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [signOutProtectionMessage, setSignOutProtectionMessage] = useState<string | null>(null);
   const syncTimer = useRef<number | null>(null);
+  const activeAuthUserId = useRef<string | null>(null);
+  const latestVaultState = useRef<VaultState>(defaultVaultState);
+  const latestVaultRevision = useRef(0);
+  const latestCacheWriteFailed = useRef(false);
+  const lastServerUpdatedAt = useRef<string | null>(null);
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
   const agentMessagesRef = useRef<HTMLDivElement>(null);
 
   // --- Derived values for the active page / snippet / project counts ---
@@ -827,75 +826,203 @@ function App() {
   function saveVaultState(reducer: (previous: VaultState) => VaultState) {
     setVaultState((previous) => {
       const nextState = reducer(previous);
-      localStorage.setItem(storageKey, JSON.stringify(nextState));
-      scheduleServerSync(nextState);
+      setSignOutProtectionMessage(null);
+      latestVaultState.current = nextState;
+      latestVaultRevision.current += 1;
+      const localOnly = !serializeWorkspaceUpload(nextState).withinBudget;
+      const sync: WorkspaceCacheSync = {
+        dirty: true,
+        localOnly,
+        revision: latestVaultRevision.current,
+        updatedAt: new Date().toISOString(),
+        lastServerUpdatedAt: lastServerUpdatedAt.current,
+      };
+      latestCacheWriteFailed.current = authUser ? !writeUserWorkspaceCache(authUser.id, nextState, sync) : false;
+      if (latestCacheWriteFailed.current) setSyncState("cache-error");
+      scheduleServerSync(nextState, latestVaultRevision.current);
       return nextState;
     });
   }
 
   // --- Server sync: persist the VaultState to the SQL backend per user ---
 
-  async function pushVaultToServer(state: VaultState) {
-    setSyncState("saving");
-    try {
-      const response = await apiFetch("/api/vault", {
-        method: "PUT",
-        body: JSON.stringify({ data: state }),
-      });
-      if (!response.ok) throw new Error("save failed");
-      setSyncState("saved");
-    } catch {
-      setSyncState("error");
+  function enqueueVaultSave(state: VaultState, revision: number, userId: string) {
+    const payload = serializeWorkspaceUpload(state);
+    if (!payload.withinBudget) {
+      if (activeAuthUserId.current === userId && revision === latestVaultRevision.current) {
+        setSyncState(latestCacheWriteFailed.current ? "cache-error" : "local-only");
+      }
+      return Promise.resolve(false);
     }
+    setSyncState("saving");
+    const execute = async () => {
+      if (activeAuthUserId.current !== userId) return false;
+      try {
+        const response = await apiFetch("/api/vault", {
+          method: "PUT",
+          body: payload.body,
+        });
+        if (!response.ok) throw new Error("save failed");
+        if (activeAuthUserId.current === userId && revision === latestVaultRevision.current) {
+          latestCacheWriteFailed.current = !writeUserWorkspaceCache(userId, state, {
+            dirty: false,
+            localOnly: false,
+            revision,
+            updatedAt: new Date().toISOString(),
+            lastServerUpdatedAt: lastServerUpdatedAt.current,
+          });
+          setSyncState(latestCacheWriteFailed.current ? "cache-error" : "saved");
+        }
+        return true;
+      } catch {
+        if (activeAuthUserId.current === userId && revision === latestVaultRevision.current) {
+          setSyncState(latestCacheWriteFailed.current ? "cache-error" : "error");
+        }
+        return false;
+      }
+    };
+    const result = saveQueue.current.then(execute, execute);
+    saveQueue.current = result.then(() => undefined, () => undefined);
+    return result;
   }
 
   /** Debounced push so we don't hit the DB on every keystroke. */
-  function scheduleServerSync(state: VaultState) {
+  function scheduleServerSync(state: VaultState, revision: number) {
     if (!authUser) return;
+    const userId = authUser.id;
     if (syncTimer.current) window.clearTimeout(syncTimer.current);
+    if (!serializeWorkspaceUpload(state).withinBudget) {
+      syncTimer.current = null;
+      setSyncState(latestCacheWriteFailed.current ? "cache-error" : "local-only");
+      return;
+    }
     syncTimer.current = window.setTimeout(() => {
-      void pushVaultToServer(state);
+      syncTimer.current = null;
+      void enqueueVaultSave(state, revision, userId);
     }, 800);
   }
 
-  async function loadVaultFromServer(migrateLocal: boolean) {
+  async function loadVaultFromServer(user: AuthUser, offerLegacyMigration: boolean) {
+    const userId = user.id;
+    setIsWorkspaceLoading(true);
+    latestVaultState.current = defaultVaultState;
+    latestVaultRevision.current = 0;
+    latestCacheWriteFailed.current = false;
+    lastServerUpdatedAt.current = null;
+    setVaultState(defaultVaultState);
     try {
       const response = await apiFetch("/api/vault");
-      if (!response.ok) return;
-      const { data } = (await response.json()) as { data: unknown };
+      if (!response.ok) throw new Error("load failed");
+      const { data, updatedAt } = (await response.json()) as { data: unknown; updatedAt?: string | null };
+      if (activeAuthUserId.current !== userId) return;
+      const cached = getUserCachedVaultState(userId);
+      lastServerUpdatedAt.current = typeof updatedAt === "string" ? updatedAt : cached?.sync.lastServerUpdatedAt || null;
+
+      if (cached && (cached.sync.dirty || cached.sync.localOnly)) {
+        latestVaultState.current = cached.state;
+        latestVaultRevision.current = cached.sync.revision;
+        setVaultState(cached.state);
+        setSyncState(cached.sync.localOnly ? "local-only" : "unsynced");
+        return;
+      }
 
       if (data) {
         const normalized = normalizeVaultState(data);
+        latestVaultState.current = normalized;
+        latestVaultRevision.current = cached?.sync.revision || 0;
         setVaultState(normalized);
-        localStorage.setItem(storageKey, JSON.stringify(normalized));
-      } else if (migrateLocal) {
-        // First time on the server for this returning user: upload local cache.
-        const local = getSavedVaultState();
-        setVaultState(local);
-        await pushVaultToServer(local);
+        latestCacheWriteFailed.current = !writeUserWorkspaceCache(userId, normalized, {
+          dirty: false,
+          localOnly: false,
+          revision: latestVaultRevision.current,
+          updatedAt: new Date().toISOString(),
+          lastServerUpdatedAt: lastServerUpdatedAt.current,
+        });
+        if (latestCacheWriteFailed.current) setSyncState("cache-error");
       } else {
-        setVaultState(defaultVaultState);
-        localStorage.setItem(storageKey, JSON.stringify(defaultVaultState));
+        let local: VaultState | null = null;
+        if (!local && offerLegacyMigration && hasUnclaimedLegacyWorkspace()) {
+          const confirmed = window.confirm("Import the legacy workspace saved in this browser into this account?");
+          const legacy = claimLegacyWorkspace(userId, confirmed);
+          local = legacy ? normalizeVaultState(legacy) : null;
+        }
+        const initial = local || defaultVaultState;
+        latestVaultState.current = initial;
+        latestVaultRevision.current = local ? 1 : 0;
+        setVaultState(initial);
+        latestCacheWriteFailed.current = !writeUserWorkspaceCache(userId, initial, {
+          dirty: Boolean(local),
+          localOnly: false,
+          revision: latestVaultRevision.current,
+          updatedAt: new Date().toISOString(),
+          lastServerUpdatedAt: lastServerUpdatedAt.current,
+        });
+        if (latestCacheWriteFailed.current) setSyncState("cache-error");
+        if (local) await enqueueVaultSave(initial, latestVaultRevision.current, userId);
       }
     } catch {
-      // Offline: keep whatever is in local cache.
+      if (activeAuthUserId.current !== userId) return;
+      const local = getUserCachedVaultState(userId);
+      const fallback = local?.state || defaultVaultState;
+      latestVaultState.current = fallback;
+      latestVaultRevision.current = local?.sync.revision || 0;
+      lastServerUpdatedAt.current = local?.sync.lastServerUpdatedAt || null;
+      setVaultState(fallback);
+      setSyncState(local?.sync.localOnly ? "local-only" : local?.sync.dirty ? "unsynced" : "error");
+    } finally {
+      if (activeAuthUserId.current === userId) setIsWorkspaceLoading(false);
     }
   }
 
   async function handleAuthed(user: AuthUser, isSignup: boolean) {
+    activeAuthUserId.current = user.id;
     setAuthUser(user);
-    await loadVaultFromServer(isSignup);
+    await loadVaultFromServer(user, isSignup);
   }
 
   async function signOut() {
-    if (syncTimer.current) window.clearTimeout(syncTimer.current);
-    await apiFetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
+    const user = authUser;
+    if (!user || isSigningOut) return;
+    if (syncTimer.current) {
+      window.clearTimeout(syncTimer.current);
+      syncTimer.current = null;
+    }
+    setIsSigningOut(true);
+    setSignOutProtectionMessage(null);
+    const saved = await enqueueVaultSave(latestVaultState.current, latestVaultRevision.current, user.id);
+    if (!saved || activeAuthUserId.current !== user.id) {
+      setSignOutProtectionMessage(
+        latestCacheWriteFailed.current
+          ? "Browser storage failed. Manually copy important content, free browser storage without clearing IO Vault site data, then retry."
+          : !serializeWorkspaceUpload(latestVaultState.current).withinBudget
+            ? "Workspace is too large for cloud sync. Your work remains saved in this browser. Reduce unneeded Projects content, then retry."
+            : "Sign out was blocked to protect unsaved changes. Retry when connected.",
+      );
+      setIsSigningOut(false);
+      return;
+    }
+    try {
+      const response = await apiFetch("/api/auth/logout", { method: "POST" });
+      if (!response.ok) throw new Error("logout failed");
+    } catch {
+      setSyncState("error");
+      setSignOutProtectionMessage("Sign out was blocked to protect unsaved changes. Retry when connected.");
+      setIsSigningOut(false);
+      return;
+    }
     localStorage.removeItem("io-vault-token");
-    localStorage.removeItem(storageKey);
+    removeUserWorkspaceCache(user.id);
+    activeAuthUserId.current = null;
+    latestVaultState.current = defaultVaultState;
+    latestVaultRevision.current = 0;
+    latestCacheWriteFailed.current = false;
+    lastServerUpdatedAt.current = null;
     setAuthUser(null);
     setIsUnlocked(false);
     setVaultState(defaultVaultState);
     setSyncState("idle");
+    setSignOutProtectionMessage(null);
+    setIsSigningOut(false);
   }
 
   // On mount: verify the HttpOnly cookie session and remove the legacy local token.
@@ -909,8 +1036,9 @@ function App() {
         if (!response.ok) throw new Error("invalid session");
         const { user } = (await response.json()) as { user: AuthUser };
         if (cancelled) return;
+        activeAuthUserId.current = user.id;
         setAuthUser(user);
-        await loadVaultFromServer(true);
+        await loadVaultFromServer(user, true);
       } catch {
         // No valid cookie session; the sign-in screen will be shown.
       } finally {
@@ -929,6 +1057,12 @@ function App() {
       ? "Saving…"
       : syncState === "error"
         ? "Offline"
+        : syncState === "local-only"
+          ? "Local only — too large"
+          : syncState === "unsynced"
+            ? "Local changes pending"
+          : syncState === "cache-error"
+            ? "Local save failed"
         : syncState === "saved"
           ? "Saved to cloud"
           : "Synced";
@@ -1359,7 +1493,7 @@ function App() {
 
   // --- Auth gate: verify session, then require sign-in before the app ---
 
-  if (!isAuthReady) {
+  if (!isAuthReady || (authUser && isWorkspaceLoading)) {
     return (
       <main className="home-screen" aria-label="Loading IO Vault">
         <div className="grid-overlay" />
@@ -1391,9 +1525,13 @@ function App() {
             <button className="unlock-button" type="button" onClick={() => setIsUnlocked(true)}>
               Unlock
             </button>
-            <button className="auth-switch" type="button" onClick={signOut}>
-              Sign out ({authUser.email})
+            <button className="auth-switch" type="button" onClick={signOut} disabled={isSigningOut}>
+              {isSigningOut ? "Saving before sign out…" : `Sign out (${authUser.email})`}
             </button>
+            {syncState === "error" && <p role="alert">Could not save changes. Retry sign out.</p>}
+            {syncState === "local-only" && <p role="alert">Workspace is too large for cloud sync. It remains local only.</p>}
+            {syncState === "unsynced" && <p role="alert">Local changes are protected but not in the cloud. Retry when connected.</p>}
+            {syncState === "cache-error" && <p role="alert">Browser storage failed. Manually copy important content, free browser storage without clearing IO Vault site data, then retry.</p>}
           </section>
         </main>
         {agentDrawer}
@@ -1476,9 +1614,10 @@ function App() {
             <div className="account-box">
               <span className={`sync-pill sync-${syncState}`} title="Server sync status">{syncLabel}</span>
               <span className="account-email">{authUser.email}</span>
-              <button className="sign-out" type="button" onClick={signOut}>
-                Sign out
+              <button className="sign-out" type="button" onClick={signOut} disabled={isSigningOut}>
+                {isSigningOut ? "Saving…" : "Sign out"}
               </button>
+              {signOutProtectionMessage && <p role="alert">{signOutProtectionMessage}</p>}
             </div>
           </header>
 
