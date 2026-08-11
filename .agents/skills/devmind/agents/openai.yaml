@@ -1,4 +1,4 @@
 interface:
-  display_name: "Devmind"
-  short_description: "Enforce evidence, traceability, and sound engineering judgment"
-  default_prompt: "Use $devmind to evaluate this decision for technical quality, ownership, and traceability."
+  display_name: "DevMind"
+  short_description: "Audit quality and enforce sound engineering judgment"
+  default_prompt: "Use $devmind to audit this work with evidence, measurable gates, and independent judgment."
