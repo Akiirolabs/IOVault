@@ -276,6 +276,7 @@ export function buildAgentConversationPrompt(messages: AgentMessage[], nextMessa
 type NavItem = {
   key: PageKey;
   label: string;
+  descriptor?: string;
   defaultIcon: IconType;
 };
 
@@ -284,8 +285,8 @@ type NavItem = {
 const navItems: NavItem[] = [
   { key: "code", label: "Code Vault", defaultIcon: SiGithub },
   { key: "write", label: "Write", defaultIcon: HiOutlineDocumentText },
-  { key: "learning", label: "Learning", defaultIcon: SiCoursera },
-  { key: "career", label: "Career", defaultIcon: FaLinkedin },
+  { key: "learning", label: "Agent M", descriptor: "Mentor", defaultIcon: SiCoursera },
+  { key: "career", label: "Agent C", descriptor: "Career", defaultIcon: FaLinkedin },
   { key: "projects", label: "Projects", defaultIcon: SiNotion },
   { key: "settings", label: "Settings", defaultIcon: HiOutlineCog6Tooth },
 ];
@@ -1557,12 +1558,12 @@ function App() {
                 key={item.key}
                 type="button"
                 onClick={() => setActivePage(item.key)}
-                aria-label={item.label}
+                aria-label={item.descriptor ? `${item.label}, ${item.descriptor}` : item.label}
               >
                 <span>
                   <Icon aria-hidden="true" />
                 </span>
-                <strong>{item.label}</strong>
+                <strong>{item.label}{item.descriptor && <small>{item.descriptor}</small>}</strong>
               </button>
             );
           })}
@@ -1607,7 +1608,7 @@ function App() {
               <p className="kicker title-icon">
                 <ActivePageIcon aria-hidden="true" />
               </p>
-              <h1>{activeNavItem.label}</h1>
+              <h1>{activeNavItem.label}{activeNavItem.descriptor && <small>{activeNavItem.descriptor}</small>}</h1>
             </div>
             <div className="account-box">
               <span className={`sync-pill sync-${syncState}`} title="Server sync status">{syncLabel}</span>

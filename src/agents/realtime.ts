@@ -11,6 +11,23 @@ type StartOptions = {
 
 export type RealtimeVoiceSession = { stop: () => void };
 
+export function realtimeTranscripts(payload:Record<string,any>):RealtimeTranscript[]{
+  const eventId=String(payload.event_id??payload.item_id??payload.response_id??"");
+  if(payload.type==="conversation.item.input_audio_transcription.completed"){
+    const content=String(payload.transcript??"").trim();
+    return content?[{role:"user",content,eventId:eventId||undefined}]:[];
+  }
+  if(["response.audio_transcript.done","response.output_audio_transcript.done"].includes(payload.type)){
+    const content=String(payload.transcript??"").trim();
+    return content?[{role:"assistant",content,eventId:eventId||undefined}]:[];
+  }
+  if(payload.type==="response.done"){
+    const transcripts=(payload.response?.output??[]).flatMap((item:any)=>(item?.content??[]).map((part:any)=>String(part?.transcript??part?.text??"").trim()).filter(Boolean));
+    return transcripts.map((content:string,index:number)=>({role:"assistant" as const,content,eventId:eventId?`${eventId}:${index}`:undefined}));
+  }
+  return [];
+}
+
 export async function startRealtimeVoice({ ephemeralKey, signal, onTranscript, onState, onError, onEnded }: StartOptions): Promise<RealtimeVoiceSession> {
   if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection === "undefined") throw new Error("Continuous voice is not supported in this browser.");
   if (signal?.aborted) throw new DOMException("Voice start was cancelled.", "AbortError");
@@ -47,13 +64,10 @@ export async function startRealtimeVoice({ ephemeralKey, signal, onTranscript, o
       const payload = JSON.parse(String(event.data));
       if (payload.type === "input_audio_buffer.speech_started") onState?.("listening");
       if (payload.type === "response.audio.delta" || payload.type === "response.output_audio.delta") onState?.("speaking");
-      const isUser = payload.type === "conversation.item.input_audio_transcription.completed";
-      const isAssistant = ["response.audio_transcript.done", "response.output_audio_transcript.done"].includes(payload.type);
-      const content = String(payload.transcript ?? "").trim();
-      const eventId = String(payload.event_id ?? payload.item_id ?? "");
-      if ((isUser || isAssistant) && content && (!eventId || !seen.has(eventId))) {
-        if (eventId) seen.add(eventId);
-        onTranscript({ role: isUser ? "user" : "assistant", content, eventId: eventId || undefined });
+      for(const transcript of realtimeTranscripts(payload)){
+        if(transcript.eventId&&seen.has(transcript.eventId))continue;
+        if(transcript.eventId)seen.add(transcript.eventId);
+        onTranscript(transcript);
       }
       if (payload.type === "error") { onError?.(String(payload.error?.message || "Realtime voice encountered an error.")); stop(); }
     } catch { onError?.("Realtime voice returned an unreadable event."); }

@@ -455,12 +455,21 @@ textarea:focus-visible,
 
 .workspace-nav strong {
   display: none;
+  align-items: baseline;
+  gap: 0.42rem;
   font-size: 0.85rem;
   white-space: nowrap;
 }
 
 .workspace-nav.open strong {
-  display: inline;
+  display: inline-flex;
+}
+
+.workspace-nav strong small {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.64rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
 }
 
 .nav-toggle {
@@ -551,6 +560,15 @@ textarea:focus-visible,
   font-size: clamp(1.5rem, 3vw, 2.5rem);
   letter-spacing: -0.06em;
   line-height: 0.92;
+}
+
+.workspace-topline h1 small {
+  margin-left: 0.32rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.38em;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  vertical-align: baseline;
 }
 
 /* --- Shared panel chrome: cards, toolbars, inputs (all workspace pages) --- */

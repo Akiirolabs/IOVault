@@ -71,6 +71,8 @@ describe("Agent Workspace conversation and voice", () => {
     expect(screen.getByText("A closure retains lexical scope.")).toBeInTheDocument();
     await waitFor(() => expect(agentApi.saveRealtimeTranscript).toHaveBeenCalledWith("learning", "conversation-1", "Teach me closures", "turn-user-1"));
     expect(agentApi.saveRealtimeTranscript).toHaveBeenCalledTimes(1);
+    await EventSourceMock.instances[0].onmessage?.({lastEventId:"40",data:JSON.stringify({type:"completed",data:{}})} as MessageEvent);
+    expect(await screen.findByText("A closure retains lexical scope.")).toBeInTheDocument();
   });
 
   it("cancels a voice start safely when the button is pressed again", async () => {

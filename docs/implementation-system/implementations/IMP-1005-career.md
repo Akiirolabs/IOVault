@@ -1,4 +1,4 @@
-# IMP-1005 — Career Agent
+# IMP-1005 — Agent C · Career
 
 **State:** Partial · **Priority:** P2
 
@@ -92,4 +92,4 @@ Google credentials, consent, deployed callback configuration, hosted-worker requ
 
 ## Verification
 
-**Partial implementation verified through 2026-08-14.** Career supports an explicitly started, one-button Realtime voice session using `gpt-realtime-2.1-mini`, semantic turn detection, interruption, and a ten-minute client ceiling. Ephemeral credentials are minted server-side; Realtime receives no application or connector tools; durable Career tasks and approvals remain authoritative. User voice turns persist with idempotent identifiers, while live assistant speech remains session-only. Focused voice tests, API tests, the production build, and lifecycle re-audit passed. Live microphone, acoustic, mobile-browser, and provider acceptance remain required.
+**Partial implementation verified through 2026-08-14.** Career supports an explicitly started, one-button Realtime voice session using `gpt-realtime-2.1-mini`, semantic turn detection, interruption, and a ten-minute client ceiling. Ephemeral credentials are minted server-side; Realtime receives no application or connector tools; durable Career tasks and approvals remain authoritative. User voice turns persist with idempotent identifiers, while live assistant speech is transcribed into the visible conversation without being treated as authoritative cloud history. Focused voice and transcript tests, API tests, the production build, and lifecycle re-audit passed. Live microphone, acoustic, mobile-browser, and provider acceptance remain required.

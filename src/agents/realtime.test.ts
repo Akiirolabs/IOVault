@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { startRealtimeVoice } from "./realtime";
+import { realtimeTranscripts, startRealtimeVoice } from "./realtime";
 
 class DataChannelMock {
   onopen: (() => void) | null = null;
@@ -32,6 +32,11 @@ describe("Realtime WebRTC voice", () => {
     vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => undefined);
   });
   afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+
+  it("extracts the assistant transcript from final audio and response events", () => {
+    expect(realtimeTranscripts({type:"response.output_audio_transcript.done",transcript:"Direct transcript",event_id:"audio-1"})).toEqual([{role:"assistant",content:"Direct transcript",eventId:"audio-1"}]);
+    expect(realtimeTranscripts({type:"response.done",event_id:"response-1",response:{output:[{content:[{type:"audio",transcript:"Fallback transcript"}]}]}})).toEqual([{role:"assistant",content:"Fallback transcript",eventId:"response-1:0"}]);
+  });
 
   it("uses only the ephemeral key, emits final transcripts once, and cleans up", async () => {
     const onTranscript = vi.fn(), onEnded = vi.fn();
