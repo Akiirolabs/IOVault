@@ -10,11 +10,12 @@
 | &emsp;↳ `IMP-1004.1.1` | Preserve notes, connections, and weekly focus in the user-scoped Mentor profile | Implemented |
 | &emsp;↳ `IMP-1004.1.2` | Extract Learning into the shared Agent Workspace without data loss | Implemented |
 | `IMP-1004.2` | Mentor Agent | Partial |
-| &emsp;↳ `IMP-1004.2.1` | Conversational learning profile with text, push-to-talk, transcripts, and spoken replies | [FTR-1011](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md) · Implemented and verified |
+| &emsp;↳ `IMP-1004.2.1` | Conversational learning profile with text, continuous voice, transcripts, and spoken replies | [FTR-1011](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md) · Implemented and verified |
 | &emsp;&emsp;↳ `IMP-1004.2.1.1` | Continuous recoverable conversation transcript | [FTR-1011.1](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
 | &emsp;&emsp;↳ `IMP-1004.2.1.2` | Softer human conversational tone within Mentor accuracy and policy boundaries | [FTR-1011.2](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
 | &emsp;&emsp;↳ `IMP-1004.2.1.3` | Left-side active transcript with responsive accessible fallback | [FTR-1011.3](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
 | &emsp;&emsp;↳ `IMP-1004.2.1.4` | Non-looping voice lifecycle with explicit stop, mute, and cancel controls | [FTR-1011.5](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1004.2.1.5` | One-button WebRTC conversation with semantic turn detection, interruption, bounded sessions, and authoritative End cleanup | Implemented and verified within repository gates |
 | &emsp;↳ `IMP-1004.2.2` | Curriculum, milestones, sessions, assignments, and approved schedules | Partial |
 | &emsp;↳ `IMP-1004.2.3` | Lessons, exercises, quizzes, projects, resources, and selected Code Vault practice | Partial |
 | &emsp;↳ `IMP-1004.2.4` | Evidence-based assessment and adaptive skill confidence | Partial |
@@ -71,4 +72,4 @@ Google credentials, consent, deployed callback configuration, hosted-worker requ
 
 ## Verification
 
-**Partial implementation verified through 2026-08-01.** Sixty-six automated tests and the production build passed. Signed-in acceptance verified the continuous transcript, cloud-save status, responsive conversation layout, explicit voice controls, legacy migration, minimal Mentor interface, and honest Google configuration state. External Google event creation, scheduled notifications, complete onboarding, resource upload, Code Vault selection, and end-to-end assessment remain unverified or planned.
+**Partial implementation verified through 2026-08-14.** Mentor supports an explicitly started, one-button Realtime voice session using `gpt-realtime-2.1-mini`, semantic turn detection, interruption, and a ten-minute client ceiling. Ephemeral credentials are minted server-side; Realtime receives no execution tools; durable tasks and approvals remain authoritative. User voice turns persist with idempotent identifiers, while live assistant speech remains session-only. Focused voice tests, API tests, the production build, and lifecycle re-audit passed. Live microphone, acoustic, mobile-browser, and provider acceptance remain required.

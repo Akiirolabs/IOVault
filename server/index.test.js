@@ -1,6 +1,6 @@
 // @vitest-environment node
 import request from "supertest";
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createUser, listAiUsageEvents } from "./db.js";
 import { SESSION_COOKIE_NAME, signToken } from "./auth.js";
 
@@ -128,6 +128,23 @@ describe("AI agent security", () => {
 });
 
 describe("Learning and Career agent API", () => {
+  it("mints a bounded semantic-VAD secret and accepts only idempotent user transcripts", async () => {
+    const user={id:`realtime-${Date.now()}`,email:`realtime-${Date.now()}@example.com`};createUser({...user,passwordHash:"unused"});
+    const cookie=`${SESSION_COOKIE_NAME}=${signToken(user)}`;
+    await request(app).post("/api/agents/learning/realtime/session").expect(401);
+    await request(app).post("/api/agents/learning/realtime/session").set("Cookie",cookie).expect(403);
+    app.locals.realtimeApiKey="server-standard-key";
+    const upstream=vi.fn().mockResolvedValue({ok:true,json:async()=>({value:"short-lived-secret",expires_at:123})});vi.stubGlobal("fetch",upstream);
+    const minted=await request(app).post("/api/agents/learning/realtime/session").set("Cookie",cookie).set("X-IOVault-CSRF","1").send({}).expect(200);
+    expect(minted.headers["cache-control"]).toBe("no-store");expect(minted.body.value).toBe("short-lived-secret");expect(JSON.stringify(minted.body)).not.toContain("server-standard-key");
+    const providerRequest=JSON.parse(upstream.mock.calls[0][1].body);expect(providerRequest.session).toMatchObject({model:"gpt-realtime-2.1-mini",output_modalities:["audio"],audio:{input:{turn_detection:{type:"semantic_vad",interrupt_response:true}}}});expect(providerRequest.session.tools).toBeUndefined();
+    const conversation=await request(app).post("/api/agents/learning/conversations").set("Cookie",cookie).set("X-IOVault-CSRF","1").send({}).expect(201);
+    const transcriptPath="/api/agents/learning/realtime/transcripts",body={conversationId:conversation.body.conversation.id,role:"user",content:"Teach me closures",turnId:"voice-turn-1"};
+    await request(app).post(transcriptPath).set("Cookie",cookie).set("X-IOVault-CSRF","1").send({...body,role:"assistant"}).expect(400);
+    await request(app).post(transcriptPath).set("Cookie",cookie).set("X-IOVault-CSRF","1").send(body).expect(201);
+    const duplicate=await request(app).post(transcriptPath).set("Cookie",cookie).set("X-IOVault-CSRF","1").send(body).expect(200);expect(duplicate.body.duplicate).toBe(true);
+    vi.unstubAllGlobals();app.locals.realtimeApiKey=null;
+  });
   it("requires authentication and CSRF before creating durable agent work", async () => {
     await request(app).get("/api/agents/learning").expect(401);
     await request(app).post("/api/agents/career/conversations").send({}).expect(401);

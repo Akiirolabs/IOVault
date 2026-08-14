@@ -17,7 +17,7 @@
 - [EDEP-1001](../implementation-system/implementations/EDEP/EDEP-1001.md) and [EDEP-1002](../implementation-system/implementations/EDEP/EDEP-1002.md) are satisfied in the testing environment; Calendar event and Gmail draft approvals execute the exact reviewed payload and recover cleanly from revoked or expired access.
 - Mentor acceptance includes onboarding, one approved curriculum, one completed lesson/assignment/assessment cycle, visible evidence, and a scheduled next action.
 - Career acceptance includes resume upload and claim confirmation, one source-backed ranked opportunity, one truthful prepared package, approval-controlled external work, and tracked follow-up.
-- Agent restart recovery, per-agent event isolation, cancellation, approval rejection, connector revocation, voice fallback, and mobile accessibility pass end-to-end acceptance.
+- Agent restart recovery, per-agent event isolation, cancellation, approval rejection, connector revocation, and mobile accessibility pass end-to-end acceptance. Realtime voice acceptance covers microphone permission, semantic turn boundaries, interruption, acoustic echo, explicit End behavior, provider failure, and supported desktop/mobile browsers.
 - Tests and production build pass on one recorded commit.
 - Database, environment, limitations, and rollback evidence are recorded.
 - The ledger records the completed state before another DPL cycle begins.

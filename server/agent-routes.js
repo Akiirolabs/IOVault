@@ -1,5 +1,6 @@
 import express from "express";
 import { toFile } from "openai";
+import { createHmac } from "node:crypto";
 import { requireAuth, requireCsrf } from "./auth.js";
 import {
   addMessage, countTodayRuns, createConversation, createTaskRun, decideApproval,
@@ -15,6 +16,8 @@ import {
 
 const router=express.Router();
 const agents=new Set(["learning","career"]);
+const realtimeMints=new Map(),savedRealtimeTurns=new Map();
+const takeRealtimeMint=(key,limit)=>{const now=Date.now(),windowMs=60_000,current=realtimeMints.get(key);if(!current||current.resetAt<=now){realtimeMints.set(key,{count:1,resetAt:now+windowMs});return 0;}if(current.count>=limit)return Math.max(1,Math.ceil((current.resetAt-now)/1000));current.count+=1;return 0;};
 const validAgent=(request,response,next)=>{ if(!agents.has(request.params.agent)){response.status(404).json({error:"Unknown agent."});return;} next(); };
 const boundedText=(value,max=8000)=>typeof value==="string"&&value.trim()&&value.length<=max;
 
@@ -39,6 +42,32 @@ router.post("/agents/:agent/messages",requireAuth,requireCsrf,validAgent,(reques
   addMessage(request.userId,conversationId,"user",message.trim());
   const created=createTaskRun(request.userId,request.params.agent,conversationId,message.trim().slice(0,100),{message:message.trim(),conversationId});
   response.status(202).json(created);
+});
+router.post("/agents/:agent/realtime/session",requireAuth,requireCsrf,validAgent,async(request,response)=>{
+  response.setHeader("Cache-Control","no-store");
+  const retryAfter=takeRealtimeMint(`user:${request.userId}`,5)||takeRealtimeMint(`ip:${request.ip}`,20);
+  if(retryAfter){response.setHeader("Retry-After",String(retryAfter));response.status(429).json({error:"Too many voice sessions. Try again shortly."});return;}
+  const apiKey=request.app.locals.realtimeApiKey||process.env.OPENAI_API_KEY;
+  if(!apiKey){response.status(503).json({error:"Realtime voice is not configured."});return;}
+  const instructions=request.params.agent==="learning"
+    ? "You are the IO Vault learning mentor. Converse naturally and briefly. Never claim to execute tasks or external actions; direct the user to the text task composer for durable work and approvals."
+    : "You are the IO Vault career guide. Converse naturally and briefly. Never claim to submit applications, send messages, or execute external actions; direct the user to the text task composer for durable work and approvals.";
+  try{
+    const safetyKey=process.env.REALTIME_SAFETY_SECRET||process.env.JWT_SECRET||"iovault-local-realtime-safety";
+    const upstream=await fetch("https://api.openai.com/v1/realtime/client_secrets",{method:"POST",signal:AbortSignal.timeout(10_000),headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json","OpenAI-Safety-Identifier":createHmac("sha256",safetyKey).update(`iovault:${request.userId}`).digest("hex")},body:JSON.stringify({session:{type:"realtime",model:"gpt-realtime-2.1-mini",instructions,output_modalities:["audio"],audio:{input:{transcription:{model:"gpt-4o-mini-transcribe"},turn_detection:{type:"semantic_vad",eagerness:"auto",create_response:true,interrupt_response:true}},output:{voice:"marin"}}}})});
+    const payload=await upstream.json().catch(()=>({}));
+    if(!upstream.ok||typeof payload.value!=="string"){response.status(502).json({error:"Realtime voice could not start."});return;}
+    response.json({value:payload.value,expiresAt:payload.expires_at,model:"gpt-realtime-2.1-mini"});
+  }catch{response.status(502).json({error:"Realtime voice could not start."});}
+});
+router.post("/agents/:agent/realtime/transcripts",requireAuth,requireCsrf,validAgent,(request,response)=>{
+  response.setHeader("Cache-Control","no-store");
+  const conversationId=String(request.body?.conversationId||""),role=request.body?.role,content=String(request.body?.content||"").trim(),turnId=String(request.body?.turnId||"");
+  const conversation=getConversation(request.userId,conversationId);
+  if(!conversation||conversation.agent!==request.params.agent){response.status(404).json({error:"Conversation not found."});return;}
+  if(role!=="user"||!boundedText(content,8000)||!/^[-\w:.]{1,160}$/.test(turnId)){response.status(content.length>8000?413:400).json({error:"A valid user transcript and turn ID are required."});return;}
+  const turnKey=`${request.userId}:${conversationId}:${turnId}`;if(savedRealtimeTurns.has(turnKey)){response.json({message:savedRealtimeTurns.get(turnKey),duplicate:true});return;}
+  const message=addMessage(request.userId,conversationId,role,content);savedRealtimeTurns.set(turnKey,message);if(savedRealtimeTurns.size>5000)savedRealtimeTurns.delete(savedRealtimeTurns.keys().next().value);response.status(201).json({message});
 });
 router.get("/agents/:agent/events",requireAuth,validAgent,(request,response)=>{
   response.setHeader("Content-Type","text/event-stream"); response.setHeader("Cache-Control","no-cache"); response.setHeader("Connection","keep-alive");

@@ -31,8 +31,8 @@
 | &emsp;↳ `IMP-1003.4.5` | Persisted Mindmap idea descriptions with compact-editor and full-page entry paths | [FTR-1012.5](../../feature-review-system/reviews/FTR-1012-projects-content-and-layout-review.md#findings) | Implemented and verified |
 | `IMP-1003.5` | Project portfolio controls | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | &emsp;↳ `IMP-1003.5.1` | Confirmed project deletion available from project and contextual actions | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
-| &emsp;↳ `IMP-1003.5.2` | Direct persisted project-card drag reordering with before/after placement | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md), [FTR-1009](../../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md) | Implemented and verified |
-| &emsp;↳ `IMP-1003.5.3` | Front-card project menu opening separately persisted full-page table and graph workspaces | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
+| &emsp;↳ `IMP-1003.5.2` | Direct persisted project-card drag reordering with a borderless handle, theme-aware hover surface, drag glow, and before/after placement | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md), [FTR-1009](../../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md), [FTR-1013.4](../../feature-review-system/reviews/FTR-1013-projects-editing-and-table-review.md#findings) | Implemented and verified |
+| &emsp;↳ `IMP-1003.5.3` | Front-card project menu with a borderless idle trigger, theme-aware hover/open state, and separately persisted full-page table and graph workspaces | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md), [FTR-1013.4](../../feature-review-system/reviews/FTR-1013-projects-editing-and-table-review.md#findings) | Implemented and verified |
 | &emsp;↳ `IMP-1003.5.4` | All, Active, In Progress, and Done project filters | [FTR-1008](../../feature-review-system/reviews/FTR-1008-projects-page-review.md) | Implemented and verified |
 | &emsp;↳ `IMP-1003.5.5` | Project-level title sorting, status grouping, and selectable Research and Launch templates beside New Project | [FTR-1009](../../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md) | Implemented and verified |
 | `IMP-1003.6` | Explicit **Send to AI** project-only context with visible assistant ownership and individual removal | [FTR-1009](../../feature-review-system/reviews/FTR-1009-projects-follow-up-review.md) | Implemented and verified |
@@ -57,6 +57,7 @@
 7. Added fail-safe Projects persistence with UTF-8 upload budgeting, truthful local-only and browser-storage states, ordered acknowledgments, protected sign-out, and versioned user-scoped recovery across reload.
 8. Added direct compact-document editing, a focused typed-table property workflow, and viewport-aware foreground menus across table and graph workspaces.
 9. Connected compact project-document scrolling to the shared Theme Mode scrollbar contract without changing card dimensions.
+10. Refined project-card drag and menu controls with quiet idle states and clear theme-aware interaction feedback.
 
 **Acceptance:** all project modes persist through account sync; existing projects load unchanged; keyboard and narrow-screen workflows work; graph deletion cannot leave orphaned references.
 

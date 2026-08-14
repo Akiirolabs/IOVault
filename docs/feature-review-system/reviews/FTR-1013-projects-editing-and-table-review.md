@@ -10,6 +10,7 @@
 | &emsp;&emsp;↳ `FTR-1013.1.1` | The mini-window scrollbar exposed that native scrollbars did not consistently follow Theme Mode across IO Vault. | Shared scrollbar variables now theme every native scrollable surface across all pages, with active-hue Default/Tinted styling and dedicated Light and Night contrast. | Verified |
 | &emsp;`FTR-1013.2` | Typed-table controls competed visually and Select properties could not be maintained safely after creation. | The table now uses focused property and row menus, safe confirmed type conversion, editable Select options, atomic cleanup, and unclipped foreground popovers. | Verified |
 | &emsp;`FTR-1013.3` | Flowchart and Mindmap three-dot menus could render behind descriptions or be clipped by the canvas. | Shared portal menus now anchor to the selected trigger, remain viewport-aware, close competing surfaces, and support outside, Escape, and keyboard navigation. | Verified |
+| &emsp;`FTR-1013.4` | Project-card drag and three-dot controls displayed permanent boxes that competed with the card content. | Both controls are borderless at rest; theme-matched surfaces appear on hover, focus, menu-open, and drag states, while the drag dots glow throughout the gesture. | Verified |
 
 ## Verification
 
@@ -18,5 +19,6 @@
 - `git diff --check` — passed.
 - DevMind approved the final diff after the initial review blockers were corrected.
 - The global themed-scrollbar correction passed the production build and diff check on 2026-08-13.
+- The refined project-card controls passed the production build and diff check on 2026-08-13.
 
 Live appearance, pointer feel, and stacking across every theme remain pending browser acceptance; repository behavior and component interactions are verified.

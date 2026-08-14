@@ -15,6 +15,7 @@
 | &emsp;&emsp;↳ `IMP-1005.2.1.2` | Softer human conversational tone within Career truthfulness and policy boundaries | [FTR-1011.2](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
 | &emsp;&emsp;↳ `IMP-1005.2.1.3` | Left-side active transcript with responsive accessible fallback | [FTR-1011.3](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
 | &emsp;&emsp;↳ `IMP-1005.2.1.4` | Non-looping voice lifecycle with explicit stop, mute, and cancel controls | [FTR-1011.5](../../feature-review-system/reviews/FTR-1011-agent-conversation-and-voice-review.md#findings) · Implemented and verified |
+| &emsp;&emsp;↳ `IMP-1005.2.1.5` | One-button WebRTC conversation with semantic turn detection, interruption, bounded sessions, and authoritative End cleanup | Implemented and verified within repository gates |
 | &emsp;↳ `IMP-1005.2.2` | Web-assisted opportunity discovery, deduplication, scoring, and visible reasons | Partial |
 | &emsp;↳ `IMP-1005.2.3` | Truthful application materials and unanswered-question handling | Partial |
 | &emsp;↳ `IMP-1005.2.4` | Review mode with exact-payload approval before every external action | Implemented |
@@ -91,4 +92,4 @@ Google credentials, consent, deployed callback configuration, hosted-worker requ
 
 ## Verification
 
-**Partial implementation verified through 2026-08-01.** Sixty-six automated tests and the production build passed. Acceptance covers durable complete transcripts, cloud-save status, responsive conversation placement, cancellation-safe voice controls, a real Responses API Career task, compact tracking drawers, and the corrected mobile layout. Google OAuth and exact-payload actions are implemented but not externally verified without connector credentials. Resume upload/parsing, confirmed-claim editing, source adapters, complete opportunity deduplication, inbox monitoring, and supported application submission remain planned or partial.
+**Partial implementation verified through 2026-08-14.** Career supports an explicitly started, one-button Realtime voice session using `gpt-realtime-2.1-mini`, semantic turn detection, interruption, and a ten-minute client ceiling. Ephemeral credentials are minted server-side; Realtime receives no application or connector tools; durable Career tasks and approvals remain authoritative. User voice turns persist with idempotent identifiers, while live assistant speech remains session-only. Focused voice tests, API tests, the production build, and lifecycle re-audit passed. Live microphone, acoustic, mobile-browser, and provider acceptance remain required.

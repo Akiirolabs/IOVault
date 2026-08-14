@@ -2605,8 +2605,35 @@ textarea {
   padding: 0.9rem;
 }
 
-.project-card-drag-handle { width: 2rem; min-width: 2rem; padding: 0; cursor: grab; touch-action: none; }
+.project-card-drag-handle {
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  color: hsl(var(--theme-hue) 50% 68%);
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, text-shadow 140ms ease;
+}
+.project-card-drag-handle:hover,
+.project-card-drag-handle:focus-visible {
+  border-color: hsl(var(--theme-hue) 72% 70% / 0.24);
+  color: hsl(var(--theme-hue) 90% 78%);
+  background: hsl(var(--theme-hue) 72% 58% / 0.1);
+  box-shadow: 0 0 1rem hsl(var(--theme-hue) 86% 60% / 0.14);
+  text-shadow: 0 0 0.55rem hsl(var(--theme-hue) 92% 72% / 0.9);
+}
 .project-card-drag-handle:active { cursor: grabbing; }
+.project-block.dragging .project-card-drag-handle {
+  border-color: hsl(var(--theme-hue) 82% 70% / 0.34);
+  color: hsl(var(--theme-hue) 94% 82%);
+  background: hsl(var(--theme-hue) 74% 56% / 0.14);
+  box-shadow: 0 0 1.25rem hsl(var(--theme-hue) 90% 62% / 0.24);
+  text-shadow: 0 0 0.7rem hsl(var(--theme-hue) 96% 78% / 1);
+}
 .project-block.dragging { opacity: 0.5; }
 .project-block.drop-before { box-shadow: inset 0 3px 0 #7dd3fc; }
 .project-block.drop-after { box-shadow: inset 0 -3px 0 #7dd3fc; }
@@ -2705,8 +2732,20 @@ textarea {
   min-width: 1.8rem;
   height: 1.8rem;
   padding: 0;
-  color: #8fbfd4;
-  background: rgba(56, 189, 248, 0.06);
+  border: 1px solid transparent;
+  border-radius: 0.55rem;
+  color: hsl(var(--theme-hue) 42% 66%);
+  background: transparent;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.project-card-action:hover,
+.project-card-action:focus-visible,
+.project-card-action[aria-expanded="true"] {
+  border-color: hsl(var(--theme-hue) 72% 70% / 0.24);
+  color: hsl(var(--theme-hue) 88% 80%);
+  background: hsl(var(--theme-hue) 72% 58% / 0.1);
+  box-shadow: 0 0 1rem hsl(var(--theme-hue) 86% 60% / 0.12);
 }
 
 .project-create-wrap {
