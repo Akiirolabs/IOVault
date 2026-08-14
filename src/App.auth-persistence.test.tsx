@@ -318,4 +318,38 @@ describe("authenticated workspace persistence", () => {
     expect(screen.getByRole("textbox", { name: "New Server Project title" })).toHaveValue("New Server Project");
     expect(screen.queryByRole("textbox", { name: "Clean Cached Project title" })).not.toBeInTheDocument();
   });
+
+  it("keeps compact and full-page rich text and Markdown edits synchronized", async () => {
+    const workspace = { projects: { blocks: [{ id: "project-1", title: "Shared Project", status: "Active", body: "", docHtml: "<p>Start</p>", docMarkdown: "Start" }] } };
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === "/api/auth/me") return Promise.resolve(jsonResponse({ user }));
+      if (url === "/api/vault" && (!init?.method || init.method === "GET")) return Promise.resolve(jsonResponse({ data: workspace }));
+      if (url === "/api/vault" && init?.method === "PUT") return Promise.resolve(jsonResponse({ ok: true }));
+      throw new Error(`Unexpected request: ${url}`);
+    }));
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "Unlock" }));
+    fireEvent.click(screen.getByRole("button", { name: "Projects" }));
+    const compactRich = screen.getByRole("textbox", { name: "Shared Project document editor" });
+    compactRich.innerHTML = "<p>Compact edit</p>";
+    fireEvent.input(compactRich);
+    fireEvent.click(screen.getByRole("button", { name: "Open Shared Project as a full page" }));
+    expect(screen.queryByRole("textbox", { name: "Shared Project document editor" })).not.toBeInTheDocument();
+    const fullRich = screen.getByRole("textbox", { name: "Project rich text document" });
+    expect(fullRich.innerHTML).toBe("<p>Compact edit</p>");
+    fullRich.innerHTML = "<p>Full edit</p>";
+    fireEvent.input(fullRich);
+    fireEvent.click(screen.getByRole("button", { name: "Markdown" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Project markdown" }), { target: { value: "Full markdown" } });
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByRole("textbox", { name: "Shared Project document editor" }).innerHTML).toBe("<p>Full edit</p>");
+    fireEvent.click(screen.getByRole("button", { name: "Markdown" }));
+    expect(screen.getByRole("textbox", { name: "Shared Project markdown editor" })).toHaveValue("Full markdown");
+    fireEvent.change(screen.getByRole("textbox", { name: "Shared Project markdown editor" }), { target: { value: "Compact markdown" } });
+    fireEvent.click(screen.getByRole("button", { name: "Open Shared Project as a full page" }));
+    fireEvent.click(screen.getByRole("button", { name: "Markdown" }));
+    expect(screen.getByRole("textbox", { name: "Project markdown" })).toHaveValue("Compact markdown");
+  });
 });

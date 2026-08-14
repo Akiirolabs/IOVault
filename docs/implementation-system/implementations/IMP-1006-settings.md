@@ -10,8 +10,9 @@
 | &emsp;↳ `IMP-1006.1.1` | Persist color mode, accent shade, ambient glow, and surface-depth preferences with IO Blue defaults | — | Implemented and verified |
 | &emsp;↳ `IMP-1006.1.2` | Retain the existing animated gradients, moving grid, orbs, layout, typography, and interaction system while tuning color | — | Implemented and verified |
 | &emsp;↳ `IMP-1006.1.3` | Provide a minimal live studio with continuous controls, curated presets, and a clearly labeled Default button for restoring IO Blue | — | Implemented and verified |
+| &emsp;↳ `IMP-1006.1.4` | Apply active-hue scrollbar tracks, thumbs, borders, and hover states across every page with dedicated Light and Night contrast | [FTR-1013.1.1](../../feature-review-system/reviews/FTR-1013-projects-editing-and-table-review.md#findings) | Implemented and verified |
 
-Settings centralizes personal interface preferences without fragmenting the application’s visual identity. Theme Mode changes the color atmosphere through shared theme variables while keeping IO Vault’s established depth, motion, layout, and component behavior intact.
+Settings centralizes personal interface preferences without fragmenting the application’s visual identity. Theme Mode changes the color atmosphere through shared theme variables—including native scrollbars across every page—while keeping IO Vault’s established depth, motion, layout, and component behavior intact.
 
 ## Theme contract
 

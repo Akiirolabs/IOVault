@@ -11,7 +11,7 @@ IMP owns page-level product outcomes moving the current testing state toward [DP
 | [IMP-1003](implementations/IMP-1003-projects.md) | Projects | `IMP-1003.1-1003.6` and FTR-1008/1009/1012 verified; SYS DBG-1007/1008 now provide bounded payloads, ordered saves, truthful local-only states, and reload recovery | Accessible card reordering is the next reviewed page improvement; server-versioned multi-device sync remains SYS work |
 | [IMP-1004](implementations/IMP-1004-learning-mentor.md) | Learning / Mentor | Legacy migration, verified conversation/voice workspace, durable runs, approval controls, history, and Google Calendar adapter implemented; teaching workflow remains partial | Complete `IMP-1004.2.2–1004.2.4`, notifications, resource intake, and externally verify `IMP-1004.2.6.1` |
 | [IMP-1005](implementations/IMP-1005-career.md) | Career | Legacy migration, verified conversation/voice workspace, durable runs, Review mode, career records, and Google adapter implemented; career workflow remains partial | Complete `IMP-1005.1.2`, `1005.2.2–1005.2.3`, source/inbox adapters, and externally verify `1005.2.5.2/1005.2.6` |
-| [IMP-1006](implementations/IMP-1006-settings.md) | Settings | `IMP-1006.1` Theme Mode implemented | Future settings remain unassigned until planned |
+| [IMP-1006](implementations/IMP-1006-settings.md) | Settings | `IMP-1006.1` Theme Mode and global themed scrolling implemented | Future settings remain unassigned until planned |
 
 External requirements are organized in one EDEP register folder: [EDEP-1001](implementations/EDEP/EDEP-1001.md) tracks Mentor dependencies and links to IMP-1004, while [EDEP-1002](implementations/EDEP/EDEP-1002.md) tracks Career dependencies and links to IMP-1005.
 

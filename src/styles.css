@@ -8,6 +8,10 @@
   --theme-hue: 198;
   --theme-glow: 55%;
   --theme-depth: 8%;
+  --scrollbar-track: hsl(var(--theme-hue) 45% 7% / 0.3);
+  --scrollbar-thumb: hsl(var(--theme-hue) 48% 34% / 0.72);
+  --scrollbar-thumb-hover: hsl(var(--theme-hue) 62% 45% / 0.86);
+  --scrollbar-border: hsl(var(--theme-hue) 45% 7% / 0.72);
   color: #eaf8ff;
   background: #020817;
   font-family:
@@ -21,6 +25,28 @@
 
 * {
   box-sizing: border-box;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 0.55rem;
+  height: 0.55rem;
+}
+
+*::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid var(--scrollbar-border);
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
 }
 
 body {
@@ -1325,7 +1351,6 @@ textarea {
   overflow: auto;
   border: 1px solid rgba(125, 211, 252, 0.1);
   border-radius: 0.8rem;
-  scrollbar-color: color-mix(in srgb, var(--accent, #38bdf8) 38%, #07111f) rgba(125, 211, 252, 0.06);
 }
 
 .notes-table-scroll::-webkit-scrollbar {
@@ -1334,13 +1359,13 @@ textarea {
 }
 
 .notes-table-scroll::-webkit-scrollbar-track {
-  background: rgba(125, 211, 252, 0.06);
+  background: var(--scrollbar-track);
 }
 
 .notes-table-scroll::-webkit-scrollbar-thumb {
-  border: 2px solid rgba(5, 15, 31, 0.78);
+  border: 2px solid var(--scrollbar-border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--accent, #38bdf8) 38%, #07111f);
+  background: var(--scrollbar-thumb);
 }
 
 .notes-relation-trigger {
@@ -2580,7 +2605,8 @@ textarea {
   padding: 0.9rem;
 }
 
-.project-block[draggable="true"] { cursor: grab; }
+.project-card-drag-handle { width: 2rem; min-width: 2rem; padding: 0; cursor: grab; touch-action: none; }
+.project-card-drag-handle:active { cursor: grabbing; }
 .project-block.dragging { opacity: 0.5; }
 .project-block.drop-before { box-shadow: inset 0 3px 0 #7dd3fc; }
 .project-block.drop-after { box-shadow: inset 0 -3px 0 #7dd3fc; }
@@ -2615,6 +2641,25 @@ textarea {
   background: rgba(5, 15, 31, 0.38);
   line-height: 1.55;
 }
+.project-card-preview::-webkit-scrollbar { width: 0.55rem; height: 0.55rem; }
+.project-card-preview::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: var(--scrollbar-track);
+}
+.project-card-preview::-webkit-scrollbar-thumb {
+  border: 2px solid var(--scrollbar-border);
+  border-radius: 999px;
+  background: var(--scrollbar-thumb);
+}
+.project-card-preview::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+.project-card-mode-switch { display: flex; justify-content: flex-end; gap: 0.25rem; margin-top: 0.6rem; }
+.project-card-mode-switch button { padding: 0.25rem 0.55rem; border-radius: 999px; font-size: 0.72rem; opacity: 0.64; }
+.project-card-mode-switch button[aria-pressed="true"] { opacity: 1; border-color: rgba(125, 211, 252, 0.46); background: rgba(56, 189, 248, 0.12); }
+.project-card-document { display: block; }
+.project-card-rich-editor { min-height: 7rem; outline: none; white-space: pre-wrap; }
+.project-card-document textarea { width: 100%; min-height: 10rem; resize: none; border: 0; background: transparent; font: inherit; }
 .project-card-preview > :first-child,
 .project-card-preview h1,
 .project-card-preview h2,
@@ -2625,7 +2670,10 @@ textarea {
 .project-card-rich-preview { white-space: pre-wrap; }
 .project-card-markdown-preview + .project-card-rich-preview,
 .project-card-rich-preview + .project-card-markdown-preview { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(125, 211, 252, 0.1); }
-.theme-light .project-card-preview { color: #243b53; background: rgba(255, 255, 255, 0.62); }
+.theme-light .project-card-preview {
+  color: #243b53;
+  background: rgba(255, 255, 255, 0.62);
+}
 
 .project-open-page {
   display: grid;
@@ -2896,8 +2944,15 @@ textarea {
 .project-table-mode table { width: 100%; min-width: 48rem; border-collapse: collapse; }
 .project-table-mode th, .project-table-mode td { padding: 0.25rem 0.35rem; border: 1px solid rgba(125, 211, 252, 0.1); }
 .project-table-mode th { background: rgba(12, 28, 49, 0.94); }
-.project-table-mode th > input { width: calc(100% - 2rem); border: 0; background: transparent; }
-.project-table-mode th > button { float: right; padding: 0.25rem 0.4rem; }
+.project-table-count { color: #7895aa; font-size: 0.75rem; }
+.project-property-head { position: relative; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 0.3rem; }
+.project-property-head > input { width: 100%; border: 0; background: transparent; }
+.project-property-head > span { color: #7895aa; font-size: 0.68rem; text-transform: capitalize; }
+.project-property-head > button, .project-row-actions > button { padding: 0.25rem 0.4rem; }
+.project-row-actions { position: relative; width: 3rem; }
+.project-table-menu { position: absolute; z-index: 100; top: calc(100% + 0.25rem); right: 0; display: grid; width: 10rem; padding: 0.4rem; border: 1px solid rgba(125, 211, 252, 0.2); border-radius: 0.65rem; background: rgba(5, 15, 31, 0.99); box-shadow: 0 1rem 2.5rem rgba(0,0,0,.45); }
+.project-table-menu strong { padding: 0.35rem 0.5rem; color: #7895aa; font-size: 0.7rem; }
+.project-table-menu button { border: 0; text-align: left; }
 .project-table-mode td input:not([type="checkbox"]), .project-table-mode td select { width: 100%; border: 0; background: transparent; }
 
 .project-flow-canvas {
@@ -2925,9 +2980,11 @@ textarea {
 .project-node-drag:active { cursor: grabbing; }
 .project-node-resize { position: absolute; right: 0.25rem; bottom: 0.25rem; z-index: 5; width: 1.2rem; height: 1.2rem; padding: 0 !important; border: 0 !important; background: linear-gradient(135deg, transparent 45%, currentColor 46%, currentColor 54%, transparent 55%) !important; color: #7dd3fc !important; cursor: nwse-resize; touch-action: none; }
 .project-node-options > div { position: absolute; top: calc(100% + 0.35rem); left: 0; display: grid; gap: 0.25rem; width: 8.5rem; padding: 0.4rem; border: 1px solid rgba(125, 211, 252, 0.2); border-radius: 0.65rem; background: rgba(5, 15, 31, 0.98); box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.4); }
+.project-node-options > [role="menu"] { display: none; }
 .project-node-options > div button,
 .project-node-options > div label { width: 100%; padding: 0.4rem 0.5rem; text-align: left; }
 .project-node-options > div label { display: flex; align-items: center; justify-content: space-between; color: #dff8ff; font-size: 0.75rem; }
+.project-node-floating-menu { position: fixed; z-index: 10000; display: grid; gap: 0.25rem; width: 9rem; padding: 0.4rem; border: 1px solid rgba(125, 211, 252, 0.2); border-radius: 0.65rem; background: rgba(5, 15, 31, 0.99); box-shadow: 0 1rem 2.5rem rgba(0,0,0,.48); }
 .project-node-description-popover { position: absolute; z-index: 8; top: calc(100% + 0.45rem); left: 0; display: grid; gap: 0.35rem; width: min(18rem, 80vw); padding: 0.5rem; border: 1px solid rgba(125, 211, 252, 0.24); border-radius: 0.7rem; background: rgba(5, 15, 31, 0.98); box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.45); }
 .project-node-description-popover textarea { width: 100%; min-height: 7rem; resize: vertical; color: #f8fdff; background: rgba(7, 18, 38, 0.92); }
 .project-node-description-popover button { justify-self: end; }
@@ -3604,6 +3661,10 @@ textarea {
 /* Night keeps the motion system over true black surfaces. */
 .home-screen.theme-night,
 .vault-dashboard.theme-night {
+  --scrollbar-track: rgba(0, 0, 0, 0.5);
+  --scrollbar-thumb: hsl(var(--theme-hue) 20% 30% / 0.78);
+  --scrollbar-thumb-hover: hsl(var(--theme-hue) 28% 40% / 0.88);
+  --scrollbar-border: rgba(0, 0, 0, 0.82);
   color: #f4f7fb;
   background:
     radial-gradient(circle at 50% 50%, hsl(var(--theme-hue) 84% 45% / 0.08), transparent 28rem),
@@ -3627,6 +3688,10 @@ textarea {
 /* Light uses white glass surfaces while retaining the same animated geometry. */
 .home-screen.theme-light,
 .vault-dashboard.theme-light {
+  --scrollbar-track: rgba(255, 255, 255, 0.52);
+  --scrollbar-thumb: hsl(var(--theme-hue) 32% 68% / 0.82);
+  --scrollbar-thumb-hover: hsl(var(--theme-hue) 44% 56% / 0.9);
+  --scrollbar-border: rgba(255, 255, 255, 0.72);
   color: #142337;
   background:
     radial-gradient(circle at 50% 50%, hsl(var(--theme-hue) 88% 58% / 0.12), transparent 28rem),

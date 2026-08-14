@@ -524,10 +524,8 @@ function answerBasicQuestion(question: string) {
 }
 
 // --- Rich text editor: uncontrolled contentEditable ---
-// The DOM content is seeded once on mount from `html`, then left uncontrolled.
-// Re-binding `dangerouslySetInnerHTML` to state on every keystroke would make
-// React reset innerHTML each input, sending the caret to the start and
-// producing reversed text. `onChange` still fires so edits persist to state.
+// External updates synchronize while this editor is not focused. During local
+// editing the DOM remains uncontrolled so React never resets the caret.
 
 type RichTextEditorProps = {
   html: string;
@@ -543,11 +541,10 @@ function RichTextEditor({ html, onChange, className, role, ariaLabel, ariaMultil
 
   useEffect(() => {
     const node = ref.current;
-    if (node && node.innerHTML !== html) {
+    if (node && document.activeElement !== node && node.innerHTML !== html) {
       node.innerHTML = html;
     }
-    // Seed once on mount only; the element is uncontrolled while editing.
-  }, []);
+  }, [html]);
 
   return (
     <div
@@ -768,6 +765,7 @@ function App() {
   const [isGithubLoading, setIsGithubLoading] = useState(false);
   const [openProjectId, setOpenProjectId] = useState<string | null>(null);
   const [projectDocMode, setProjectDocMode] = useState<"rich" | "markdown" | "table" | "flowchart" | "mindmap">("rich");
+  const [projectCardModes, setProjectCardModes] = useState<Record<string, "rich" | "markdown">>({});
   const [projectFilter, setProjectFilter] = useState<ProjectFilter>("all");
   const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
   const [projectMenuId, setProjectMenuId] = useState<string | null>(null);
@@ -1707,13 +1705,14 @@ function App() {
 
               <section className="project-board">
                 {filteredProjects.map((block) => (
-                  <article className={`project-block ${draggedProjectId === block.id ? "dragging" : ""} ${projectDropTarget?.id === block.id ? `drop-${projectDropTarget.position}` : ""}`} key={block.id} draggable onDragStart={() => setDraggedProjectId(block.id)} onDragEnd={() => { setDraggedProjectId(null); setProjectDropTarget(null); }} onDragOver={(event) => { if (!draggedProjectId || draggedProjectId === block.id) return; event.preventDefault(); const bounds = event.currentTarget.getBoundingClientRect(); setProjectDropTarget({ id: block.id, position: event.clientY < bounds.top + bounds.height / 2 ? "before" : "after" }); }} onDrop={(event) => { event.preventDefault(); if (draggedProjectId) reorderProject(draggedProjectId, block.id, projectDropTarget?.id === block.id ? projectDropTarget.position : "after"); }}>
+                  <article className={`project-block ${draggedProjectId === block.id ? "dragging" : ""} ${projectDropTarget?.id === block.id ? `drop-${projectDropTarget.position}` : ""}`} key={block.id} onDragOver={(event) => { if (!draggedProjectId || draggedProjectId === block.id) return; event.preventDefault(); const bounds = event.currentTarget.getBoundingClientRect(); setProjectDropTarget({ id: block.id, position: event.clientY < bounds.top + bounds.height / 2 ? "before" : "after" }); }} onDrop={(event) => { event.preventDefault(); if (draggedProjectId) reorderProject(draggedProjectId, block.id, projectDropTarget?.id === block.id ? projectDropTarget.position : "after"); }}>
                     <div className="project-block-head">
                       <input
                         value={block.title}
                         onChange={(event) => updateProject(block.id, { title: event.target.value })}
                         aria-label={`${block.title} title`}
                       />
+                      <button type="button" className="project-card-drag-handle" draggable aria-label={`Move ${block.title}`} onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; setDraggedProjectId(block.id); }} onDragEnd={() => { setDraggedProjectId(null); setProjectDropTarget(null); }}>⠿</button>
                       <button
                         className="project-open-page"
                         type="button"
@@ -1738,11 +1737,13 @@ function App() {
                       <option value="In progress">In progress</option>
                       <option value="Done">Done</option>
                     </select>
-                    <div className="project-card-preview" aria-label={`${block.title} preview`}>
-                      {block.docHtml?.trim() && <div className="project-card-rich-preview">{agentPlainText(block.docHtml.replace(/<\/(p|div|h[1-6]|li|blockquote|pre)>/gi, "$&\n")).trim()}</div>}
-                      {block.docMarkdown?.trim() && <div className="project-card-markdown-preview"><ReactMarkdown>{block.docMarkdown}</ReactMarkdown></div>}
-                      {!block.docHtml?.trim() && !block.docMarkdown?.trim() && <p>{block.body || "Open this project to add content."}</p>}
+                    {openProjectId !== block.id && <><div className="project-card-mode-switch" role="group" aria-label={`${block.title} document format`}>
+                      <button type="button" aria-pressed={(projectCardModes[block.id] ?? "rich") === "rich"} onClick={() => setProjectCardModes((current) => ({ ...current, [block.id]: "rich" }))}>Rich text</button>
+                      <button type="button" aria-pressed={projectCardModes[block.id] === "markdown"} onClick={() => setProjectCardModes((current) => ({ ...current, [block.id]: "markdown" }))}>Markdown</button>
                     </div>
+                    <div className="project-card-preview project-card-document" aria-label={`${block.title} document`}>
+                      {(projectCardModes[block.id] ?? "rich") === "rich" ? <RichTextEditor key={`project-card-${block.id}`} className="project-card-rich-editor" html={block.docHtml ?? ""} onChange={(docHtml) => updateProject(block.id, { docHtml })} role="textbox" ariaMultiline ariaLabel={`${block.title} document editor`} /> : <textarea aria-label={`${block.title} markdown editor`} value={block.docMarkdown ?? ""} onChange={(event) => updateProject(block.id, { docMarkdown: event.target.value })} placeholder="Optional Markdown…" />}
+                    </div></>}
                   </article>
                 ))}
               </section>

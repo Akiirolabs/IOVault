@@ -16,19 +16,47 @@ describe("project workspace modes", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     function Harness() { const [table, setTable] = useState<ProjectTable>(createProjectTable()); return <ProjectTableEditor table={table} onChange={setTable} />; }
     render(<Harness />);
-    fireEvent.click(screen.getByRole("button", { name: "+ Row" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ New row" }));
     expect(screen.queryByRole("textbox", { name: "New project column name" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "+ Column" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Property" }));
     fireEvent.change(screen.getByRole("textbox", { name: "New project column name" }), { target: { value: "Status" } });
     fireEvent.change(screen.getByRole("combobox", { name: "New project column type" }), { target: { value: "select" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Project select options" }), { target: { value: "Todo, Done" } });
     fireEvent.click(screen.getByRole("button", { name: "Add column" }));
     fireEvent.change(screen.getByRole("combobox", { name: "Status row 1" }), { target: { value: "Done" } });
     expect(screen.getByRole("combobox", { name: "Status row 1" })).toHaveValue("Done");
-    fireEvent.click(screen.getByRole("button", { name: "Delete Status column" }));
+    fireEvent.click(screen.getByRole("button", { name: "Status property menu" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete property" }));
     expect(screen.queryByRole("combobox", { name: "Status row 1" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Delete project row 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Project row 1 menu" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Delete row" }));
     expect(screen.queryByRole("textbox", { name: "Name row 1" })).not.toBeInTheDocument();
+  });
+
+  it("changes property types safely and keeps row actions in menus", () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    function Harness() { const [table, setTable] = useState<ProjectTable>({ columns: [{ id: "value", name: "Value", type: "text" }], rows: [{ id: "row", cells: { value: "not-a-number" } }] }); return <ProjectTableEditor table={table} onChange={setTable} />; }
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Value property menu" }));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "number" }));
+    expect(screen.getByRole("spinbutton", { name: "Value row 1" })).toHaveValue(null);
+    fireEvent.click(screen.getByRole("button", { name: "Project row 1 menu" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Duplicate row" }));
+    expect(screen.getByText(/2 rows/)).toBeInTheDocument();
+  });
+
+  it("portals table menus and atomically clears removed select values", () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    function Harness() { const [table, setTable] = useState<ProjectTable>({ columns: [{ id: "status", name: "Status", type: "select", options: ["Todo", "Done"] }], rows: [{ id: "row", cells: { status: "Done" } }] }); return <ProjectTableEditor table={table} onChange={setTable} />; }
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "Status property menu" }));
+    expect(screen.getByRole("menu", { name: "Status property options" }).parentElement).toBe(document.body);
+    fireEvent.change(screen.getByRole("textbox", { name: "Status select options" }), { target: { value: "Todo" } });
+    fireEvent.click(screen.getByRole("menuitem", { name: "Save options" }));
+    expect(window.confirm).toHaveBeenCalledWith("Remove these options? Values using removed options will be cleared.");
+    expect(screen.getByRole("combobox", { name: "Status row 1" })).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "Project row 1 menu" }));
+    expect(screen.getByRole("menu", { name: "Project row 1 options" }).parentElement).toBe(document.body);
   });
 
   it("creates, connects, moves, and safely deletes flowchart nodes", () => {
@@ -71,6 +99,41 @@ describe("project workspace modes", () => {
     expect(screen.getByRole("textbox", { name: "Node 1 page content" })).toHaveValue("Shared node context");
   });
 
+  it("portals flowchart options above mutually exclusive node surfaces", () => {
+    function Harness() { const [flowchart, setFlowchart] = useState<ProjectFlowchart>(createProjectFlowchart()); return <ProjectFlowchartEditor flowchart={flowchart} onChange={setFlowchart} />; }
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "+ Node" }));
+    const trigger = screen.getByLabelText("Options for Node 1");
+    fireEvent.click(trigger);
+    expect(screen.getByRole("menu", { name: "Node 1 options" }).parentElement).toBe(document.body);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Description" }));
+    expect(screen.queryByRole("menu", { name: "Node 1 options" })).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Node 1 description" })).toBeInTheDocument();
+    fireEvent.click(trigger);
+    expect(screen.queryByRole("textbox", { name: "Node 1 description" })).not.toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menu", { name: "Node 1 options" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("anchors duplicate flowchart labels to the clicked trigger and supports menu navigation", () => {
+    function Harness() { const [flowchart, setFlowchart] = useState<ProjectFlowchart>({ ...createProjectFlowchart(), nodes: [
+      { id: "first", label: "Same", x: 0, y: 0, width: 304, height: 112, color: "#38bdf8" },
+      { id: "second", label: "Same", x: 350, y: 0, width: 304, height: 112, color: "#38bdf8" },
+    ] }); return <ProjectFlowchartEditor flowchart={flowchart} onChange={setFlowchart} />; }
+    render(<Harness />);
+    const triggers = screen.getAllByLabelText("Options for Same");
+    Object.defineProperty(triggers[1], "getBoundingClientRect", { value: () => ({ left: 420, right: 440, top: 740, bottom: 760, width: 20, height: 20, x: 420, y: 740, toJSON: () => ({}) }) });
+    fireEvent.click(triggers[1]);
+    const menu = screen.getByRole("menu", { name: "Same options" });
+    expect(menu).toHaveStyle({ left: "420px" });
+    expect(menu).toHaveStyle({ top: "554px" });
+    fireEvent.keyDown(document, { key: "End" });
+    expect(screen.getByRole("menuitem", { name: "Delete Same" })).toHaveFocus();
+    fireEvent.keyDown(document, { key: "Home" });
+    expect(screen.getByRole("menuitem", { name: "Description" })).toHaveFocus();
+  });
+
   it("builds an object mindmap with fields, relations, hierarchy, and cycle prevention", () => {
     function Harness() { const [mindmap, setMindmap] = useState<ProjectMindmap>(createProjectMindmap()); return <ProjectMindmapEditor mindmap={mindmap} onChange={setMindmap} />; }
     render(<Harness />);
@@ -98,5 +161,21 @@ describe("project workspace modes", () => {
     fireEvent.click(screen.getByLabelText("Options for Root"));
     fireEvent.click(screen.getByRole("menuitem", { name: "Description" }));
     expect(screen.getByRole("textbox", { name: "Root description" })).toHaveValue("Detailed idea notes");
+  });
+
+  it("portals mindmap options and dismisses competing surfaces", () => {
+    function Harness() { const [mindmap, setMindmap] = useState<ProjectMindmap>(createProjectMindmap()); return <ProjectMindmapEditor mindmap={mindmap} onChange={setMindmap} />; }
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "+ Idea" }));
+    const trigger = screen.getByLabelText("Options for Idea 1");
+    fireEvent.click(trigger);
+    expect(screen.getByRole("menu", { name: "Idea 1 options" }).parentElement).toBe(document.body);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Description" }));
+    expect(screen.queryByRole("menu", { name: "Idea 1 options" })).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Idea 1 description" })).toBeInTheDocument();
+    fireEvent.click(trigger);
+    expect(screen.queryByRole("textbox", { name: "Idea 1 description" })).not.toBeInTheDocument();
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByRole("menu", { name: "Idea 1 options" })).not.toBeInTheDocument();
   });
 });
